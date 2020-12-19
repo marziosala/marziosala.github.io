@@ -1,4 +1,5 @@
 ---
+layout: splash
 permalink: /publications/
 title: "Publications"
 ---
@@ -62,3 +63,15 @@ M. Sala: [Domain Decomposition Preconditioners: Theoretical Properties, Applicat
 - M. Sala, K. Stanley: *Amesos 1.0 Reference Guide*. Sandia report SAND-2004-2188 (22 pages), May 2004.
 - M. Sala, M. Heroux, D. Day: Trilinos 4.0 Tutorial. Sandia report SAND-2004-2189 (115 pages), May 2004.
 - M. Sala, P. Leyland: A Parallel Adaptive Newton-Krylov-Schwarz Method for the 3D Compressible Euler Equations. EPFL-IACS report (51 pages), March 2003.
+
+## Co-Supervised Master Thesis
+
+* Francesco Pizzi, *Stochastic Collocation and Option Pricing*, Master thesis, Politecnico di Milano, 2011.
+* Marco Pischedda, *Mesh morphing techniques based on continuum deformation models*, Master thesis, Politecnico di Milano, Spring 2009. 
+* Uche Mennel, *Multi-level micro-Finite Element Analysis for Human Bone Structures*, Master thesis, ETH, Spring 2006.
+* Sabine Emch, *Parallel 3D VCSEL Simulation*, Master thesis, ETH, Fall 2005.
+* Omar Trabattoni, *Approssimazione di Flussi Comprimibili con il Metodo di Schur per Sottodomini* (in Italian), Politecnico di Milano, 2001.
+
+## PhD Thesis Committees
+
+* Klaus Sapelza, *Multilevel preconditioners for elliptic problems with multiple scales*, EPFL, thesis n° 3931, 2007. 
