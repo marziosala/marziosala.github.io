@@ -11,7 +11,7 @@ M. Sala: [Domain Decomposition Preconditioners: Theoretical Properties, Applicat
 ## Articles
 
 - L. Cannelli, G. Nuti, M. Sala, O. Szehr. [Hedging using reinforcement learning: Contextual k-Armed Bandit versus Q-learning](https://arxiv.org/search/?query=sala+nuti&searchtype=all&source=header).
-- M. Sala, V. Thiery. [Greeks with continuous adjoints: fast to code, fast to run. Risk, Cutting Edge, July 2015](http://www.risk.net/risk-magazine/technical-paper/2415103/greeks-with-continuous-adjoints-fast-to-code-fast-to-run).
+- M. Sala, V. Thiery. [Greeks with continuous adjoints: fast to code, fast to run](http://www.risk.net/risk-magazine/technical-paper/2415103/greeks-with-continuous-adjoints-fast-to-code-fast-to-run). Risk, Cutting Edge, July 2015.
 - M. Sala, P. Leyland and A. Casagrande: A Parallel Adaptive Newton-Krylov-Schwarz Method for 3D Compressible Inviscid Flow Simulations. Modelling and Simulations in Engineering, Volume 2013.
 - P. T. Lin, J. N. Shadid, R. S. Tuminaro, M. Sala, G. L. Hennigan and R. P. Pawlowski: [A parallel fully coupled algebraic multilevel preconditioner applied to multiphysics PDE applications: Drift-diffusion, flow/transport/reaction, resistive MHD](http://onlinelibrary.wiley.com/doi/10.1002/fld.2402/abstract). International Journal for Numerical Methods in Fluids, Volume 64(10-12), pp. 1148-1179, 10-30, 2010.
 - P. T. Lin, J. N. Shadid, M. Sala, R. S. Tuminaro, G. L. Hennigan, R. J. Hoekstra: Performance of a parallel algebraic multilevel preconditioner for stabilized finite element semiconductor device modeling, Journal of Computational Physics, Volume 228, Issue 17, Pages 6079-6616 (20 September 2009).
