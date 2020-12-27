@@ -3,6 +3,7 @@ layout: splash
 permalink: /tic-tac-toe/
 title: "Tic-Tac-Toe with Q-Learning"
 header:
+  overlay_image: /assets/images/tic-tac-toe/tic-tac-toe.png
 excerpt: "Solving the simple tic-tac-toe game with Q-learning."
 ---
 
