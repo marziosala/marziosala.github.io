@@ -1,6 +1,6 @@
 ---
 layout: splash
-permalink: /atari/
+permalink: /tic-tac-toe/
 title: "Tic-Tac-Toe with Q-Learning"
 header:
 excerpt: "Solving the simple tic-tac-toe game with Q-learning."
