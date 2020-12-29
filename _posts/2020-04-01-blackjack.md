@@ -3,7 +3,7 @@ layout: splash
 permalink: /blackjack/
 title: "Blackjack with Monte Carlo Control"
 header:
-  overlay_image: /assets/images/atari/blackjack_8_0.png
+  overlay_image: /assets/images/blackjack/blackjack_8_0.png
 excerpt: "Solving the Blackjack problem of Sutton and Barto with Monte Carlo control."
 ---
 
@@ -179,4 +179,4 @@ fig.tight_layout()
 
 The image above is similar, yet not identical, to the one in the book from Sutton and Barto. They use a different method, which is difficult to apply to the OpenAI Gym environment, and also limit themselved to 500'000 episodes instead of the 10'000'000 used here. What we have presented here is very easy to implement and quite intuitive, but is converges slowly and is very sensitive to exploration rate and its decay.
 
-![](optimal-strategy.png)
+![](/assets/images/blackjack/optimal-strategy.png)
