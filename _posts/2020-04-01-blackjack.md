@@ -109,7 +109,6 @@ for episode in trange(num_episodes):
 ```
 
 
-    HBox(children=(HTML(value=''), FloatProgress(value=0.0, max=10000000.0), HTML(value='')))
 
 
     
