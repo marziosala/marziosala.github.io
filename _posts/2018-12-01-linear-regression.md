@@ -3,8 +3,9 @@ layout: splash
 permalink: /linear-regression/
 title: "Linear Regression with PyTorch"
 header:
-  overlay_image: /assets/images/linear-regression/boston.png
+  overlay_image: /assets/images/linear-regression/boston.jpeg
 excerpt: "Solving the Boston housing problem with linear regression, in scikit-learn and PyTorch."
+tags: scikit-learn, pytorch, linear regression
 ---
 
 Our goal is to use a linear regression model, implemented in PyTorch, for thr `boston` housing dataset contained in the scikit-learn package. We start by loading the data, performing some basic data analysis and visualization, then finally building the PyTorch model and fitting it. Although linear models exist in scikit-learn (and are very easy to use for this example), we want to play with PyTorch on a simple yet interesting problem.
