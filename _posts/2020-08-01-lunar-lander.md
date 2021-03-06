@@ -256,7 +256,7 @@ Video('./lunar-lander-video.mp4')
 
 
 
-<video src="./lunar-lander-video.mp4" controls  >
+<video src="/assets/videos/lunar-lander/lunar-lander-video.mp4" controls  >
       Your browser does not support the <code>video</code> element.
     </video>
 
