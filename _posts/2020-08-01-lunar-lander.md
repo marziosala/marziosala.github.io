@@ -237,7 +237,7 @@ print(f"# steps: {len(video) - 1}, total reward: {total_reward:.2f}")
 video = np.array(video)
 ```
 
-    # steps: 451, total reward: 249.01
+    # steps: 278, total reward: 261.08
     
 
 
@@ -268,11 +268,8 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, frames=video.shape[
 anim.save('./lunar-lander-video.mp4')
 ```
 
-
-```python
-from IPython.display import Video
-
-Video('./lunar-lander-video.mp4')
-```
+<video src="/assets/videos/lunar-lander/lunar-lander-video.mp4" controls="">
+      Your browser does not support the <code>video</code> element.
+</video>
 
 As we said in the introduction we have used the basic REINFORCE without baselines. This isn't used much on its own because the gradient update has large variance, rendering the training process unstable. The solution is to add a *baseline*, akin to the variance reduction approaches that are used in Monte Carlo procedures. This brings us to the so-called actor-critic methods, often referred to as *advantage actor-critic methods*. We will explore A2C methods in another article.
