@@ -14,7 +14,7 @@ For discrete action spaces a common approach is to let the neural network return
 Here we implement the REINFORCE method. The method was proposed by R. Williams in 1992 in the paper *Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning*, Machine Learning, 8, 229-256. The paper
 says that the name is an acronym for "REward Increment = Nonnegative Factor x Offset Reinforcement x Characteristic Eligibility", which is the equation described at page 234. The notation of the paper is slightly different from what is generally used today, so to understand the method it's easier to read the Sutton and Barto book.
 
-The code is taken from the official [PyTorch example](https://github.com/pytorch/examples/blob/master/reinforcement_learning/reinforce.py), then changed a bit. The implementation is quite simple and almost all of the logic is contained in the `finish_episode()` method. The method is the basic one without any baselines, and leave the problem for a later article on more modern methods.
+The code is taken from the official [PyTorch example](https://github.com/pytorch/examples/blob/master/reinforcement_learning/reinforce.py), then changed a bit. The implementation is quite simple and almost all of the logic is contained in the `finish_episode()` method. The method is the basic one without baselines.
 
 
 ```python
@@ -23,7 +23,6 @@ import numpy as np
 from itertools import count
 from collections import deque
 import matplotlib.pylab as plt
-from tqdm.notebook import tnrange as trange
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -49,8 +48,6 @@ LOG_INTERVAL = 100
 
 ```python
 env = gym.make(ENV_NAME)
-env.seed(SEED)
-_ = torch.manual_seed(SEED)
 ```
 
 
@@ -63,16 +60,25 @@ print(f"Observation space size: {num_observations}, # actions: {num_actions}")
     Observation space size: 8, # actions: 4
     
 
-We define the main class, which contains the (simple) neural network that is used to approximate the policy. The network won't learn unless the numbers it operates on are reasonably scaled; in our case we aim to scale the sum of the returns to be normal. As we don't know the mean and the standard deviation, we estimate it by the values we get during the training phase.
+We define the main class, which contains the (simple) neural network that is used to approximate the policy. The network won't learn unless the numbers it operates on are reasonably scaled; in our case we aim to scale the sum of the returns to be normal. As we don't know the mean and the standard deviation, we estimate it by the values we get during the training phase. The training logic is contained in the `finish_episode()` method, which uses the gradient
+$$
+\nabla J(\theta) = E_\pi
+    \left[
+        G_t \nabla \ln \pi(A_t | S_t, \theta)
+    \right],
+$$
+see page 327 of the Sutton and Barto book, second edition. The expression in the expectation can be computed on each time step once an episode is finished and says that the increment is the product of the a return $G_t$ and a vector, the gradient of the probability of taking the action actually taken divided by the probability of taking that action.
+
+Note that there is no explicit exploration: since the action is selected using a multinomial probability distribution, the exploration is performed automatically.
 
 
 ```python
 class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(num_observations, 128)
+        self.affine1 = nn.Linear(num_observations, 64)
         self.dropout = nn.Dropout(p=0.6)
-        self.affine2 = nn.Linear(128, num_actions)
+        self.affine2 = nn.Linear(64, num_actions)
 
         self.saved_log_probs = []
         self.rewards = []
@@ -106,14 +112,13 @@ class Policy(nn.Module):
         returns = []
         for r in self.rewards[::-1]:
             G = r + GAMMA * G
-            returns.insert(0, F)
+            returns.insert(0, G)
             self.num_returns += 1
             self.sum_returns += G
             self.sum_returns_squared += G**2
         returns = torch.tensor(returns)
         returns_mean = self.sum_returns / self.num_returns
         returns_std_dev = np.sqrt(self.sum_returns_squared / self.num_returns - returns_mean**2)
-        #returns = (returns - returns.mean()) / (returns.std() + self.eps)
         returns = (returns - returns_mean) / (returns_std_dev + self.eps)
         
         for log_prob, R in zip(self.saved_log_probs, returns):
@@ -130,6 +135,9 @@ REINFORCE, as other policy methods, is on-policy; fresh samples from the environ
 
 
 ```python
+env.seed(SEED)
+_ = torch.manual_seed(SEED)
+
 reinforce = Policy()
 optimizer = optim.Adam(reinforce.parameters(), lr=1e-2)
 
@@ -141,7 +149,7 @@ episode_rewards = []
 
 for i_episode in range(1, 10_001):
     state, episode_reward = env.reset(), 0.0
-    for t in range(1, 10_000):  # Don't infinite loop while learning
+    for t in range(1, 5_000):  # Don't infinite loop while learning
         action = reinforce.select_action(state)
         state, reward, done, _ = env.step(action)
         reinforce.rewards.append(reward)
@@ -168,56 +176,32 @@ for i_episode in range(1, 10_001):
         print(f"Episode {i_episode}\tRunning average reward: {mean:.2f}, std dev: {std_dev:.2f}")
 
     if mean > env.spec.reward_threshold:
-        print(f"Solved! Running reward is now {mean} and the last episode runs to {t} time steps!")
+        print(f"Solved! Running reward is now {mean:.2f} and the last episode runs to {t} time steps!")
         break
 ```
 
-    Episode 100	Running average reward: -146.99, std dev: 67.67
-    Episode 200	Running average reward: -111.73, std dev: 50.44
-    Episode 300	Running average reward: -88.78, std dev: 60.07
-    Episode 400	Running average reward: -60.18, std dev: 53.81
-    Episode 500	Running average reward: -9.19, std dev: 78.84
-    Episode 600	Running average reward: 41.59, std dev: 105.77
-    Episode 700	Running average reward: 28.21, std dev: 66.04
-    Episode 800	Running average reward: 12.99, std dev: 78.04
-    Episode 900	Running average reward: 19.66, std dev: 108.44
-    Episode 1000	Running average reward: 66.10, std dev: 88.15
-    Episode 1100	Running average reward: 108.77, std dev: 88.07
-    Episode 1200	Running average reward: 90.31, std dev: 84.93
-    Episode 1300	Running average reward: 86.01, std dev: 84.10
-    Episode 1400	Running average reward: 99.33, std dev: 48.19
-    Episode 1500	Running average reward: 50.61, std dev: 83.39
-    Episode 1600	Running average reward: 112.47, std dev: 60.89
-    Episode 1700	Running average reward: 99.22, std dev: 58.40
-    Episode 1800	Running average reward: 60.37, std dev: 73.11
-    Episode 1900	Running average reward: 58.38, std dev: 69.03
-    Episode 2000	Running average reward: 61.87, std dev: 85.73
-    Episode 2100	Running average reward: 39.67, std dev: 95.84
-    Episode 2200	Running average reward: 111.14, std dev: 93.01
-    Episode 2300	Running average reward: 98.93, std dev: 91.58
-    Episode 2400	Running average reward: 104.73, std dev: 89.01
-    Episode 2500	Running average reward: 67.08, std dev: 91.04
-    Episode 2600	Running average reward: 111.97, std dev: 95.23
-    Episode 2700	Running average reward: 128.60, std dev: 77.49
-    Episode 2800	Running average reward: 110.06, std dev: 72.48
-    Episode 2900	Running average reward: 115.01, std dev: 68.66
-    Episode 3000	Running average reward: 107.67, std dev: 58.95
-    Episode 3100	Running average reward: 80.51, std dev: 90.51
-    Episode 3200	Running average reward: 50.79, std dev: 96.64
-    Episode 3300	Running average reward: 53.30, std dev: 56.20
-    Episode 3400	Running average reward: 75.74, std dev: 83.93
-    Episode 3500	Running average reward: 67.44, std dev: 109.20
-    Episode 3600	Running average reward: 5.90, std dev: 105.01
-    Episode 3700	Running average reward: 145.90, std dev: 106.93
-    Episode 3800	Running average reward: 48.29, std dev: 93.44
-    Episode 3900	Running average reward: 127.24, std dev: 98.55
-    Episode 4000	Running average reward: 131.80, std dev: 107.16
-    Episode 4100	Running average reward: 61.85, std dev: 126.42
-    Episode 4200	Running average reward: 148.52, std dev: 119.06
-    Solved! Running reward is now 200.37813834872566 and the last episode runs to 293 time steps!
+    Episode 100	Running average reward: -174.67, std dev: 110.92
+    Episode 200	Running average reward: -128.64, std dev: 66.37
+    Episode 300	Running average reward: -111.89, std dev: 51.31
+    Episode 400	Running average reward: -104.08, std dev: 122.00
+    Episode 500	Running average reward: -68.92, std dev: 88.25
+    Episode 600	Running average reward: -20.49, std dev: 63.68
+    Episode 700	Running average reward: -30.84, std dev: 68.17
+    Episode 800	Running average reward: 2.51, std dev: 87.19
+    Episode 900	Running average reward: 46.44, std dev: 84.19
+    Episode 1000	Running average reward: 62.02, std dev: 125.79
+    Episode 1100	Running average reward: 86.62, std dev: 128.10
+    Episode 1200	Running average reward: 122.29, std dev: 156.24
+    Episode 1300	Running average reward: 187.94, std dev: 114.57
+    Episode 1400	Running average reward: 163.10, std dev: 122.77
+    Episode 1500	Running average reward: 185.22, std dev: 109.39
+    Episode 1600	Running average reward: 98.53, std dev: 116.95
+    Episode 1700	Running average reward: 108.87, std dev: 132.48
+    Episode 1800	Running average reward: 181.16, std dev: 108.07
+    Solved! Running reward is now 200.26 and the last episode runs to 269 time steps!
     
 
-The method converges, albeit quite slowly and with a non-monotonic convergence. Possibly a different learning rate or more nodes in the neural network would have improved the results. There is still quite some variability in the results, as seen in the picture below which reports the total rewards per episode over the 4,2000 episodes that it takes to solve the problem, as well as the mean and the standard deviation over the last 100 episodes. The confidence interval is reported: note that the distribution isn't symmetric but rather skewed towards bad results (as expected, it's easier to make mistake than to do fantastic things by chance). This means that our policy will be generally good, but in some cases it may fail completely.
+The method converges, albeit quite slowly and with a non-monotonic convergence. Possibly a different learning rate or more nodes in the neural network would have improved the results (using 128 hidden nodes leads to a convergence in 4,200 episodes while a smaller dropout rate results in a much worse convergence). There is still quite some variability in the results, as seen in the picture below which reports the total rewards per episode over the 1,800 episodes that it takes to solve the problem, as well as the mean and the standard deviation over the last 100 episodes. The confidence interval is reported: note that the distribution isn't symmetric but rather skewed towards bad results. This is expected: on one side, it's easier to make mistake than to do fantastic things by chance; on the other side, the maximum reward is limited. This means that our policy will be generally good, but in some cases it may fail completely.
 
 
 ```python
@@ -253,7 +237,7 @@ print(f"# steps: {len(video) - 1}, total reward: {total_reward:.2f}")
 video = np.array(video)
 ```
 
-    # steps: 197, total reward: 8.82
+    # steps: 451, total reward: 249.01
     
 
 
@@ -290,14 +274,5 @@ from IPython.display import Video
 
 Video('./lunar-lander-video.mp4')
 ```
-
-
-
-
-<video src="/assets/videos/lunar-lander/lunar-lander-video.mp4" controls  >
-      Your browser does not support the <code>video</code> element.
-    </video>
-
-
 
 As we said in the introduction we have used the basic REINFORCE without baselines. This isn't used much on its own because the gradient update has large variance, rendering the training process unstable. The solution is to add a *baseline*, akin to the variance reduction approaches that are used in Monte Carlo procedures. This brings us to the so-called actor-critic methods, often referred to as *advantage actor-critic methods*. We will explore A2C methods in another article.
