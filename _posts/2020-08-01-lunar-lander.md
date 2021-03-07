@@ -21,7 +21,7 @@ The code is taken from the official [PyTorch example](https://github.com/pytorch
 import gym
 import numpy as np
 from itertools import count
-from collections import deque, namedtuple
+from collections import deque
 import matplotlib.pylab as plt
 from tqdm.notebook import tnrange as trange
 import torch
@@ -63,7 +63,7 @@ print(f"Observation space size: {num_observations}, # actions: {num_actions}")
     Observation space size: 8, # actions: 4
     
 
-We define the main class, which contains the (simple) neural network that is used to approximate the policy. 
+We define the main class, which contains the (simple) neural network that is used to approximate the policy. The network won't learn unless the numbers it operates on are reasonably scaled; in our case we aim to scale the sum of the returns to be normal. As we don't know the mean and the standard deviation, we estimate it by the values we get during the training phase.
 
 
 ```python
@@ -101,18 +101,19 @@ class Policy(nn.Module):
         return action.item()
 
     def finish_episode(self):
-        R = 0
+        G = 0
         policy_loss = []
         returns = []
         for r in self.rewards[::-1]:
-            R = r + GAMMA * R
-            returns.insert(0, R)
+            G = r + GAMMA * G
+            returns.insert(0, F)
             self.num_returns += 1
-            self.sum_returns += R
-            self.sum_returns_squared += R**2
+            self.sum_returns += G
+            self.sum_returns_squared += G**2
         returns = torch.tensor(returns)
         returns_mean = self.sum_returns / self.num_returns
         returns_std_dev = np.sqrt(self.sum_returns_squared / self.num_returns - returns_mean**2)
+        #returns = (returns - returns.mean()) / (returns.std() + self.eps)
         returns = (returns - returns_mean) / (returns_std_dev + self.eps)
         
         for log_prob, R in zip(self.saved_log_probs, returns):
@@ -138,9 +139,9 @@ running_std_devs = []
 episode_lengths = []
 episode_rewards = []
 
-for i_episode in range(1, 1_001):
-    state, episode_reward = env.reset(), 0
-    for t in range(1, 10000):  # Don't infinite loop while learning
+for i_episode in range(1, 10_001):
+    state, episode_reward = env.reset(), 0.0
+    for t in range(1, 10_000):  # Don't infinite loop while learning
         action = reinforce.select_action(state)
         state, reward, done, _ = env.step(action)
         reinforce.rewards.append(reward)
@@ -165,6 +166,10 @@ for i_episode in range(1, 1_001):
     # log results
     if i_episode % LOG_INTERVAL == 0:
         print(f"Episode {i_episode}\tRunning average reward: {mean:.2f}, std dev: {std_dev:.2f}")
+
+    if mean > env.spec.reward_threshold:
+        print(f"Solved! Running reward is now {mean} and the last episode runs to {t} time steps!")
+        break
 ```
 
     Episode 100	Running average reward: -146.99, std dev: 67.67
@@ -177,9 +182,42 @@ for i_episode in range(1, 1_001):
     Episode 800	Running average reward: 12.99, std dev: 78.04
     Episode 900	Running average reward: 19.66, std dev: 108.44
     Episode 1000	Running average reward: 66.10, std dev: 88.15
+    Episode 1100	Running average reward: 108.77, std dev: 88.07
+    Episode 1200	Running average reward: 90.31, std dev: 84.93
+    Episode 1300	Running average reward: 86.01, std dev: 84.10
+    Episode 1400	Running average reward: 99.33, std dev: 48.19
+    Episode 1500	Running average reward: 50.61, std dev: 83.39
+    Episode 1600	Running average reward: 112.47, std dev: 60.89
+    Episode 1700	Running average reward: 99.22, std dev: 58.40
+    Episode 1800	Running average reward: 60.37, std dev: 73.11
+    Episode 1900	Running average reward: 58.38, std dev: 69.03
+    Episode 2000	Running average reward: 61.87, std dev: 85.73
+    Episode 2100	Running average reward: 39.67, std dev: 95.84
+    Episode 2200	Running average reward: 111.14, std dev: 93.01
+    Episode 2300	Running average reward: 98.93, std dev: 91.58
+    Episode 2400	Running average reward: 104.73, std dev: 89.01
+    Episode 2500	Running average reward: 67.08, std dev: 91.04
+    Episode 2600	Running average reward: 111.97, std dev: 95.23
+    Episode 2700	Running average reward: 128.60, std dev: 77.49
+    Episode 2800	Running average reward: 110.06, std dev: 72.48
+    Episode 2900	Running average reward: 115.01, std dev: 68.66
+    Episode 3000	Running average reward: 107.67, std dev: 58.95
+    Episode 3100	Running average reward: 80.51, std dev: 90.51
+    Episode 3200	Running average reward: 50.79, std dev: 96.64
+    Episode 3300	Running average reward: 53.30, std dev: 56.20
+    Episode 3400	Running average reward: 75.74, std dev: 83.93
+    Episode 3500	Running average reward: 67.44, std dev: 109.20
+    Episode 3600	Running average reward: 5.90, std dev: 105.01
+    Episode 3700	Running average reward: 145.90, std dev: 106.93
+    Episode 3800	Running average reward: 48.29, std dev: 93.44
+    Episode 3900	Running average reward: 127.24, std dev: 98.55
+    Episode 4000	Running average reward: 131.80, std dev: 107.16
+    Episode 4100	Running average reward: 61.85, std dev: 126.42
+    Episode 4200	Running average reward: 148.52, std dev: 119.06
+    Solved! Running reward is now 200.37813834872566 and the last episode runs to 293 time steps!
     
 
-The method converges, albeit a bit slowly, although probably a different learning rate or more nodes in the neural network would have improved the results. There is still quite some variability in the results, as seen in the picture below which reports the total rewards per episode over the 10,000 episodes, as well as the mean and the standard deviation over the last 100 episodes. The confidence interval is reported: note that the distribution isn't symmetric but rather skewed towards bad results (as expected, it's easier to make mistake than to do fantastic things by chance). This means that our policy will be generally good, but in some cases it may fail completely.
+The method converges, albeit quite slowly and with a non-monotonic convergence. Possibly a different learning rate or more nodes in the neural network would have improved the results. There is still quite some variability in the results, as seen in the picture below which reports the total rewards per episode over the 4,2000 episodes that it takes to solve the problem, as well as the mean and the standard deviation over the last 100 episodes. The confidence interval is reported: note that the distribution isn't symmetric but rather skewed towards bad results (as expected, it's easier to make mistake than to do fantastic things by chance). This means that our policy will be generally good, but in some cases it may fail completely.
 
 
 ```python
