@@ -9,8 +9,6 @@ excerpt: "Variational autoencoders applied to mathematical functions."
 
 In the *autoencoder* post we have seen how to approximate the PDF of the Beta distribution. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution.
 
-https://mathybit.github.io/auto-var/
-
 
 ```python
 import seaborn as sns
