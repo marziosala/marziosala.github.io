@@ -89,7 +89,7 @@ plt.legend()
 
 
     
-![png](/assets/images/autoencoders/autoencoders_8_1.png)
+![png](/assets/images/autoencoders/autoencoders-1.png)
     
 
 
@@ -205,7 +205,7 @@ plt.plot(history)
 
 
     
-![png](/assets/images/autoencoders/autoencoders_15_1.png)
+![png](/assets/images/autoencoders/autoencoders-2.png)
     
 
 
@@ -229,7 +229,7 @@ fig.tight_layout()
 
 
     
-![png](/assets/images/autoencoders/autoencoders_17_0.png)
+![png](/assets/images/autoencoders/autoencoders-3.png)
     
 
 
@@ -302,6 +302,6 @@ fig.tight_layout()
 
 
     
-![png](/assets/images/autoencoders/autoencoders_22_0.png)
+![png](/assets/images/autoencoders/autoencoders-4.png)
     
 
