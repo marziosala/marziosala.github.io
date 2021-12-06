@@ -54,18 +54,18 @@ grid = torch.linspace(0.01, 0.99, num_points)
 
 
 ```python
-def target_func(grid, Î±, Î²):
-    return torch.distributions.Beta(Î±, Î²).log_prob(grid)
+def target_func(grid, α, β):
+    return torch.distributions.Beta(α, β).log_prob(grid)
 ```
 
 
 ```python
 X, Y = [], []
 for _ in range(num_inputs):
-    Î± = uniform_dist.sample()
-    Î² = uniform_dist.sample()
-    X.append(target_func(grid, Î±, Î²))
-    Y.append([Î±, Î²])
+    α = uniform_dist.sample()
+    β = uniform_dist.sample()
+    X.append(target_func(grid, α, β))
+    Y.append([α, β])
 X = torch.vstack(X)
 
 assert X.shape[0] == num_inputs
@@ -75,8 +75,8 @@ assert X.isnan().sum() == 0.0
 
 
 ```python
-for x, (Î±, Î²) in zip(X[:5], Y[:5]):
-    plt.plot(grid, x.exp(), label=f'Î±={Î±.item():.4f}, Î²={Î².item():.4f}')
+for x, (α, β) in zip(X[:5], Y[:5]):
+    plt.plot(grid, x.exp(), label=f'α={α.item():.4f}, β={β.item():.4f}')
 plt.legend()
 ```
 
@@ -240,12 +240,12 @@ from scipy.optimize import minimize
 
 
 ```python
-Î± = torch.tensor(2.0) # uniform_dist.sample()
-Î² = torch.tensor(4.0) # uniform_dist.sample()
+α = torch.tensor(2.0) # uniform_dist.sample()
+β = torch.tensor(4.0) # uniform_dist.sample()
 
-print(f'Params for the test: Î±={Î±.item():.4f}, Î²={Î².item():.4f}')
+print(f'Params for the test: α={α.item():.4f}, β={β.item():.4f}')
 
-X_target = target_func(grid, Î±, Î²).numpy()
+X_target = target_func(grid, α, β).numpy()
 
 def func(x):
     X_pred = autoencoder.decoder(torch.FloatTensor(x).to(device))
@@ -254,7 +254,7 @@ def func(x):
     return diff
 ```
 
-    Params for the test: Î±=2.0000, Î²=4.0000
+    Params for the test: α=2.0000, β=4.0000
     
 
 
@@ -287,16 +287,16 @@ X_pred = autoencoder.decoder(torch.FloatTensor(res.x).to(device)).cpu().detach()
 
 ```python
 fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
-ax0.plot(grid, np.exp(X_target), label=f'Î±={Î±.item():.4f}, Î²={Î².item():.4f}')
+ax0.plot(grid, np.exp(X_target), label=f'α={α.item():.4f}, β={β.item():.4f}')
 ax0.plot(grid, np.exp(X_pred), label=f'c1={res.x[0].item():.4f}, c_2={res.x[1].item():.4f}')
 ax0.legend()
 ax1.plot(grid, np.exp(X_target) - np.exp(X_pred))
 ax0.set_xlabel('x')
-ax0.set_ylabel('Î²(x; Î±, Î²)')
+ax0.set_ylabel('β(x; α, β)')
 ax0.set_title('PDF')
 ax1.set_xlabel('x')
 ax1.set_ylabel('Error')
-ax1.set_title('Î²(x; Î±, Î²) - Î²_NN(x; c_1, c_2)')
+ax1.set_title('β(x; α, β) - β_NN(x; c_1, c_2)')
 fig.tight_layout()
 ```
 
