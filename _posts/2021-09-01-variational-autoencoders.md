@@ -18,7 +18,7 @@ where $\xi \sim N(0,1)$ is a random number coming from the standard normal distr
 
 The architecture is reported in the picture below. Note that the dense layer is connected to two separate blocks, one of which generates $\mu$ and the other $\sigma$. The part is the *encoder*. Once $Z$ has been generated, we enter the *decoder* that rebuilds the inputs from the encodings. 
 
-![](variational-autoencoders.png)
+![](/assets/images/variational-autoencoders/variational-autoencoders-net.png)
 
 The implementation is quite close to that of an autoencoder. The loss function is trickier though as now we have to goals:
 - a good reconstruction of the inputs; and
@@ -338,4 +338,4 @@ fig.tight_layout()
 
 The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
 
-To conclude, two references that have largely inspired this contribution: https://mathybit.github.io/auto-var/
+To conclude, two references that have largely inspired this contribution: https://avandekleut.github.io/vae/ for the code and https://mathybit.github.io/auto-var/ for the math.
