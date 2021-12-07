@@ -7,7 +7,57 @@ header:
 excerpt: "Variational autoencoders applied to mathematical functions."
 ---
 
-In the *autoencoder* post we have seen how to approximate the PDF of the Beta distribution. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution.
+In the *autoencoder* post we have seen how to approximate the PDF of the Beta distribution. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution. So, if we have $N_C$ encodings, our goal is to have $N_C$ independent and normally distributed encodings. In order to do that, we want to learn the mean $\mu$ and the standard deviation $\sigma$ that are close to that of a standard normal distribution, while at the same time having outputs that are close to the inputs.
+
+A useful trick to achieve what we want is to write the $i-$th component of the encoding vector
+$Z=(z_1, z_2, \ldots, z_C) $ as
+$$
+z_i = \mu_i  + \sigma_i \cdot \xi,
+$$
+where $\xi \sim N(0,1)$ is a random number coming from the standard normal distribution. Why do we do this? Because the random number generation is a non-differentiable operation, so if we did specify the mean and standard deviation of the distribution directly we would not be able to backpropagate the gradients.
+
+The architecture is reported in the picture below. Note that the dense layer is connected to two separate blocks, one of which generates $\mu$ and the other $\sigma$. The part is the *encoder*. Once $Z$ has been generated, we enter the *decoder* that rebuilds the inputs from the encodings. 
+
+![](variational-autoencoders.png)
+
+The implementation is quite close to that of an autoencoder. The loss function is trickier though as now we have to goals:
+- a good reconstruction of the inputs; and
+- a coding space that is normally distributed.
+
+The first goal is treated as for the autoencoder; the second requires us to compute the distance between two probability distributions, and this is done using the Kullback-Leibler divergence. If we assume that the encodings are independent we can simplify our analysis and work with univariate $\mu$ and $\sigma$.
+
+The Kullback-Leibler divergence between two probability distributions $P$ and $Q$ is defined as
+$$
+D_{KL}(P || Q) = \int_\mathcal{X} p(x) \ln \frac{q(x)}{p(x)} dx
+$$
+where $p(x)$ and $q(x)$ are the probability density functions pf $P$ and $Q$, respectively, and the integral is taken over the sample space $\mathcal{X}$. For us, $P$ and $Q$ are Gaussians, so $\mathcal{X} = \mathbb{R}$, and
+\begin{align}
+p(x) & = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( \frac{(x - \mu)^2}{2 \sigma^2} \right) \\
+q(x) & = \frac{1}{\sqrt{2 \pi}} \exp \left( \frac{x^2}{2} \right).
+\end{align}
+Plugging the definitions of $p(x)$ and $q(x)$ into the equation of the KL divergence gives
+\begin{align}
+D_{KL}(P || Q) & = \int_\mathcal{R} (\ln p(x) -\ln q(x)) p(x) dx \\
+& = \int_\mathcal{R} \left[
+\ln \frac{1}{\sigma^2} - \frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2 + \frac{1}{2} x^2
+\right] p(x) dx \\
+& = \mathbb{E}_P\left[ \ln \frac{1}{\sigma} + \frac{1}{2} X^2 - \frac{1}{2} 
+\left( \frac{X - \mu}{\sigma} \right)^2
+\right] \\
+& = \ln \frac{1}{\sigma} + \frac{1}{2} (\sigma^2 + \mu^2) + \frac{1}{2},
+\end{align}
+after noting that
+\begin{align}
+\mathbb{E}_P[X^2] & = \mathbb{E}_P[X^2 - 2 \mu X + \mu^2 + 2 \mu X = \mu^2] \\
+& = \mathbb{E}_P[(X - \mu)^2] + 2 \mu \mathbb{E}_P[X] - \mu^2 \\
+& = \sigma^2 + 2 \mu^2 - \mu^2 \\
+& = \sigma^2 + \mu^2.
+\end{align}
+Therefore,
+$$
+D_{KL}(P || Q) = \frac{1}{2} \left( \mu^2 + \sigma^2 -1 - \ln \sigma^2 \right)
+$$
+which we can easily compute given $\mu$ and $\sigma$.
 
 
 ```python
@@ -287,3 +337,5 @@ fig.tight_layout()
 
 
 The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
+
+To conclude, two references that have largely inspired this contribution: https://mathybit.github.io/auto-var/
