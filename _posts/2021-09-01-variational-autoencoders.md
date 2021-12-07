@@ -31,11 +31,15 @@ $$
 D_{KL}(P || Q) = \int_\mathcal{X} p(x) \ln \frac{q(x)}{p(x)} dx
 $$
 where $p(x)$ and $q(x)$ are the probability density functions pf $P$ and $Q$, respectively, and the integral is taken over the sample space $\mathcal{X}$. For us, $P$ and $Q$ are Gaussians, so $\mathcal{X} = \mathbb{R}$, and
+$$
 \begin{align}
 p(x) & = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( \frac{(x - \mu)^2}{2 \sigma^2} \right) \\
 q(x) & = \frac{1}{\sqrt{2 \pi}} \exp \left( \frac{x^2}{2} \right).
 \end{align}
+$$
+
 Plugging the definitions of $p(x)$ and $q(x)$ into the equation of the KL divergence gives
+$$
 \begin{align}
 D_{KL}(P || Q) & = \int_\mathcal{R} (\ln p(x) -\ln q(x)) p(x) dx \\
 & = \int_\mathcal{R} \left[
@@ -46,13 +50,16 @@ D_{KL}(P || Q) & = \int_\mathcal{R} (\ln p(x) -\ln q(x)) p(x) dx \\
 \right] \\
 & = \ln \frac{1}{\sigma} + \frac{1}{2} (\sigma^2 + \mu^2) + \frac{1}{2},
 \end{align}
+$$
 after noting that
+$$
 \begin{align}
 \mathbb{E}_P[X^2] & = \mathbb{E}_P[X^2 - 2 \mu X + \mu^2 + 2 \mu X = \mu^2] \\
 & = \mathbb{E}_P[(X - \mu)^2] + 2 \mu \mathbb{E}_P[X] - \mu^2 \\
 & = \sigma^2 + 2 \mu^2 - \mu^2 \\
 & = \sigma^2 + \mu^2.
 \end{align}
+$$
 Therefore,
 $$
 D_{KL}(P || Q) = \frac{1}{2} \left( \mu^2 + \sigma^2 -1 - \ln \sigma^2 \right)
