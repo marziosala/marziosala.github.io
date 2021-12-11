@@ -7,6 +7,9 @@ header:
 excerpt: "Conditional variational autoencoders applied to the classical MNIST dataset."
 ---
 
+![](conditional-variational-autoencoders-net.png)
+
+
 ```python
 import seaborn as sns
 import torch; torch.manual_seed(0)
