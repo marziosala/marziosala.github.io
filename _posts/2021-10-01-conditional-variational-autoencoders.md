@@ -7,7 +7,7 @@ header:
 excerpt: "Conditional variational autoencoders applied to the classical MNIST dataset."
 ---
 
-![](conditional-variational-autoencoders-net.png)
+![](/assets/images/conditional-variational-autoencoders/conditional-variational-autoencoders-net.png)
 
 
 ```python
