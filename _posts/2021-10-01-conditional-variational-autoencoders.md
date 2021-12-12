@@ -7,6 +7,8 @@ header:
 excerpt: "Conditional variational autoencoders applied to the classical MNIST dataset."
 ---
 
+Conditional variational autoencoders are a generative method that is a simple extension of the variational autoencoders covered in the previous article. As we have seen, variational autoencoders can be very effective; however we have no control on the generated data, which can be problematic if we want to generate some specific data. Let's consider the MNIST dataset, which we will use in the code below: with variational autoencoders we cannot generate a given digit, say a 2 -- we will generate one digit, without any label associated to it. The solution was proposed here https://papers.nips.cc/paper/2015/file/8d55a249e6baa5c06772297520da2051-Paper.pdf and consists in conditioning on the label. This means that both the encoder and the decoder take in input the label, as shown in the picture below, with the remainder equivalent to that of a variational autoencoder.
+
 ![](/assets/images/conditional-variational-autoencoders/conditional-variational-autoencoders-net.png)
 
 
@@ -22,14 +24,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 ```
 
+Using a GPU reduces the computational time, so if one is available it's better to take advantage of it.
+
 
 ```python
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device {device}")
 ```
 
-    Using device cuda
+    Using device cpu
     
+
+Our labels are categorical and we use a one-hot encoding.
 
 
 ```python
@@ -44,6 +50,8 @@ def to_one_hot(index, n):
     
     return onehot
 ```
+
+This is the main part. The images, once flattened, have size 784. We use 256 hidden nodes in the first dense layer, which is connected to a dense layer to predict the means $\mu$ and the standard deviations $\sigma$. As $\sigma > 0$, we rather use $\log \sigma^2$, which is defined on the whole real axis. 
 
 
 ```python
@@ -72,6 +80,8 @@ class VariationalEncoder(nn.Module):
         return z, kl
 ```
 
+The decoder is similar and takes in input the encodings as well as the digit `c`.
+
 
 ```python
 class Decoder(nn.Module):
@@ -89,6 +99,8 @@ class Decoder(nn.Module):
         return z.reshape((-1, 1, 28, 28))
 ```
 
+At this point creating the conditional autoencoder is trivial -- just call one after the other, returning the prediction as well as the Kullback-Leibler distance.
+
 
 ```python
 class CVAE(nn.Module):
@@ -103,13 +115,24 @@ class CVAE(nn.Module):
         return self.decoder(z, c), kl
 ```
 
+We are now ready to load the data using Torch's built-in functions. The batch size is 128.
+
 
 ```python
-def train(cvae, data, epochs=20, lr=1e-4):
+data_set = torchvision.datasets.MNIST('./data', transform=torchvision.transforms.ToTensor(),
+                                     download=True),
+data_loader = torch.utils.data.DataLoader(data_set, batch_size=128, shuffle=True)
+```
+
+The `train` function is quite classical and similar to the one for variational autoencoders, with the difference that now the labels are used as well.
+
+
+```python
+def train(cvae, data_loader, epochs=20, lr=1e-4):
     opt = torch.optim.Adam(cvae.parameters(), lr=lr)
     for epoch in range(epochs):
         total_loss = 0.0
-        for x, y in data:
+        for x, y in data_loader:
             x, y = x.to(device), y.long().to(device)
             opt.zero_grad()
             x_hat, kl = cvae(x, y)
@@ -123,19 +146,9 @@ def train(cvae, data, epochs=20, lr=1e-4):
 
 
 ```python
-data = torch.utils.data.DataLoader(
-        torchvision.datasets.MNIST('./data',
-               transform=torchvision.transforms.ToTensor(),
-               download=True),
-        batch_size=128,
-        shuffle=True)
-```
-
-
-```python
 latent_dims = 2
 cvae = CVAE(latent_dims, 10).to(device) # GPU
-train(cvae, data, epochs=100, lr=1e-3)
+train(cvae, data_loader, epochs=100, lr=1e-3)
 ```
 
     Epoch:  10, loss: 2.1029e+06
@@ -151,12 +164,14 @@ train(cvae, data, epochs=100, lr=1e-3)
     Wall time: 9min 28s
     
 
+By plotting the encodings for each digit, we notice that they are all nicely scattered around zero and in the $(-3, 3)$ range expected from a standard random variable. Apart from the digit 1, which is slightly different, all the others are regular.
+
 
 ```python
 def plot_label(label, ax):
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
               'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
-    for x, y in data:
+    for x, y in data_loader:
         subset = y == label
         if sum(subset) == 0: continue
         x_label = x[subset].to(device)
@@ -192,6 +207,8 @@ axes[4, 1].set_xlabel('Z_1');
 ![png](/assets/images/conditional-variational-autoencoders/conditional-variational-autoencoders-1.png)
     
 
+
+To look at the reconstructed digits, we go over the encoding space $(-2, 2) \times (-2, 2)$ for each digit. The results are quite good, with different styles for writing the numbers as we go from left to right and from top to bottom. Not all numbers are good (some of the four, eight and nine are badly written), yet overall we could easily generate digits that look realistic and have good quality.
 
 
 ```python
