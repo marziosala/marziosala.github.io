@@ -164,12 +164,12 @@ def solve(model, num_points, num_epochs, lr, κ, λ, print_every=None):
             print(epoch + 1, history[-1])
         with torch.no_grad():
             u_approx_sample = model(x_sample).detach().flatten().numpy()
-            errors.append(abs(u_approx_sample - u_exact_sample).max())
+            errors.append(abs(u_approx_sample - u_exact_sample).mean())
     
     return history, errors
 ```
 
-We use $\kappa={2, 4, 6}$, and adapt the learning rate to the value of $\kappa$ to avoid divergence.
+We use $\kappa={2, 4, 8}$. After a small hyperparameter optimization, the learning rate is set to 0.001 for all values of $\kappa$.
 
 
 ```python
@@ -180,25 +180,27 @@ history_2, errors_2 = solve(model_2, num_points, num_epochs, lr=0.001, κ=2, λ=
 
 ```python
 model_4 = Model()
-history_4, errors_4 = solve(model_4, num_points, num_epochs, lr=0.001, κ=4, λ=λ, print_every=1_000)
+history_4, errors_4 = solve(model_4, num_points, num_epochs, lr=0.001, κ=4, λ=λ)
 ```
 
 
 ```python
-model_6 = Model()
-history_6, errors_6 = solve(model_6, num_points, num_epochs, lr=0.00001, κ=6, λ=λ)
+model_8 = Model()
+history_8, errors_8 = solve(model_8, num_points, num_epochs, lr=0.001, κ=8, λ=λ)
 ```
+
+It is not straightforward to compare the problems, however the graphs below show some interesting phenomena. Looking at the loss function, we see a small plateau at the beginning, which gets longer as $\kappa$ grows. For $\kappa=1$, it seems that about one thousand iterations suffice (after that, the optimizer stagnates); for $\kappa=2$, it takes about two thousand iterations to stagnate, while $\kappa=8$ hasn't converged at all, as we will see below.
 
 
 ```python
 fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
-for history, κ in [(history_2, 2), (history_4, 4), (history_6, 6)]:
+for history, κ in [(history_2, 2), (history_4, 4), (history_8, 8)]:
     ax0.semilogy(history, label=f'κ={κ}')
 ax0.grid()
 ax0.set_xlabel('Epoch')
 ax0.set_ylabel('Loss')
 ax0.legend()
-for errors, κ in [(errors_2, 2), (errors_4, 4), (errors_6, 6)]:
+for errors, κ in [(errors_2, 2), (errors_4, 4), (errors_8, 8)]:
     ax1.semilogy(errors, label=f'κ={κ}')
 ax1.grid()
 ax1.set_xlabel('Epoch')
@@ -213,26 +215,31 @@ fig.tight_layout()
     
 
 
-The approximation is quite good for small values of $\kappa$, and gets worse as $\kappa$ increases. We could have used more epochs
-
 
 ```python
-fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
-x_unif = torch.linspace(0, 1, 201).unsqueeze(-1)
-for model, κ in [(model_2, 2), (model_4, 4), (model_6, 6)]:
-    y_approx = model_2(x_unif).detach().numpy()
+def plot(model, κ):
+    fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
+    x_unif = torch.linspace(0, 1, 201).unsqueeze(-1)
+    y_approx = model(x_unif).detach().numpy()
     ax0.plot(x_unif.numpy(), y_approx, label=r'$\hat{u}(x), \kappa=' + str(κ) + '$')
     y_exact = exact_solution(x_unif, κ).numpy()
     ax0.plot(x_unif.numpy(), y_exact, label=r'$u(x), \kappa=' + str(κ) + '$')
     ax1.plot(x_unif.numpy(), y_approx - y_exact, label=f'κ={κ}')
-ax0.set_xlabel('x')
-ax0.legend(loc='upper right')
-ax0.set_title('Functions')
-ax1.set_xlabel('x')
-ax1.set_ylabel(r'$\hat{u}(x) - u(x)$')
-ax1.set_title('Error')
-ax1.legend()
-fig.tight_layout()
+    ax0.set_xlabel('x')
+    ax0.legend(loc='upper right')
+    ax0.set_title('Functions')
+    ax1.set_xlabel('x')
+    ax1.set_ylabel(r'$\hat{u}(x) - u(x)$')
+    ax1.set_title('Error')
+    ax1.legend()
+    fig.tight_layout()
+```
+
+For $\kappa=2$ and $\kappa=4$, the approximation is quite good, while for $\kappa=8$ the solver has clearly not managed to provide a reasonable solution (even if more iterations or a smaller learning rate would probably solve the problem).
+
+
+```python
+plot(model_2, 2)
 ```
 
 
@@ -242,28 +249,25 @@ fig.tight_layout()
 
 
 
-In general, because of the F-principle, PINNs converge quickly to the low frequencies of the solution; the convergence to the high frequencies is slow and requires many more epochs, as we have seen. Because of this, PINNs tend to be of limited usage when the application requires highly accurate solutions that contain high frequency modes.
-
-
 ```python
-
+plot(model_4, 4)
 ```
 
 
-```python
+    
+![png](/assets/images/laplacian/laplacian-3.png)
+    
 
-```
-
-https://towardsdatascience.com/how-to-solve-an-ode-with-a-neural-network-917d11918932
-
-https://cloud4scieng.org/2020/06/10/notes-on-deep-learning-and-differential-equations/
 
 
 ```python
-
+plot(model_8, 8)
 ```
 
 
-```python
+    
+![png](/assets/images/laplacian/laplacian-4.png)
+    
 
-```
+
+These results show that, because of the F-principle, PINNs converge quickly to the low frequencies of the solution; the convergence to the high frequencies is slow and requires many more epochs, as we have seen. Because of this, PINNs tend to be of limited usage when the application requires highly accurate solutions that contain high frequency modes.
