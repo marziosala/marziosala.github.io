@@ -7,16 +7,7 @@ header:
 excerpt: "Solving A Simple One-Dimensional Laplacian with Neural Networks."
 ---
 
-Over the last two years  some very interesting research has emerged that illustrates a fascinating connection between Deep Neural Nets and differential equations. In the preivous post we have seen the applications to ordinary differential equations (ODEs); here we focus on partial differentil equations (PDEs).
-
-The solution of PDE by neural networks described here is largely the excellent work of Karniadakis at Brown University and his collaborators on *Physics Informed Neural Networks* (PINNs).   This work has led to some impressive theory and also advances in applications. The main articles are:
-
-- [Physics Informed Deep Learning (Part I): Data-driven Solutions of Nonlinear Partial Differential Equations](https://arxiv.org/abs/1711.10561v1) and [Physics Informed Deep Learning (Part II): Data-driven Discovery of Nonlinear Partial Diﬀerential Equations](https://arxiv.org/abs/1711.10566), by Raisse, Perdikaris and Karniadakis, Nov 2017, introduce PINNS and demonstrates the concept by showing how to solve several classical PDEs;
-- [Physics-Informed Generative Adversarial Networks for Stochastic Differential Equations](https://arxiv.org/abs/1811.02033), by Yang, Zhang, and Karniadakis, addresses the problem of stochastic differential equations but uses a generative adversarial neural network;
-- [Highly-scalable, physics-informed GANs for learning solutions of stochastic PDEs](https://arxiv.org/abs/1910.13444), by Yang, Treichler, Kurth, Fischer, Barajas-Solano, Romero, Churavy, Tartakovsky, Houston, Prabhat, and Karniadakis, is the large study that applies the GAN PINNs techniques to the large scale problem of  as uncertainty quantification of the models of subsurface flow at the Hanford nuclear site;
-- [On the Convergence and Generalization of Physics Informed Neural Networks](https://arxiv.org/abs/2004.01806), by Shin, Darbon and Karniadakis, is the theoretical proof that the PINNs approach really works.
-
-
+Over the last two years  some very interesting research has emerged that illustrates a fascinating connection between Deep Neural Nets and differential equations. In the previous post we have seen the applications to ordinary differential equations (ODEs); here we focus on partial differentil equations (PDEs).
 
 Here, we use PINNs to approximate the solution of the one-dimensional PDE
 
@@ -36,20 +27,28 @@ The residuals for all the $M$ points $x_i, i = 1, \ldots, M$ are computed; their
 
 Once a PINN is trained, the inference step provides in output the solution of the governing equation at the position specified by the input. PINNs are gridless methods because they do not require a grid. They borrow concepts from Newton-Krylov solvers (they aim to minimize the residual function), from finite element methods (they use basis functions) and Monte Carlo and Quasi-Monte Carlo method (to determine the points where to evaluate the residuals).
 
-We start from a very simple problem:
+The literature on PINNs has grown substantially since their introduction. The main articles are:
+
+- [Physics Informed Deep Learning (Part I): Data-driven Solutions of Nonlinear Partial Differential Equations](https://arxiv.org/abs/1711.10561v1) and [Physics Informed Deep Learning (Part II): Data-driven Discovery of Nonlinear Partial Diﬀerential Equations](https://arxiv.org/abs/1711.10566), by Raisse, Perdikaris and Karniadakis, Nov 2017, introduce PINNS and demonstrates the concept by showing how to solve several classical PDEs;
+- [Physics-Informed Generative Adversarial Networks for Stochastic Differential Equations](https://arxiv.org/abs/1811.02033), by Yang, Zhang, and Karniadakis, addresses the problem of stochastic differential equations but uses a generative adversarial neural network;
+- [Highly-scalable, physics-informed GANs for learning solutions of stochastic PDEs](https://arxiv.org/abs/1910.13444), by Yang, Treichler, Kurth, Fischer, Barajas-Solano, Romero, Churavy, Tartakovsky, Houston, Prabhat, and Karniadakis, is the large study that applies the GAN PINNs techniques to the large scale problem of  as uncertainty quantification of the models of subsurface flow at the Hanford nuclear site;
+- [On the Convergence and Generalization of Physics Informed Neural Networks](https://arxiv.org/abs/2004.01806), by Shin, Darbon and Karniadakis, is the theoretical proof that the PINNs approach really works.
+
+We will only scratch the surface with a very simple problem -- the one-dimensional Laplacian
 
 $$
 - \Delta u(x) = f(x), \quad x \in (0, 1),
 $$
 
-with zero boundary conditions, $u(0) = 0$, $u(1) = 0$. The right-hand side is defined such that the solution read
+with zero boundary conditions, $u(0) = 0$, $u(1) = 0$. The right-hand side is defined such that the solution reads
 
 $$
 u(x) = \sin(\kappa \pi x),
 $$
 
-where $\kappa \in \mathbb{N}^+$ is a parameter that controls the smoothness of the solution and can be seen as a *frequency*. An important result is presented in [Frequency Principle: Fourier Analysis Sheds
-Light on Deep Neural NetworkS](https://arxiv.org/pdf/1901.06523.pdf), by Xu, Zhang, Luo, Xiao, and Ma, and it is called the *Frequency principle* (or F-principle): neural networks tend to fit target functions from low to high frequencies. This F-principle  is opposite to the behavior of most conventional iterative solvers, which tend to converge faster for high frequencies and slowly for slow ones. Our simple problem shows indeed that the higher the value for $\kappa$ the slower the convergence.
+where $\kappa \in \mathbb{N}^+$ is a parameter that controls the smoothness of the solution and can be seen as a *frequency*. We introduce it to verify experimentally an important result is presented in [Frequency Principle: Fourier Analysis Sheds
+Light on Deep Neural NetworkS](https://arxiv.org/pdf/1901.06523.pdf), by Xu, Zhang, Luo, Xiao, and Ma. This result
+is called the *Frequency principle* (or F-principle) and shows that neural networks tend to fit target functions from low to high frequencies. This F-principle  is opposite to the behavior of most conventional iterative solvers, which tend to converge faster for high frequencies and slowly for slow ones. We will see that, even for our simple problem, the higher the value for $\kappa$ the slower the convergence.
 
 As always, we start with a few imports.
 
@@ -189,7 +188,7 @@ model_8 = Model()
 history_8, errors_8 = solve(model_8, num_points, num_epochs, lr=0.001, κ=8, λ=λ)
 ```
 
-It is not straightforward to compare the problems, however the graphs below show some interesting phenomena. Looking at the loss function, we see a small plateau at the beginning, which gets longer as $\kappa$ grows. For $\kappa=1$, it seems that about one thousand iterations suffice (after that, the optimizer stagnates); for $\kappa=2$, it takes about two thousand iterations to stagnate, while $\kappa=8$ hasn't converged at all, as we will see below.
+It is not straightforward to compare the results with different $\kappa$ values (because of the $\pi^2 \kappa^2$ scaling in the right-hand side, which we try to remove), however the graphs below show some interesting phenomena. Looking at the loss function, we see a small plateau at the beginning, which gets longer as $\kappa$ grows. For $\kappa=1$, it seems that about one thousand iterations suffice (after that, the optimizer stagnates); for $\kappa=2$, it takes about two thousand iterations to stagnate, while $\kappa=8$ hasn't converged at all, as we will see below.
 
 
 ```python
@@ -270,4 +269,4 @@ plot(model_8, 8)
     
 
 
-These results show that, because of the F-principle, PINNs converge quickly to the low frequencies of the solution; the convergence to the high frequencies is slow and requires many more epochs, as we have seen. Because of this, PINNs tend to be of limited usage when the application requires highly accurate solutions that contain high frequency modes.
+These results show that, because of the F-principle, PINNs converge quickly to the low frequencies of the solution; the convergence to the high frequencies is slow and requires many more epochs, as we have seen. Because of this, PINNs tend to be of limited usage when the application requires highly accurate solutions that contain high frequency modes. They will shine more with nonlinear problems and complex, high-dimensional domains, as we will show in following posts.
