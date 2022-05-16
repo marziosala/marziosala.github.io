@@ -8,7 +8,7 @@ title: "Software Projects"
 
 [ParFE](http://parfe.sourceforge.net) is an open-source, fully-parallel scalable μ-FE solvers for human bone modeling. Results obtained with ParFE lead to an article on ETH-Life and a note from the IBM Zurich Research Laboratories. The picture below shows the result of a simulation on a bone.
 
-![](./cube-parfe.png)
+![](/assets/images/cube-parfe.png)
 
 
 [WebTrilinos](https://trilinos.github.io/web_trilinos.html) is a Trilinos package I developed to define a web-based environment for learning and testing high-performance parallel computing through a web browser.
