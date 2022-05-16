@@ -6,7 +6,7 @@ title: "Software Projects"
 
 <br>
 
-[ParFE](http://parfe.sourceforge.net) is an open-source, fully-parallel scalable μ-FE solvers for human bone modeling. Results obtained with ParFE lead to an article on ETH-Life and a note from the IBM Zurich Research Laboratories. The picture below shows the result of a simulation on a bone.
+[ParFE](http://parfe.sourceforge.net) is an open-source, fully-parallel scalable μ-FE solvers for human bone modeling. Results obtained with ParFE lead to an article on ETH-Life and a note from the IBM Zurich Research Laboratories. The picture below shows the result of a simulation on a bone; more details are in [this](/assets/pdf/bones.pdf) presentation.
 
 ![](/assets/images/cube-parfe.png)
 
