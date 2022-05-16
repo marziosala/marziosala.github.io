@@ -75,3 +75,34 @@ M. Sala: [Domain Decomposition Preconditioners: Theoretical Properties, Applicat
 ## PhD Thesis Committees
 
 * Klaus Sapelza, *Multilevel preconditioners for elliptic problems with multiple scales*, EPFL, thesis n° 3931, 2007. 
+
+## Presentations
+
+- Apr 13, 2016. The Continuous Adjoint Method for Computing Risk Sensitivities. Quant Summit Europe 2016, London, United Kingdom.
+- Mar 23, 2015. Fast Computation of Risk Sensitivities using Adjoint PDEs. MathFinance Conference, Frankfurt, Germany.
+- Nov 08, 2006: Scalable Algebraic Multigrid for Human Trabecular Bone Structures. IBM Zürich Research Lab, Rüschlikon, Switzerland.
+- Sep 25, 2006: Multi-level μ-Finite Element Analysis for Human Bone Structures. CSCS User Day 2006, Manno, Switzerland.
+- Jun 19, 2006: PyTrilinos: High-Performance Distributed-Memory Solvers for. PARA06 Parallel Processing 2006, Umea, Sweden.
+- Jun 19, 2006: Amesos: General Interfaces to Direct Solver Libraries. PARA06 Parallel Processing 2006, Umea, Sweden.
+- Feb 22, 2006: A new framework for smoothed aggregation preconditioners for the parallel solution of non-symmetric linear systems. SIAM Parallel Processing 2006, San Francisco, USA.
+- Jan 12, 2006: Object-Oriented Programming Techniques for Sparse Linear System Solvers. CERFACS, Toulouse, France.
+- May 19, 2005: A Smoothed Aggregation Preconditioner for the Solution of Non-symmetric Linear Systems. Preconditioning 2005, Emory, USA.
+- Feb 15, 2005: Multilevel Preconditioners for the Solution of the Incompressible Navier-Stokes Equations. SIAM Conference on Computational Science and Engineering, Orlando, USA.
+- Feb 14, 2005: Overview of the ML package. SIAM Conference on Computational Science and Engineering, Orlando, USA.
+- Feb 14, 2005: Overview of the Amesos package. SIAM Conference on Computational Science and Engineering, Orlando, USA.
+- Jan 18, 2005: Aggregation-Based Preconditioners for the Incompressible Navier-Stokes Equations. Invited talk, Rensselaer Polytechnic Institute, Troy, USA.
+- Jan 12, 2005: Algebraic Preconditioners for Non-symmetric PDEs. 16th International Domain Decomposition Conference, New York, USA.
+- Nov 3, 2004: Recent developments in IFPACK. Second Trilinos Users Group meeting, Albuquerque, USA.
+- Nov 3, 2004: ML Tutorial. Second Trilinos Users Group meeting, Albuquerque, USA.
+- Nov 2, 2004: Overview of DIDASKO. Second Trilinos Users Group meeting, Albuquerque, USA.
+- Oct 25, 2004: Multilevel Preconditioners: Algorithms and Software. Invited talk, COLAB, ETH Zurich, Switzerland.
+- Jun 22, 2004: An Overview of the Trilinos Project. PARA04, Copenhagen, Denmark.
+- Mar 29, 2004: Algebraic Multilevel Preconditioners Based on Aggregation Procedures: A Demonstration for the Navier-Stokes Equations with Associated Heat and Mass Transfer. Copper Mountain Conference, Copper (CO), USA.
+- June 18, 2003: Aggregation Coarse Corrections: Convergence Estimates and Numerical Results. Second MIT Conference, Boston, USA.
+- Nov 26, 2002: Two-level Schwarz Preconditioners: Theoretical Properties and Applications to the Compressible Euler Equations. Invited talk, Louisiana State University, Baton Rouge (LA), USA.
+- Nov 21, 2002: Domain Decomposition Preconditioners: Theoretical Properties and Applications to the Compressible Euler Equations. Invited talk, Sandia National Laboratories, Albuquerque (NM), USA.
+- Jun 17, 2002: Domain Decomposition Preconditioners for the Compressible Euler Equations. Invited Talk. Università di Bergamo, Italy.
+- Sep 6, 2001: Algebraic Coarse Grid Operators for Domain Decompositon Based Preconditioners. London Mathematical Society Workshop on Domain Decomposition Methods in Fluid Dynamics, Greenwich, United Kingdom.
+- May 21, 2001: Algebraic Coarse Grid Operators for Domain Decomposition Based Preconditioners.allel CFD 2001, Egmond aan Zee, The Netherlands.
+- Jan 31, 2001: Algebraic Domain Decomposition Preconditioners with Applications to Euler Equationsvited talk. CRS4, Cagliari, Italy.
+- Oct 13, 2000: Schwarz and Schur Complement Preconditioners for multidimensional upwind methods in CFDth International Domain Decomposition Conference, Lyon, France.
