@@ -106,3 +106,8 @@ M. Sala: [Domain Decomposition Preconditioners: Theoretical Properties, Applicat
 - May 21, 2001: Algebraic Coarse Grid Operators for Domain Decomposition Based Preconditioners.allel CFD 2001, Egmond aan Zee, The Netherlands.
 - Jan 31, 2001: Algebraic Domain Decomposition Preconditioners with Applications to Euler Equationsvited talk. CRS4, Cagliari, Italy.
 - Oct 13, 2000: Schwarz and Schur Complement Preconditioners for multidimensional upwind methods in CFD. International Domain Decomposition Conference, Lyon, France.
+
+## Organization of Workshop and Conferences
+
+- First [workshop](/assets/pdf/workshop-poster.pdf) on High Performance Computing, ETH Zurich, 2006.
+- International Conference for Applied Mathematics, 2001.
