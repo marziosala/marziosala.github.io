@@ -12,7 +12,7 @@ This post focus on one of the UCI datasets, the [bank loan marking](https://arch
 ```
 python -m venv .venv
 .\venv\Scripts\activate.ps1
-pip install numpy pandas matplotlib seaborn ipykernel scikit-learn
+pip install numpy pandas matplotlib seaborn ipykernel scikit-learn nbconvert
 pip install imbalanced-learn
 pip install torch 
 ```
