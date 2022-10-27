@@ -367,7 +367,7 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, frames=video.shape[
 anim.save('mountain-car-video.gif', writer='pillow', dpi=80, fps=24)
 ```
 
-<img src='/assets/videos/mountain-car/mountain-car-video.gif'/>
+<img src='/assets/images/mountain-car/mountain-car-video.gif'/>
 
 
 ```python
