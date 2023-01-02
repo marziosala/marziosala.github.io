@@ -52,7 +52,7 @@ $$
 that is,
 
 $$
-S_T = e^{\mu T}S_0 + \int_0^Te^{\mu (T - \tau) \sigma dW(\tau)}.
+S_T = e^{\mu T}S_0 + \int_0^Te^{\mu (T - \tau)} \sigma dW(\tau).
 $$
 
 Using [Ito's isometry](https://en.wikipedia.org/wiki/It%C3%B4_isometry), it follows that
@@ -74,7 +74,7 @@ $$
 C & = e^{-rT} \mathbb{E}[(S_T - K)^+] \\
 & = e^{-rT} \mathbb{E}\left[(e^{\mu T} S_0 +
   \sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)} Z - K)^+\right] \\
-& = \sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)} \mathbb{E}
+& = e^{-rT} \sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)} \mathbb{E}
 \left[
   \left(
     Z - \frac{K - e^{\mu T}S_0}{\sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)}}
