@@ -15,7 +15,7 @@ $$
 dS(t) = \mu S(t) dt + \sigma dW(t),
 $$
 
-with $S(0) = S_0$ given and $W(t)$ a standard Wiener process. The drift can be removed with
+with $S(0) = S_0$ given and $W(t)$ a standard [Wiener process](https://en.wikipedia.org/wiki/Wiener_process). The drift $\mu S(t) dt$ can be removed with
 the transformation
 
 $$
@@ -64,7 +64,7 @@ S_T \sim \mathcal{N}\left(
 \right),
 $$
 
-meaning that the spot distribution at time $T$ follows a normal distribution with mean
+meaning that the distribution of the spot at time $T$ follows a normal distribution with mean
 $e^{\mu T} S_0$ and variance $\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)$.
 
 At this point we have all the ingredients to compute the price of a call option:
