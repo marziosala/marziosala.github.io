@@ -7,6 +7,8 @@ header:
 excerpt: "Computing the price of an option using the Bachelier model."
 ---
 
+In this article we look at the [Bachelier model](https://en.wikipedia.org/wiki/Bachelier_model).
+
 We assume the dynamics
 
 $$
@@ -44,16 +46,16 @@ $$
 This equation can be easily integrated, giving
 
 $$
-X(T) - X(0) = \int_0^Te^{\mu(T - \tau)}\sigma d\tau,
+X(T) - X(0) = \int_0^Te^{\mu(T - \tau)}\sigma dW(\tau),
 $$
 
 that is,
 
 $$
-S_T = e^{\mu T}S_0 + \int_0^Te^{\mu (T - \tau) \sigma d\tau}.
+S_T = e^{\mu T}S_0 + \int_0^Te^{\mu (T - \tau) \sigma dW(\tau)}.
 $$
 
-Using Ito's isometry, it follows that
+Using [Ito's isometry](https://en.wikipedia.org/wiki/It%C3%B4_isometry), it follows that
 
 $$
 S_T \sim \mathcal{N}\left(
@@ -96,7 +98,7 @@ where $\Phi$ is the cumulative density function of the standard normal distribut
 
 $$
 \begin{aligned}
-\mathbb{E}[(Z - a)^+] & = \frac{1}{2 \pi} int_{a^2 /2}^\infty e^{-\zeta} d\zeta - a \Phi(-a) \\
+\mathbb{E}[(Z - a)^+] & = \frac{1}{2 \pi} \int_{a^2 /2}^\infty e^{-\zeta} d\zeta - a \Phi(-a) \\
 & = - \frac{1}{2 \pi} \left. e^{-\zeta} \right|_{a^2/2}^\infty - a \Phi(-a) \\
 & = - \frac{1}{2 \pi} e^{-a^2/2} - a \Phi(-a) \\
 & = \varphi(a) - a \Phi(-a) \\
