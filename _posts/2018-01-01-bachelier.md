@@ -21,37 +21,50 @@ X(t) = e^{\mu (T - t)} S(t),
 $$
 
 which brings
+
 $$
 dX(t) = -\mu e^{\mu(T - t)}S(t) dt + e^{\mu(T - t)}dS(t),
 $$
+
 that is
+
 \begin{align*}
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = dS(t) \\
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = \mu S(t)dt + \sigma dW(t),
 \end{align*}
+
 and therefore
+
 $$
 dX(t) = e^{\mu(T - t)} \sigma dW(t).
 $$
+
 This equation can be easily integrated, giving
+
 $$
 X(T) - X(0) = \int_0^Te^{\mu(T - \tau)}\sigma d\tau,
 $$
+
 that is,
+
 $$
 S_T = e^{\mu T}S_0 + \int_0^Te^{\mu (T - \tau) \sigma d\tau}.
 $$
+
 Using Ito's isometry, it follows that
+
 $$
 S_T \sim \mathcal{N}\left(
   e^{\mu T} S_0,
   \frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)
 \right),
 $$
+
 meaning that the spot distribution at time $T$ follows a normal distribution with mean
 $e^{\mu T} S_0$ and variance $\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)$.
 
 At this point we have all the ingredients to compute the price of a call option:
+
 \begin{align*}
 C & = e^{-rT} \mathbb{E}[(S_T - K)^+] \\
 & = e^{-rT} \mathbb{E}\left[(e^{\mu T} S_0 +
@@ -63,13 +76,16 @@ C & = e^{-rT} \mathbb{E}[(S_T - K)^+] \\
   \right)
 \right],
 \end{align*}
+
 where $Z \sim \mathcal{N}(0, 1)$ is a standard normal. Our task reduces to the computation,
 for $a \in \mathbb{R}$, of
+
 \begin{align*}
 \mathbb{E}[(Z - a)^+] & = \mathbb{E}[(Z - a) \mathbb{1}_{Z > a}] \\
 & =  \mathbb{E}[Z\mathbb{1}_{Z > a}] - a \mathbb{P}[Z > a] \\
 & = \frac{1}{2 \pi} \int_a^\infty z e^{-z^2/2} dz - a (1 - \Phi(a)),
 \end{align*}
+
 where $\Phi$ is the cumulative density function of the standard normal distribution. Using $\zeta = z^2/2$, we obtain
 
 \begin{align*}
