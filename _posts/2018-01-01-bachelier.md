@@ -28,10 +28,10 @@ $$
 
 that is
 
-\begin{align}
+\begin{aligned}
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = dS(t) \\
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = \mu S(t)dt + \sigma dW(t),
-\end{align}
+\end{aligned}
 
 and therefore
 
