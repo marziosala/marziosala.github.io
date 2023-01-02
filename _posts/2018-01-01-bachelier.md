@@ -28,10 +28,10 @@ $$
 
 that is
 
-\begin{align*}
+\begin{align}
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = dS(t) \\
 e^{-\mu (T-t)}dX(t) + \mu S(t) dt & = \mu S(t)dt + \sigma dW(t),
-\end{align*}
+\end{align}
 
 and therefore
 
@@ -65,7 +65,7 @@ $e^{\mu T} S_0$ and variance $\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right
 
 At this point we have all the ingredients to compute the price of a call option:
 
-\begin{align*}
+\begin{align}
 C & = e^{-rT} \mathbb{E}[(S_T - K)^+] \\
 & = e^{-rT} \mathbb{E}\left[(e^{\mu T} S_0 +
   \sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)} Z - K)^+\right] \\
@@ -75,16 +75,16 @@ C & = e^{-rT} \mathbb{E}[(S_T - K)^+] \\
     Z - \frac{K - e^{\mu T}S_0}{\sqrt{\frac{\sigma^2}{2\mu} \left( e^{2\mu T} - 1 \right)}}
   \right)
 \right],
-\end{align*}
+\end{align}
 
 where $Z \sim \mathcal{N}(0, 1)$ is a standard normal. Our task reduces to the computation,
 for $a \in \mathbb{R}$, of
 
-\begin{align*}
+\begin{align}
 \mathbb{E}[(Z - a)^+] & = \mathbb{E}[(Z - a) \mathbb{1}_{Z > a}] \\
 & =  \mathbb{E}[Z\mathbb{1}_{Z > a}] - a \mathbb{P}[Z > a] \\
 & = \frac{1}{2 \pi} \int_a^\infty z e^{-z^2/2} dz - a (1 - \Phi(a)),
-\end{align*}
+\end{align}
 
 where $\Phi$ is the cumulative density function of the standard normal distribution. Using $\zeta = z^2/2$, we obtain
 
