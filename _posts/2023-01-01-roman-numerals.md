@@ -4,7 +4,7 @@ permalink: /roman-numerals/
 title: "Roman Numerals"
 header:
   overlay_image: /assets/images/roman-numerals/roman-numerals-splash.png
-excerpt: "A code exercise to convert an Arabic number to Roman numerals."
+excerpt: "A coding exercise to convert an Arabic number to Roman numerals."
 ---
 
 [Roman numerals](https://en.wikipedia.org/wiki/Roman_numerals) are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. The basic rules are well-known: numbers are written with combinations of letters from the Latin alphabet, each letter with a fixed integer value.
