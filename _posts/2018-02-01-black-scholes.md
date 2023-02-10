@@ -4,16 +4,26 @@ permalink: /black-scholes/
 title: "The Black-Scholes Model"
 header:
   overlay_image: /assets/images/black-scholes/black-scholes-splash.jpeg
-excerpt: "Heding analysis of an option under the Black-Scholes model."
+excerpt: "Hedging analysis of an option under the Black-Scholes model."
 ---
 
-The Python environment is quite simple and only requires standard packages.
+In this article we cover the [Black-Scholes](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model#Extensions_of_the_model) model for modeling a a divideng-paying stock. We will verify the basic property of the model by looking at the realized profit and loss (P/L) of a trader that is short an option and performs delta hedging.
+
+The Python environment is quite simple and requires a few standard packages.
 
 ```powershell
 $ python -mv venv venv
 $ ./venv/Scripts/activate
 $ pip install numpy matplotlib seaborn scipy pandas
 ```
+
+We assume that the stock process $S(t)$ follows the dynamics
+
+$$
+\frac{dS(t)}{S(t)} = (r - q) dt + \sigma dW(t),
+$$
+
+with $S(0) = S_0$ the initial value, $r$ the deterministic discount factor, $q$ the deterministic dividend yield, and $dW(t)$ a [Wiener process](https://en.wikipedia.org/wiki/Wiener_process). We assume $r$, $q$, and $\sigma$ to be constant values, even if it is easy to extend the results to time-varying (yet deterministic) functions.
 
 
 ```python
@@ -25,16 +35,36 @@ from scipy.stats import norm
 import seaborn as sns
 ```
 
-
-```python
-Φ = norm.cdf
-```
+To keep things simple, we put together all the components of the model into the class `Model`. All the features of the vanilla contract are in the `Vanilla` class, where $N$ is the notional of the contract (that is, the number of shares that the client wants to buy or sell), `K` is the strike, `T` the expiry, and `is_call` is a boolean to distinguish put and call options. All times are in fractions of the year, starting from $t=0$.
 
 
 ```python
 Model = namedtuple('Model', 'r, q, σ')
 Vanilla = namedtuple('Vanilla', 'N, K, T, is_call')
 ```
+
+
+```python
+Φ = norm.cdf
+```
+
+It is well-known that the value of a vanilla option at time $t$ is given by the formula
+
+$$
+C = e^{-r T} \omega \left[
+F \, \Phi(ω d_+) - K \, \Phi(ω d_-))
+\right]
+$$
+
+where $K$ is the strike of the option, $\tau = T -t$ is the time to expiry, $F = S(t) e^{(r - q) τ}$ is the forward at time $T$,
+$\omega$ is 1 for a call and -1 for a put, $\Phi$ the cumulative function of the normal distribution, and
+
+$$
+\begin{aligned}
+d_+ & = \frac{\log\frac{F}{K} + \frac{1}{2} σ^2 τ}{σ \sqrt{τ}} \\
+d_- & = d_+ - σ * \sqrt{τ}.
+\end{aligned}
+$$
 
 
 ```python
@@ -50,6 +80,12 @@ def compute_price(t, S_t, r, q, σ, N, K, T, is_call):
     return N * ω * df * (F * Φ(ω * d_plus) - K * Φ(ω * d_minus))
 ```
 
+To perform delta hedging, a trader needs to build the amount of shares given by the delta of the option, which reads
+
+$$
+\Delta = ω e^{-r \tau} (F \, Φ(ω d_+) - K \, Φ(ω d_-)).
+$$
+
 
 ```python
 def compute_delta(t, S_t, r, q, σ, N, K, T, is_call):
@@ -61,6 +97,8 @@ def compute_delta(t, S_t, r, q, σ, N, K, T, is_call):
     d_plus = (np.log(F / K) + 0.5 * σ**2 * τ) / σ / np.sqrt(τ)
     return N * ω * np.exp(-q * τ) * Φ(ω * d_plus)
 ```
+
+We need to generate paths that are realization of the Black-Scholes model, as done by the `generate_paths()` function.
 
 
 ```python
@@ -79,6 +117,9 @@ def generate_paths(t_0, S_0, r, q, σ, T, num_paths, num_steps):
         retval.append(np.exp(X))
     return schedule, np.vstack(retval)
 ```
+
+The procedure is the following: the trader sells the option and adds the premium to the P/L; then at every time $t$ they purchase
+$\Delta(t)$ options at spot $S(t)$, costing $S(t) \Delta(t)$, which is the amount we need to subtract to the P/L. At $t + \delta t$ they need to purchase $\Delta(t + \delta t) - \Delta(t)$ options, and so on till expiry. In the interval $[t, t + \delta t)$ the cash accrues the interest $r$, while the shares accrues $q \Delta(t) S(t)$ in dividends. At expiry, the owner of the call will get one share if $S(T) > K$ and will pay $K$, or nothing if $S(T) \le K$; the behavior at expiry for a put option is similar. From the classical theory we would expect a zero P/L over all paths when hedging happens continuously, or a small difference otherwise. 
 
 
 ```python
@@ -122,6 +163,8 @@ def analyze(t_0, S_0, model, vanilla, num_steps, num_paths):
     normalized_pnls = pnls / premium
     return normalized_pnls
 ```
+
+We will analyze two cases: a call option first, then a put option. We take $S_0=100$ and a volatility of 25%. For a fixed number of paths (1,000), we divide the time $[0, T]$ into $n$ interval and perform delta hedging at each point. We would expect to have a P/L distribution that is centered around zero yet a bit scattered (symmetrically), with average errors getting smaller and smaller as $n\rightarrow \infty$. We have plotted the normalized P/L, defined as P/L divided by the option premium.
 
 
 ```python
