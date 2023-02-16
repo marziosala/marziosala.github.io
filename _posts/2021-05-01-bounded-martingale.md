@@ -1,7 +1,7 @@
 ---
 layout: splash
 permalink: /bounded-martingale/
-title: "Define Non-Trivial Bounded Martingales"
+title: "Non-Trivial Bounded Martingales"
 header:
   overlay_image: /assets/images/bounded-martingale/bounded-martingale-splash.png
 excerpt: "Two ways to define non-trivial martingales that are bounded."
