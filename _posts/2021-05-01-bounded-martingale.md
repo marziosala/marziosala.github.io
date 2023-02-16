@@ -160,7 +160,7 @@ plt.ylabel('S(t)');
 
 It is easy to see from the above plot that there are two states, one at 0 and the other at $H=1$. The process remains a martingale, but after some time the paths are very close to the bounds.
 
-Another choice for the drift coefficient for which we have analytically tractable expression was discussed in [Kakushade 2019]() and reads
+Another choice for the drift coefficient for which we have analytically tractable expression was discussed in [Option Pricing: Channels, Target Zones and Sideways Markets](https://arxiv.org/abs/2006.14121) by Z. Kakushadze and reads
 
 $$
 \mu(x) = \nu \sigma^2 \tanh(\nu(x - x^\star)),
