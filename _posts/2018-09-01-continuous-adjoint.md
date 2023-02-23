@@ -7,19 +7,19 @@ header:
 excerpt: "How to compute option sensitivities when pricing with PDEs using adjoint methods."
 ---
 
-In this article we look at the applications of the continuous adjoint method to finance. The approach is described in this [2015 paper](https://www.risk.net/derivatives/2415103/greeks-with-continuous-adjoints-fast-to-code-fast-to-run).
+In this article we look at the applications of the continuous adjoint method to finance. The approach is described in this [2015 Risk.net paper](https://www.risk.net/derivatives/2415103/greeks-with-continuous-adjoints-fast-to-code-fast-to-run).
 
-The focus is on the pricing of financial products, for which one needs to compute the option value as well as a (possibly quite large) number of risk sensitivities, also known as *Greeks*, that is the partial derivative of the price with respect to a model parameter. For example, one needs to know how much the option value will change when spot changes, or when the volatility changes, as so on.
+The focus is on the pricing of [financial derivatives](https://en.wikipedia.org/wiki/Derivative_(finance)), for which one often needs to compute the  value as well as a (possibly quite large) number of risk sensitivities, also known as [Greeks](https://en.wikipedia.org/wiki/Greeks_(finance)), that is the partial derivative of the value with respect to a model parameter. For example, one needs to know how much the option value will change when spot changes, or when the volatility changes, as so on. 
 
 We will go through the meain reasoning, the equations, and discuss how this method compares with other techniques for computing risk sensitivities.
 
-To explain the proble, let's start with the Black-Scholes process
+We have already covered financial modeling in other articles, for example for the [Black-Scholes model](/black-scholes). The notation of this article is slightly difference, since we want to emphasize the dependency on the parameters on which we need to compute the derivatives. The stochastic differential equation reads
 
 $$
-dX(t, \alpha) = (r_d(t,\alpha) - r_f(t,\alpha) - \frac{1}{2}\sigma_{BS}(t,\alpha)^2)dt + \sigma_{BS}(t, \alpha) dW(t)
+dX(t, \alpha) = (r(t,\alpha) - q(t,\alpha) - \frac{1}{2}\sigma_{BS}(t,\alpha)^2)dt + \sigma_{BS}(t, \alpha) dW(t)
 $$
 
-with initial conditions $X(0) = x_0$ and $X(t) = log(S(t))$,  $\alpha \in \mathbb{R}^n$ a vector if parameters, and $\alpha^\star$ the market conditions around which we want to compute the sensitivities.
+where $r$ is the continuously componded interest rate, $q$ the continuous dividend, $\sigma_{BS}$ the volatility, $X(0) = x_0$ the initial conditions, $X(t) = \log(S(t))$ the logarithm of the spot price,  $\alpha \in \mathbb{R}^n$ a vector if parameters, and $\alpha^\star$ the market conditions around which we want to compute the sensitivities.
 
 The PDE pricing problem reads as follows: Find $u(x, t, \alpha)$ such that
 
@@ -39,19 +39,21 @@ $$
 \textstyle
 \mathcal{L}_{BS}(x, t, \alpha) = 
 \frac{1}{2} \sigma_{BS}(t, \alpha)^2 \frac{\partial^2}{\partial x^2} + 
-\left(r_d(t, \alpha) - r_f(t, \alpha) - \frac{1}{2}\sigma_{BS}(t, \alpha)^2 \right)
+\left(r(t, \alpha) - q(t, \alpha) - \frac{1}{2}\sigma_{BS}(t, \alpha)^2 \right)
 \frac{\partial}{\partial x}  - r_d(t, \alpha).
 $$
 
-Our goal is compute the risk sensitivity
+Once $u(x, t, \alpha^\star)$ is computed, our goal is compute the risk sensitivities
 
 $$
 R_\ell(\alpha^\star) = \left.
 \frac{\partial TV(\alpha)}{\partial \alpha_\ell}
-\right|_{\alpha = \alpha^\star}, \quad \quad \ell = 1, \ldots, n.
+\right|_{\alpha = \alpha^\star}, \quad \quad \ell = 1, \ldots, n
 $$
 
-In the general $d-$dimensional case, we aim to solve the backward PDE
+as efficiently as possible.
+
+The formulation of the paper is not limited to Black-Scholes; indeed, it can be applied to the general $d-$dimensional backward PDE
 
 $$
 \left\{
@@ -73,9 +75,7 @@ $$
 + \beta(x, t, \alpha).
 $$
 
-This covers Black-Scholes (1-dim or $d-$dim), local volatility (1-dim and $d-$dim) and mixture models for European options.  
-
-Our objective is the following: for a given $\alpha^\star$, solve the PDE, then compute the option value
+in which case our objective becomes the following: for a given $\alpha^\star$, solve the PDE, then compute the option value
 
 $$
 TV(\alpha^\star) = u(x_0, 0, \alpha^\star) = \int_{\mathbb{R}^d} \delta(x - x_0)u(x, 0, \alpha^\star) dx
@@ -109,9 +109,7 @@ u(x, T, \alpha) & = & g(x) & \text{ on } \mathbb{R}^d \times \mathbb{R}^n \\
 \right.
 $$
 
-The procedure is as follows: constraint $\rightarrow$ Lagrangian multiplier $\lambda \rightarrow$ integration by parts $\rightarrow$ define a "good" $\lambda \rightarrow$ new formula to compute $R_\ell$
-
-Our $TV(\alpha)$ is replaced by
+The value of the derivative $TV(\alpha)$ is then replaced by
 
 $$
 TV(\alpha) - \int_0^T \int_{\mathbb{R}^n} \lambda(x, t, \alpha^\star)
@@ -124,9 +122,7 @@ TV(\alpha) - \int_0^T \int_{\mathbb{R}^n} \lambda(x, t, \alpha^\star)
 \,dx\,dt
 $$
 
-where $\lambda(x, t, \alpha)$ is the Lagrangian multiplier (to be chosen).
-
-The risk sensitivities are therefore
+where $\lambda(x, t, \alpha)$ is the Lagrangian multiplier (to be chosen); the risk sensitivities are instead
 
 $$
 \begin{aligned}
@@ -143,13 +139,19 @@ R_\ell(\alpha^\star) & =
 \end{aligned}
 $$
 
-Remember that
+Having reformulated the problem as a constraint optimization, the procedure is as follows:
+
+1. we introduce a generic Lagrangian multiplier $\lambda(x, t \alpha)$;
+2. we integrate by parts $\rightarrow$;
+3. we define define a "good" $\lambda$ such that we can compute the risk sensitivities $R_\ell$ efficiently.
+
+To do that, we start from the definition of the price itself,
 
 $$
 TV(\alpha) = \int_{\mathbb{R}^d} \delta(x - x_0)u(x, 0, \alpha) dx.
 $$
 
-After several manipulations, we obtain
+After several easy manipulations, we obtain
 
 $$
 R_\ell(\alpha^\star) = \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
@@ -248,7 +250,6 @@ We can apply integration by parts directly to
 
 $$
 \begin{aligned}
-\vspace*{-5mm}
 TV(\alpha^\star) & =
 \int_{\mathbb{R}^d} \delta(x - x_0) u(x, 0, \alpha^\star) dx \\
 & - \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
