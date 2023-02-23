@@ -13,7 +13,7 @@ The focus is on the pricing of [financial derivatives](https://en.wikipedia.org/
 
 We will go through the meain reasoning, the equations, and discuss how this method compares with other techniques for computing risk sensitivities.
 
-We have already covered financial modeling in other articles, for example for the [Black-Scholes model](/black-scholes). The notation of this article is slightly difference, since we want to emphasize the dependency on the parameters on which we need to compute the derivatives. The stochastic differential equation reads
+We have already covered financial modeling in other articles, for example when discussing the [Black-Scholes model](/black-scholes). The notation of this article is slightly different, since we want to emphasize the dependency on the parameters on which we need to compute the derivatives. The stochastic differential equation reads
 
 $$
 dX(t, \alpha) = (r(t,\alpha) - q(t,\alpha) - \frac{1}{2}\sigma_{BS}(t,\alpha)^2)dt + \sigma_{BS}(t, \alpha) dW(t)
@@ -51,7 +51,7 @@ R_\ell(\alpha^\star) = \left.
 \right|_{\alpha = \alpha^\star}, \quad \quad \ell = 1, \ldots, n
 $$
 
-as efficiently as possible.
+where $TV(\alpha$ is the value of our derivative in $(x_0, 0)$, as efficiently as possible, assuming $n$ large.
 
 The formulation of the paper is not limited to Black-Scholes; indeed, it can be applied to the general $d-$dimensional backward PDE
 
@@ -81,7 +81,7 @@ $$
 TV(\alpha^\star) = u(x_0, 0, \alpha^\star) = \int_{\mathbb{R}^d} \delta(x - x_0)u(x, 0, \alpha^\star) dx
 $$
 
-with $\delta(x-x_0)$ the Dirac delta operator centered in $x_0$.
+with $\delta(x-x_0)$ the [Dirac delta function](https://en.wikipedia.org/wiki/Dirac_delta_function) in $x_0$,
 
 Borrowing from optimization methods, we see our problem as if we were computing
 
@@ -145,13 +145,7 @@ Having reformulated the problem as a constraint optimization, the procedure is a
 2. we integrate by parts;
 3. we define define a "good" $\lambda$ such that most terms disappears and we can compute the risk sensitivities $R_\ell$ efficiently.
 
-To do that, we start from the definition of the price itself, written as an integral of the solution at $t=0$ multiplied by the [Dirac delta function](https://en.wikipedia.org/wiki/Dirac_delta_function) in $x_0$,
-
-$$
-TV(\alpha) = \int_{\mathbb{R}^d} \delta(x - x_0)u(x, 0, \alpha) dx.
-$$
-
-After several easy manipulations, we obtain
+To do that, we start from the definition of the price itself, written as an integral of the solution at $t=0$ multiplied by the Dirac delta function. After several (easy) manipulations, we obtain
 
 $$
 R_\ell(\alpha^\star) = \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
