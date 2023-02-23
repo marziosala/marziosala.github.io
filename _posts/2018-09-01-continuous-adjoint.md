@@ -140,10 +140,10 @@ $$
 Having reformulated the problem as a constraint optimization, we proceed in three steps:
 
 1. we introduce a generic Lagrangian multiplier $\lambda(x, t, \alpha)$;
-2. we integrate by parts;
-3. we define define a "good" $\lambda$ such that most terms disappears and we can compute the risk sensitivities $R_\ell$ efficiently.
+2. we integrate by parts over the entire space-time domain;
+3. we define define a "good" $\lambda(x, t, \alpha)$ such that most terms disappears and we can compute the risk sensitivities $R_\ell$ efficiently.
 
-To do that, we start from the definition of the price itself, written as an integral of the solution at $t=0$ multiplied by the Dirac delta function. After several (easy) manipulations, we obtain
+To do that, we start from the definition of the price itself, written as an integral of the solution at $t=0$ multiplied by the Dirac delta function as done above. After several (easy) manipulations, we obtain
 
 $$
 R_\ell(\alpha^\star) = \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
@@ -151,7 +151,7 @@ R_\ell(\alpha^\star) = \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
 u(x, t, \alpha^\star) \,dx \,dt
 $$
 
-where $\lambda$ is the solution of the (forward) problem
+where $\lambda$ is the solution of the forward problem
 
 $$
 \left\{
@@ -182,7 +182,7 @@ $$
 + \frac{\partial \beta(x, t, \alpha)}{\partial \alpha_\ell}.
 $$
 
-This is the procedure for the continuous adjoint.
+We have now all the components to compute risk sensitivities with the continuous adjoint method.
 
 *Step 1*: Solve the backward pricing equation:
 
@@ -199,6 +199,7 @@ $$
 to compute $u(x, t, \alpha^\star)$ and store all solutions.
 
 *Step 2*: Solve the forward adjoint equation:
+
 $$
 \left\{
 \begin{array}{r c l l}
@@ -208,6 +209,7 @@ $$
 \end{array}
 \right.
 $$
+
 to compute $\lambda(x, t, \alpha^\star)$ and store all solutions.
 
 *Step 3*: For $\ell = 1, \ldots, n$ compute the integral
@@ -225,7 +227,7 @@ We can apply integration by parts directly to
 
 $$
 \begin{aligned}
-TV(\alpha^\star) & =
+TV(\alpha^\star) = &
 \int_{\mathbb{R}^d} \delta(x - x_0) u(x, 0, \alpha^\star) dx \\
 & - \int_0^T \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star)
 \left\{
@@ -249,9 +251,7 @@ TV(\alpha^\star) = \int_{\mathbb{R}^d} \lambda(x, t, \alpha^\star) u(x, t, \alph
 \quad \quad \forall t \in [0, T].
 $$
 
-We could also compute $\lambda$ directly and use it to price. The adjoint of $\lambda$ will then be $u$; the integrals for $R_\ell(\alpha^\star)$ will be similar.
-
-Differentiating the pricing equation
+This means that we could also compute $\lambda$ directly and use it to price (but we don't, as solving an equation with a Dirac delta as initial condition is more copmlicated that solving the backward pricing PDE directory). If we did, though, the adjoint of $\lambda$ will then be $u$; the integrals for $R_\ell(\alpha^\star)$ will be similar. Differentiating the pricing equation
 
 $$
 \left\{
@@ -284,7 +284,7 @@ $$
 
 By using the (discounted) probability distribution $\lambda(x, t, \alpha^\star)$ and the Feynman-Kac formula, we obtain the same result as before.
 
-The general formulation takes into account a generic functional $J$ defined as
+The above procedure can be generalized to take into account a generic functional $J$ defined as
 
 $$
 J(\alpha) = \int_\Omega P(x, \alpha, u(x, 0, \alpha) dx 
@@ -298,7 +298,7 @@ After solving a (slightly modified) adjoint problem, we get:
 
 $$
 \begin{aligned}
-\left.\frac{\partial J(\alpha)}{\partial \alpha_\ell}\right|_{\alpha=\alpha^\star} & =
+\left.\frac{\partial J(\alpha)}{\partial \alpha_\ell}\right|_{\alpha=\alpha^\star} = &
 \int_\Omega \left. \frac{\partial P}{\partial \alpha_\ell}(x, \alpha, u(x, 0, \alpha)) \right|_{\alpha = \alpha^\star}dx +
 \\
 & \int_0^T \int_\Omega \left.\frac{\partial Q}{\partial \alpha_\ell}(x, t, \alpha, u(x, t, \alpha)) \right|_{\alpha = \alpha^\star} dx \, dt +
