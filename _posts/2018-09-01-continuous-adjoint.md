@@ -125,10 +125,9 @@ $$
 where $\lambda(x, t, \alpha)$ is the Lagrangian multiplier (to be chosen); the risk sensitivities are instead
 
 $$
-\begin{aligned}
-R_\ell(\alpha^\star) & =
-\left.\frac{\partial TV(\alpha)}{\partial \alpha_\ell}\right|_{\alpha = \alpha^\star} + \\
-&&  \frac{\partial}{\partial \alpha_\ell}
+R_\ell(\alpha^\star)  =
+\left.\frac{\partial TV(\alpha)}{\partial \alpha_\ell}\right|_{\alpha = \alpha^\star} +
+ \frac{\partial}{\partial \alpha_\ell}
 \left.
 \int_0^T \int_{\mathbb{R}^n} \lambda(x, t, \alpha^\star)
 \left\{
@@ -136,12 +135,11 @@ R_\ell(\alpha^\star) & =
 \mathcal{L}(x, t, \alpha) u(x, t, \alpha)
 \right\} dx dt
 \right|_{\alpha = \alpha^\star}
-\end{aligned}
 $$
 
-Having reformulated the problem as a constraint optimization, the procedure is as follows:
+Having reformulated the problem as a constraint optimization, we proceed in three steps:
 
-1. we introduce a generic Lagrangian multiplier $\lambda(x, t \alpha)$;
+1. we introduce a generic Lagrangian multiplier $\lambda(x, t, \alpha)$;
 2. we integrate by parts;
 3. we define define a "good" $\lambda$ such that most terms disappears and we can compute the risk sensitivities $R_\ell$ efficiently.
 
