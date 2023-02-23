@@ -142,10 +142,10 @@ $$
 Having reformulated the problem as a constraint optimization, the procedure is as follows:
 
 1. we introduce a generic Lagrangian multiplier $\lambda(x, t \alpha)$;
-2. we integrate by parts $\rightarrow$;
-3. we define define a "good" $\lambda$ such that we can compute the risk sensitivities $R_\ell$ efficiently.
+2. we integrate by parts;
+3. we define define a "good" $\lambda$ such that most terms disappears and we can compute the risk sensitivities $R_\ell$ efficiently.
 
-To do that, we start from the definition of the price itself,
+To do that, we start from the definition of the price itself, written as an integral of the solution at $t=0$ multiplied by the [Dirac delta function](https://en.wikipedia.org/wiki/Dirac_delta_function) in $x_0$,
 
 $$
 TV(\alpha) = \int_{\mathbb{R}^d} \delta(x - x_0)u(x, 0, \alpha) dx.
@@ -190,23 +190,6 @@ $$
 + \frac{\partial \beta(x, t, \alpha)}{\partial \alpha_\ell}.
 $$
 
-As an example, the adjoint solution for the Black-Scholes PDE is
-
-<!--
-Using sympy:
-
-sigma, r, mu = symbols('sigma, r, mu')
-lam = 1 / (sqrt(2 * pi * t)* sigma) * exp(r*t - (x - (mu - 1/2*sigma**2)*t)**2 / (2 * sigma**2 * t))
-(lam.diff(t) + (mu - 1/2*sigma**2)*lam.diff(x) - 1/2*sigma**2*lam.diff(x, x) - r*lam).simplify()
-
--->
-
-$$
-\lambda(x, t) = \frac{1}{\sigma \sqrt{2 \pi t}} \exp\left\{
-r_d t - \frac{(x - (r_d - r_f - \frac{1}{2}\sigma^2) t)^2}{2 \sigma^2 t}
-\right\}.
-$$
-
 This is the procedure for the continuous adjoint.
 
 *Step 1*: Solve the backward pricing equation:
@@ -244,7 +227,7 @@ R_\ell(\alpha^\star) = \int_0^T \int_{\mathbb{R}^d}
 \right|_{\alpha = \alpha^\star} u(x, t, \alpha^\star) \,dx \,dt.
 $$
 
-Note that $\lambda$ can be reinterpreted as a Probability Distribution.
+Note that $\lambda$ can be reinterpreted as a probability distribution.
 
 We can apply integration by parts directly to
 
@@ -367,4 +350,21 @@ Then
 $$
 J(\alpha) = \frac{\pi \alpha_2^2}{8}, \quad \quad
 R_1 = 0, \quad \quad R_2 = \frac{\pi \alpha_2}{4}.
+$$
+
+Finally, the adjoint solution for the Black-Scholes PDE we started this article with is
+
+<!--
+Using sympy:
+
+sigma, r, mu = symbols('sigma, r, mu')
+lam = 1 / (sqrt(2 * pi * t)* sigma) * exp(r*t - (x - (mu - 1/2*sigma**2)*t)**2 / (2 * sigma**2 * t))
+(lam.diff(t) + (mu - 1/2*sigma**2)*lam.diff(x) - 1/2*sigma**2*lam.diff(x, x) - r*lam).simplify()
+
+-->
+
+$$
+\lambda(x, t) = \frac{1}{\sigma \sqrt{2 \pi t}} \exp\left\{
+r_d t - \frac{(x - (r - q - \frac{1}{2}\sigma^2) t)^2}{2 \sigma^2 t}
+\right\}.
 $$
