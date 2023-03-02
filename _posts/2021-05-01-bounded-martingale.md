@@ -39,7 +39,7 @@ $$
 \begin{aligned}
 \frac{\pi \sigma^2}{H^2} x \psi(x) & = - \frac{\sigma^2}{2}\frac{d\psi(x)}{dx} \\
 %
-\frac{d\psi(x)}{dx} & = - \frac{2 \pi}{H^2} x dx \\
+\frac{d\psi(x)}{\psi} & = - \frac{2 \pi}{H^2} x dx \\
 %
 \log(\psi(x)) & = C_1 - \frac{\pi}{H^2}x^2 \\
 %
@@ -73,7 +73,7 @@ S(x) = H\Phi\left(
 \right).
 $$
 
-Since $\Phi(x)$ maps $\mathbb{R}$ into $[0, 1]$, $S(t)$ is contained in $[0, H]$. (For a generic $S(t) \in [L, U]$ we can easily modify the above procedure to obtain $S(t) = L + (U - L) \Phi(\sqrt{2\pi}/(U - L)X(t))$.)
+Since $\Phi(x)$ maps $\mathbb{R}$ into $[0, 1]$, $S(t)$ is contained in $[0, H]$; for a generic $S(t) \in [L, U]$ we can easily modify the above procedure to obtain $S(t) = L + (U - L) \Phi(\sqrt{2\pi}/(U - L)X(t))$.
 
 To generate $S(t)$ we can simulate $X(t)$ and apply $\varphi$, but we can also use the definition of $dX(t)$ we obtained through the application of Ito's lemma. The drift is zero by construction, so we are left with
 
@@ -81,7 +81,7 @@ $$
 dS(t) = \sigma \sqrt{2\pi} \, \Phi'
 \left(
 \frac{\sqrt{2\pi}}{H} X(t)
-\right) dW(t)
+\right) dW(t).
 $$
 
 From the definition of $S(t)$ we have
@@ -201,16 +201,16 @@ $$
 \varphi(x) = A + B \tanh(\nu(x - x^\star)),
 $$
 
-where $A$ and $B$ are two constants defines such that the unattainable boundaries are $A - B$ and $A+B$, while $x^\star$  is the value of the mean. We also note that this process is mean-repelling.
+where $A$ and $B$ are two constants defined such that the unattainable boundaries are $A - B$ and $A+B$, while $x^\star$  is the value of the mean. We also note that this process is mean-repelling.
 
 The probability density $p(x, t)$ for a process starting at $x_0$ at $t=0$ can be computed from the Fokker-Planck equation
 
 $$
-\frac{\partial p}{\partial t}
-+ \frac{\partial}{\partial x}\left[
-\mu(x)p
-\right]
-- \frac{\sigma^2}{2} \frac{\partial^2}{\partial x^2}p = 0
+\frac{\partial}{\partial t}[(x, t)]
++ \frac{\partial}{\partial x}\left(
+\mu(x)p(x, t)
+\right)
+- \frac{\sigma^2}{2} \frac{\partial^2}{\partial x^2}p(x, t) = 0
 $$
 
 and reads
