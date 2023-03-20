@@ -36,17 +36,17 @@ p(x, 0) & = \delta(x - X_0).
 \end{aligned}
 $$
 
-In this article we will solve the above equation, using the local volatility formulation provided by [SSVI](/ssvi), using the same date of the SSVI article.
+In this article we will solve the above equation, using the local volatility formulation provided by [SSVI](/ssvi), using the same date of the SSVI article. We won't calibrate SSVI here and simply take the calibrated parameters, that is η = 1.5830, λ = 0.3818, and
+ρ = -0.1332. To make things a bit simpler, the interest rates are assumed constant; at 5% and 3% they are roughly equivalent to real 2008 market data, but the code is a bit easier to follow.
 
 
 ```python
-from dataclasses import dataclass
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d, PchipInterpolator
 from scipy.linalg import solve_banded
-from scipy.optimize import least_squares, root_scalar
+from scipy.optimize import root_scalar
 from scipy.stats import norm
 ```
 
@@ -62,6 +62,8 @@ V_ATM_all = σ_ATM_all**2 * T_all
 λ = 0.3818
 ρ = -0.1332
 ```
+
+We need two functions to describe the local volatility surface: `compute_w()` returns the total implied variance at logmoneyness $Y$ and expiry $T$, while `get_local_vol()` returns the local volatility, this time at logmoneyness $X$ and expiry $T$. Both formulae are taken here from the [original SSVI paper](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2033323).
 
 
 ```python
@@ -115,6 +117,8 @@ fig.tight_layout()
 ![png](/assets/images/local-volatility/local-volatility-1.png)
     
 
+
+For the discretization of the Fokker-Planck equation requires we will use finite differences.
 
 
 ```python
