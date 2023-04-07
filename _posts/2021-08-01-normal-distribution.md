@@ -12,15 +12,19 @@ An *autoencoder* is a type of neural network that can learn efficient representa
 In its simplest version, it is composed by two neural networks stacked on the top of each other: an *encoder* which compresses the data to a smaller dimensional encoding, and a *decoder*, which tries to reconstruct the original data from this encoding.
 
 Most of the tutorials on autoencoders take images. Indeed, images are a very important application of generative machine learning models; however, here we will work with the reconstruction of a well-known mathematical function: the probability density function of the [normal distribution](https://en.wikipedia.org/wiki/Normal_distribution),
+
 $$
 Φ(x; μ, σ) = \frac{1}{\sqrt{2 \pi} \sigma} \exp \left(-\frac{1}{2}\left( \frac{x - \mu}{\sigma} \right)^2 \right).
 $$
+
+This function has two parameters, $\mu$ and $\sigma$, apart from the input variable $x$. What we do is to create a grid of points $[x_1, x_2, \ldots, x_n]$ on which we will sample $Φ(x; μ, σ)$ for given values of $\mu$ and $\sigma$; this vector of $n$ points is the quantity that the autoencoder will operator upon. 
+Since there are only two parameters we should be able to capture it with an autoencoder with two latent variables, meaning that the encoder will project the $n$ points into 2 latent variables, while the decoder will do the opposite, moving from the two laten variables to $n$ points, idelly very close to the input ones.
 
 Our procedure is the following: 
 - the parameters $\mu$ and $\sigma$ are sampled, the first in $\mathcal{U}(-3, 3)$ and the second
 in $\mathcal{U}(0.5, 3)$;
 - for given values of $\mu$ and $\sigma$, we compute the values $y(x)$ on a (fixed) grid of points;
-- we train an autoencoder with only two latent variables and check the quality of the fit.
+- we train an autoencoder and check the quality of the fit.
 
 The following packages were used:
 
@@ -45,6 +49,8 @@ from torch.utils.data import Dataset, DataLoader
 import torch.distributions
 ```
 
+We specify a `device` such that we can use CPUs, GPUs, or anything else supported by PyTorch.
+
 
 ```python
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -53,6 +59,8 @@ print(f"Using device {device}.")
 
     Using device cpu.
     
+
+The first phase is the generation of the training dataset. The dataset is composed by a vector sampling out target function, on a predefined grid, for some values of $\mu$ and $\sigma$ that are given by a random number generator.
 
 
 ```python
@@ -63,7 +71,7 @@ uniform_dist_σ = torch.distributions.uniform.Uniform(0.5, 3.0)
 
 ```python
 num_inputs = 100_000
-num_points = 1000
+num_points = 1_000
 ```
 
 
@@ -92,6 +100,8 @@ assert X.shape[1] == num_points
 assert X.isnan().sum() == 0.0
 ```
 
+Plotting a few entries of the dataset shows what we have. For the selected parameter ranges, the functions are smooth, yet potentially with large gradients when $\sigma$ is small.
+
 
 ```python
 for x, (μ, σ) in zip(X[:5], Y[:5]):
@@ -106,6 +116,8 @@ plt.ylabel('Φ(x)');
 ![png](/assets/images/normal-distribution/normal-distribution-1.png)
     
 
+
+The architecture of the encoder is quite simple: a classical sequential network with four layers and `tanh` activation function. The decoder is symmetric and quite simple as well. As we will see, this suffices for our goals so we won't try more complicated architectures.
 
 
 ```python
@@ -141,6 +153,8 @@ class Decoder(nn.Module):
         return self.linear4(z)
 ```
 
+The autoencoder composed the encoder and the decoder, passing the input data through the former and then the latter.
+
 
 ```python
 class Autoencoder(nn.Module):
@@ -153,6 +167,8 @@ class Autoencoder(nn.Module):
         z = self.encoder(x)
         return self.decoder(z)
 ```
+
+We are almost ready to do the training. A small wrapper to the `Dataset` class is used such that we can define a `DataLoader` and specify the batch size (here, 256) and shuffling.
 
 
 ```python
@@ -182,7 +198,7 @@ def train(autoencoder, data_loader, epochs, lr, gamma, print_every):
         last_lr = scheduler.get_last_lr()
         total_loss = 0.0
         for x in data_loader:
-            x = x.to(device) # GPU
+            x = x.to(device)  # to GPU if necessary
             optimizer.zero_grad()
             x_hat = autoencoder(x)
             loss = ((x - x_hat)**2).sum()
@@ -233,6 +249,8 @@ history = train(autoencoder, data_loader, epochs=200, lr=1e-3, gamma=0.98, print
 
 ```python
 plt.semilogy(history)
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
 ```
 
 
@@ -247,6 +265,8 @@ plt.semilogy(history)
 ![png](/assets/images/normal-distribution/normal-distribution-2.png)
     
 
+
+It is important at this point to look at the latent space. as we have no control on how to is defined and which shape it has. To do that, we apply the encoder to all out dataset and store the results in the `Z` array; we then plot the distribution of $Z_1$ and $Z_2$, as well as all the points $(z_1, z_2)$. From the first two graphs we can appreciate that the first latent dimension goes from about -3 to 2, while the second from -4 to about 1.5. The third graph is the most interesting: the points have a peculiar shape and are not well distributed around the origin. The dashed red line represents the $(-1, 1) \times (-1, 1)$ square, and we can see that the lower left corner has not been touched in training. This means that points generated by the decoder when $z_1=-1$ and $z_2=-1$ will be based on extrapolation rather than interpolation and will probably be of poor quality.
 
 
 ```python
@@ -271,6 +291,8 @@ fig.tight_layout()
 ![png](/assets/images/normal-distribution/normal-distribution-3.png)
     
 
+
+It is now time to verify the quality of our decoder. We define new random values for $\mu$ and $\sigma$ and look for the latent variables that provide the best fit. The search is performed using SciPy's `minimize` and is extremely fast.
 
 
 ```python
@@ -305,6 +327,8 @@ print(res)
                            [ 1.614e-01, -1.525e+00]]), array([ 4.667e-02,  4.667e-02,  4.667e-02]))
     
 
+Plotting the results shows quite a good agreement between the exact solution and the one produced by the decoder; increasing the size of the training dataset or the number of epoch would increase the quality.
+
 
 ```python
 X_pred = autoencoder.decoder(torch.FloatTensor(res.x).to(device)).cpu().detach().numpy()
@@ -327,6 +351,8 @@ fig.tight_layout()
 ![png](/assets/images/normal-distribution/normal-distribution-4.png)
     
 
+
+And finally a nice example of what each latent variable represents by plotting, on a 10 by 10 grid, the result of the decoder for several values of $z_1$ and $z_2$, both ranging from -1 to 1. As we discussed above, the bottom left corner was not covered during the training and indeed the results aren't very meaningful; otherise we can see our distributions changing with the two parameters. 
 
 
 ```python
