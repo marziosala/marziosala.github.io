@@ -7,7 +7,7 @@ header:
 excerpt: "Variational autoencoders applied to mathematical functions."
 ---
 
-In the *autoencoder* post we have seen how to approximate the PDF of the Beta distribution. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution. So, if we have $N_C$ encodings, our goal is to have $N_C$ independent and normally distributed encodings. In order to do that, we want to learn the mean $\mu$ and the standard deviation $\sigma$ that are close to that of a standard normal distribution, while at the same time having outputs that are close to the inputs.
+In the previous post we have seen how autoencoders work. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution. So, if we have $N_C$ encodings, our goal is to have $N_C$ independent and normally distributed encodings. In order to do that, we want to learn the mean $\mu$ and the standard deviation $\sigma$ that are close to that of a standard normal distribution, while at the same time having outputs that are close to the inputs.
 
 A useful trick to achieve what we want is to write the $i-$th component of the encoding vector
 $Z=(z_1, z_2, \ldots, z_C) $ as
@@ -18,7 +18,7 @@ where $\xi \sim N(0,1)$ is a random number coming from the standard normal distr
 
 The architecture is reported in the picture below. Note that the dense layer is connected to two separate blocks, one of which generates $\mu$ and the other $\sigma$. The part is the *encoder*. Once $Z$ has been generated, we enter the *decoder* that rebuilds the inputs from the encodings. 
 
-![](/assets/images/beta-distribution/variational-autoencoders-net.png)
+![](variational-autoencoders-net.png)
 
 The implementation is quite close to that of an autoencoder. The loss function is trickier though as now we have to goals:
 - a good reconstruction of the inputs; and
@@ -36,8 +36,8 @@ where $p(x)$ and $q(x)$ are the probability density functions pf $P$ and $Q$, re
 
 $$
 \begin{align}
-p(x) & = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( \frac{(x - \mu)^2}{2 \sigma^2} \right) \\
-q(x) & = \frac{1}{\sqrt{2 \pi}} \exp \left( \frac{x^2}{2} \right).
+p(x) & = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( -\frac{(x - \mu)^2}{2 \sigma^2} \right) \\
+q(x) & = \frac{1}{\sqrt{2 \pi}} \exp \left( -\frac{x^2}{2} \right).
 \end{align}
 $$
 
@@ -77,15 +77,16 @@ which we can easily compute given $\mu$ and $\sigma$.
 
 
 ```python
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import minimize
 import seaborn as sns
 import torch; torch.manual_seed(0)
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils
 import torch.distributions
-import torchvision
-import numpy as np
-import matplotlib.pyplot as plt
+from torch.utils.data import Dataset, DataLoader
 ```
 
 
@@ -100,7 +101,7 @@ uniform_dist = torch.distributions.uniform.Uniform(0, 5)
 
 
 ```python
-num_inputs = 5_000
+num_inputs = 10_000
 num_points = 100
 ```
 
@@ -112,6 +113,7 @@ grid = torch.linspace(0.01, 0.99, num_points)
 
 ```python
 def target_func(grid, α, β):
+    # return the log of the probability, not the probability itself
     return torch.distributions.Beta(α, β).log_prob(grid)
 ```
 
@@ -140,7 +142,7 @@ plt.legend()
 
 
 
-    <matplotlib.legend.Legend at 0x25ad7d15488>
+    <matplotlib.legend.Legend at 0x2034239a3a0>
 
 
 
@@ -149,11 +151,6 @@ plt.legend()
 ![png](/assets/images/beta-distribution/beta-distribution-1.png)
     
 
-
-
-```python
-num_hidden = 256
-```
 
 
 ```python
@@ -167,15 +164,19 @@ if device == 'cuda':
 ```python
 class VariationalEncoder(nn.Module):
 
-    def __init__(self, latent_dims):
+    def __init__(self, latent_dims, num_hidden):
         super().__init__()
-        self.linear = nn.Linear(num_points, num_hidden)
+        self.linear1 = nn.Linear(num_points, num_hidden)
+        self.linear2 = nn.Linear(num_hidden, num_hidden)
+        self.linear3 = nn.Linear(num_hidden, num_hidden)
         self.linear_mu = nn.Linear(num_hidden, latent_dims)
         self.linear_logsigma2 = nn.Linear(num_hidden, latent_dims)
         self.kl = 0
 
     def forward(self, x):
-        x = F.relu(self.linear(x))
+        x = F.tanh(self.linear1(x))
+        x = F.tanh(self.linear2(x))
+        x = F.tanh(self.linear3(x))
         mu =  self.linear_mu(x)
         logsigma2 = self.linear_logsigma2(x)
         sigma = torch.exp(logsigma2 / 2)
@@ -188,24 +189,28 @@ class VariationalEncoder(nn.Module):
 ```python
 class Decoder(nn.Module):
 
-    def __init__(self, latent_dims):
-        super().__init__()
+    def __init__(self, latent_dims, num_hidden):
+        super(Decoder, self).__init__()
         self.linear1 = nn.Linear(latent_dims, num_hidden)
-        self.linear2 = nn.Linear(num_hidden, num_points)
+        self.linear2 = nn.Linear(num_hidden, num_hidden)
+        self.linear3 = nn.Linear(num_hidden, num_hidden)
+        self.linear4 = nn.Linear(num_hidden, num_points)
 
     def forward(self, z):
-        z = F.relu(self.linear1(z))
-        return F.relu(self.linear2(z))  # can use F.relu() as this is a CDF
+        z = F.tanh(self.linear1(z))
+        z = F.tanh(self.linear2(z))
+        z = F.tanh(self.linear3(z))
+        return self.linear4(z)
 ```
 
 
 ```python
 class VariationalAutoencoder(nn.Module):
 
-    def __init__(self, latent_dims):
+    def __init__(self, latent_dims, num_hidden):
         super().__init__()
-        self.encoder = VariationalEncoder(latent_dims)
-        self.decoder = Decoder(latent_dims)
+        self.encoder = VariationalEncoder(latent_dims, num_hidden)
+        self.decoder = Decoder(latent_dims, num_hidden)
 
     def forward(self, x):
         z = self.encoder(x)
@@ -215,6 +220,24 @@ class VariationalAutoencoder(nn.Module):
         ξ = normal_dist.sample(X_hat.shape)
         X_sampled = X_hat + η * ξ
         return 0.5 * ((X - X_sampled)**2).sum() / η**2 + η.log()
+```
+
+
+```python
+class FuncDataset(Dataset):
+    def __init__(self, X):
+        self.X = X
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx]
+```
+
+
+```python
+data_loader = DataLoader(FuncDataset(X), batch_size=32, shuffle=True)
 ```
 
 
@@ -236,6 +259,7 @@ def train(vae, data, epochs=20, lr=1e-3, gamma=0.95, η=0.1, print_every=1):
             total_log_loss += log_loss.item()
             total_kl_loss += kl_loss.item()
             loss = log_loss + kl_loss
+            loss /= num_points * len(x)
             loss.backward()
             optimizer.step()
         scheduler.step()
@@ -243,45 +267,77 @@ def train(vae, data, epochs=20, lr=1e-3, gamma=0.95, η=0.1, print_every=1):
             print(f"Epoch: {epoch + 1:3d}, lr=: {last_lr[0]:.4e}, " \
                   f"total log loss: {total_log_loss:.4f}, total KL loss: {total_kl_loss:.4f}")
         history.append((total_log_loss, total_kl_loss))
-    return history
+    return np.array(history)
 ```
 
 
 ```python
-%%time
+data_loader = DataLoader(FuncDataset(X), batch_size=256, shuffle=True)
 latent_dims = 2
-vae = VariationalAutoencoder(latent_dims).to(device)
-history = train(vae, X, epochs=100, lr=1e-4, gamma=0.975, η=0.1, print_every=10)
+vae = VariationalAutoencoder(latent_dims, num_hidden=32).to(device)
 ```
 
-    Epoch:  10, lr=: 7.9624e-05, total log loss: 177319683.0049, total KL loss: 30413.3774
-    Epoch:  20, lr=: 6.1814e-05, total log loss: 177252307.2591, total KL loss: 29225.2336
-    Epoch:  30, lr=: 4.7988e-05, total log loss: 177263478.4586, total KL loss: 28762.0559
-    Epoch:  40, lr=: 3.7255e-05, total log loss: 177262979.6462, total KL loss: 28350.7128
-    Epoch:  50, lr=: 2.8922e-05, total log loss: 177279913.8852, total KL loss: 28218.2624
-    Epoch:  60, lr=: 2.2453e-05, total log loss: 177261550.7046, total KL loss: 28144.7394
-    Epoch:  70, lr=: 1.7431e-05, total log loss: 177286632.5582, total KL loss: 28067.6457
-    Epoch:  80, lr=: 1.3532e-05, total log loss: 177275772.3955, total KL loss: 28106.7608
-    Epoch:  90, lr=: 1.0505e-05, total log loss: 177301151.0656, total KL loss: 27862.5597
-    Epoch: 100, lr=: 8.1556e-06, total log loss: 177284926.8205, total KL loss: 27868.6222
-    Wall time: 25min 33s
+
+```python
+history = train(vae, data_loader, epochs=2_000, lr=1e-4, gamma=0.99, η=1, print_every=50)
+```
+
+    Epoch:  50, lr=: 6.1112e-05, total log loss: 517560.9767, total KL loss: 53777.0405
+    Epoch: 100, lr=: 3.6973e-05, total log loss: 517397.8387, total KL loss: 53511.1262
+    Epoch: 150, lr=: 2.2369e-05, total log loss: 516222.6875, total KL loss: 53464.8774
+    Epoch: 200, lr=: 1.3533e-05, total log loss: 515707.3129, total KL loss: 53421.4163
+    Epoch: 250, lr=: 8.1877e-06, total log loss: 516783.6189, total KL loss: 53319.7858
+    Epoch: 300, lr=: 4.9536e-06, total log loss: 516166.5024, total KL loss: 53320.4863
+    Epoch: 350, lr=: 2.9970e-06, total log loss: 516000.9357, total KL loss: 53301.2755
+    Epoch: 400, lr=: 1.8132e-06, total log loss: 517115.9525, total KL loss: 53286.8647
+    Epoch: 450, lr=: 1.0970e-06, total log loss: 515438.4694, total KL loss: 53273.6666
+    Epoch: 500, lr=: 6.6369e-07, total log loss: 515070.7604, total KL loss: 53273.0131
+    Epoch: 550, lr=: 4.0153e-07, total log loss: 514981.3275, total KL loss: 53279.6528
+    Epoch: 600, lr=: 2.4293e-07, total log loss: 515832.8436, total KL loss: 53274.6857
+    Epoch: 650, lr=: 1.4697e-07, total log loss: 515978.0646, total KL loss: 53273.6939
+    Epoch: 700, lr=: 8.8920e-08, total log loss: 516658.6315, total KL loss: 53271.9757
+    Epoch: 750, lr=: 5.3797e-08, total log loss: 514245.8837, total KL loss: 53274.7419
+    Epoch: 800, lr=: 3.2548e-08, total log loss: 516539.5763, total KL loss: 53271.7818
+    Epoch: 850, lr=: 1.9692e-08, total log loss: 515993.5084, total KL loss: 53272.6352
+    Epoch: 900, lr=: 1.1914e-08, total log loss: 514139.7813, total KL loss: 53272.5826
+    Epoch: 950, lr=: 7.2077e-09, total log loss: 515917.3399, total KL loss: 53272.7743
+    Epoch: 1000, lr=: 4.3607e-09, total log loss: 516738.8276, total KL loss: 53272.5610
+    Epoch: 1050, lr=: 2.6383e-09, total log loss: 515481.4313, total KL loss: 53272.5339
+    Epoch: 1100, lr=: 1.5962e-09, total log loss: 515403.8425, total KL loss: 53272.4816
+    Epoch: 1150, lr=: 9.6569e-10, total log loss: 515286.4664, total KL loss: 53272.4920
+    Epoch: 1200, lr=: 5.8425e-10, total log loss: 513969.0332, total KL loss: 53272.4972
+    Epoch: 1250, lr=: 3.5347e-10, total log loss: 515212.8973, total KL loss: 53272.4982
+    Epoch: 1300, lr=: 2.1385e-10, total log loss: 514161.1364, total KL loss: 53272.4985
+    Epoch: 1350, lr=: 1.2938e-10, total log loss: 514198.2072, total KL loss: 53272.4977
+    Epoch: 1400, lr=: 7.8278e-11, total log loss: 514654.1814, total KL loss: 53272.4980
+    Epoch: 1450, lr=: 4.7358e-11, total log loss: 516021.1305, total KL loss: 53272.4986
+    Epoch: 1500, lr=: 2.8652e-11, total log loss: 514222.7737, total KL loss: 53272.4985
+    Epoch: 1550, lr=: 1.7335e-11, total log loss: 513725.6606, total KL loss: 53272.4987
+    Epoch: 1600, lr=: 1.0488e-11, total log loss: 516049.3605, total KL loss: 53272.4984
+    Epoch: 1650, lr=: 6.3451e-12, total log loss: 515978.9597, total KL loss: 53272.4981
+    Epoch: 1700, lr=: 3.8388e-12, total log loss: 514534.2349, total KL loss: 53272.4987
+    Epoch: 1750, lr=: 2.3225e-12, total log loss: 516498.9371, total KL loss: 53272.4989
+    Epoch: 1800, lr=: 1.4051e-12, total log loss: 514640.8371, total KL loss: 53272.4980
+    Epoch: 1850, lr=: 8.5011e-13, total log loss: 515816.7416, total KL loss: 53272.4977
+    Epoch: 1900, lr=: 5.1432e-13, total log loss: 515970.1772, total KL loss: 53272.4981
+    Epoch: 1950, lr=: 3.1117e-13, total log loss: 516229.1086, total KL loss: 53272.4984
+    Epoch: 2000, lr=: 1.8826e-13, total log loss: 515762.4912, total KL loss: 53272.4978
     
 
 
 ```python
-C = []
-for entry in X:
-    C.append(vae.encoder(entry.to(device)).cpu().detach().numpy())
-C = np.array(C)
+history = np.array(history)
 ```
 
 
 ```python
 fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
-sns.histplot(C[:, 0], ax=ax0)
-sns.histplot(C[:, 1], ax=ax1)
-ax0.set_xlabel('c_1')
-ax1.set_xlabel('c_2')
+ax0.semilogy(history[:, 0])
+ax0.set_xlabel('Epoch')
+ax0.set_ylabel('Loglikelyhood Loss')
+ax1.semilogy(history[:, 1])
+ax1.set_xlabel('Epoch')
+ax1.set_ylabel('KL Loss')
 fig.tight_layout()
 ```
 
@@ -291,12 +347,34 @@ fig.tight_layout()
     
 
 
-Although the second code $c_2$ isn't quite symmetric, they both are broadly in the (-3, 3) interval, as we would expect from a standard normal variate. It is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(c_1, c_2)$ that produce the closest match.
+
+```python
+Z = []
+for entry in X:
+    Z.append(vae.encoder(entry.to(device)).cpu().detach().numpy())
+Z = np.array(Z)
+```
 
 
 ```python
-from scipy.optimize import minimize
+fig, (ax0, ax1, ax2) = plt.subplots(figsize=(12, 4), ncols=3)
+sns.histplot(Z[:, 0], ax=ax0, stat='density')
+sns.histplot(Z[:, 1], ax=ax1, stat='density')
+ax2.scatter(Z[:, 0], Z[:, 1], color='salmon')
+ax0.set_xlabel('$z_1$')
+ax1.set_xlabel('$z_2$')
+ax2.set_xlabel('$z_1$'); ax2.set_ylabel('$z_2$')
+# ax2.add_patch(Rectangle((-1, -1), 2, 2, linestyle='dashed', color='red', alpha=1, fill=None))
+fig.tight_layout()
 ```
+
+
+    
+![png](/assets/images/beta-distribution/beta-distribution-3.png)
+    
+
+
+Although the second code $c_2$ isn't quite symmetric, they both are broadly in the (-3, 3) interval, as we would expect from a standard normal variate. It is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(c_1, c_2)$ that produce the closest match.
 
 
 ```python
@@ -312,40 +390,33 @@ def func(x):
     X_pred = X_pred.cpu().detach().numpy()
     diff = np.linalg.norm(X_target - X_pred).item()
     return diff
-```
 
-    Params for the test: α=3.1240, β=4.7134
-    
-
-
-```python
 res = minimize(func, [0.0, 0.0], method='Nelder-Mead')
 res
 ```
 
+    Params for the test: α=2.2155, β=2.5044
+    
 
 
 
-     final_simplex: (array([[-2.19452863,  1.8495743 ],
-           [-2.19450143,  1.8495532 ],
-           [-2.19444038,  1.84950134]]), array([26.89578629, 26.89578629, 26.89578629]))
-               fun: 26.89578628540039
-           message: 'Optimization terminated successfully.'
-              nfev: 87
-               nit: 36
-            status: 0
+
+           message: Optimization terminated successfully.
            success: True
-                 x: array([-2.19452863,  1.8495743 ])
+            status: 0
+               fun: 0.13826389610767365
+                 x: [-3.881e-01 -9.114e-02]
+               nit: 54
+              nfev: 101
+     final_simplex: (array([[-3.881e-01, -9.114e-02],
+                           [-3.880e-01, -9.117e-02],
+                           [-3.880e-01, -9.109e-02]]), array([ 1.383e-01,  1.383e-01,  1.383e-01]))
 
 
 
 
 ```python
 X_pred = vae.decoder(torch.FloatTensor(res.x).to(device)).cpu().detach().numpy()
-```
-
-
-```python
 fig, (ax0, ax1) = plt.subplots(figsize=(10, 4), ncols=2)
 ax0.plot(grid, np.exp(X_target), label=f'α={α.item():.4f}, β={β.item():.4f}')
 ax0.plot(grid, np.exp(X_pred), label=f'c1={res.x[0].item():.4f}, c_2={res.x[1].item():.4f}')
@@ -362,10 +433,30 @@ fig.tight_layout()
 
 
     
-![png](/assets/images/beta-distribution/beta-distribution-3.png)
+![png](/assets/images/beta-distribution/beta-distribution-4.png)
     
 
 
 The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
+
+
+```python
+n = 10
+fig, axes = plt.subplots(nrows=n, ncols=n, figsize=(8, 8), sharex=True, sharey=True)
+for i, c_1 in enumerate(np.linspace(-3, 3, n)):
+    for j, c_2 in enumerate(np.linspace(-3, 3, n)):
+        y = vae.decoder(torch.FloatTensor([c_1, c_2]).to(device)).detach().cpu().exp()
+        axes[n - 1 - j, i].plot(grid, y)
+        axes[n - 1 - j, i].plot(grid, np.zeros_like(grid), color='grey', linestyle='dashed')
+        axes[n - 1 - j, i].axis('off')
+        axes[n - 1 - j, i].set_title(f'{c_1:.2f},{c_2:.2f}', fontsize=6)
+fig.tight_layout()
+```
+
+
+    
+![png](/assets/images/beta-distribution/beta-distribution-5.png)
+    
+
 
 To conclude, two references that have largely inspired this contribution: https://avandekleut.github.io/vae/ for the code and https://mathybit.github.io/auto-var/ for the math.
