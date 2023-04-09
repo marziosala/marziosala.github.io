@@ -77,6 +77,7 @@ which we can easily compute given $\mu$ and $\sigma$.
 
 
 ```python
+from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
@@ -364,7 +365,8 @@ ax2.scatter(Z[:, 0], Z[:, 1], color='salmon')
 ax0.set_xlabel('$z_1$')
 ax1.set_xlabel('$z_2$')
 ax2.set_xlabel('$z_1$'); ax2.set_ylabel('$z_2$')
-# ax2.add_patch(Rectangle((-1, -1), 2, 2, linestyle='dashed', color='red', alpha=1, fill=None))
+for r in [1, 2, 3, 4, 5]:
+    ax2.add_patch(Circle((0, 0), r, linestyle='dashed', color='crimson', alpha=1, fill=None))
 fig.tight_layout()
 ```
 
@@ -374,7 +376,8 @@ fig.tight_layout()
     
 
 
-Although the second code $c_2$ isn't quite symmetric, they both are broadly in the (-3, 3) interval, as we would expect from a standard normal variate. It is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(c_1, c_2)$ that produce the closest match.
+Both latent dimensions $z_1$ and $z_2$ have a distribution resembling the one of a Normal variate; their joint distribution is nicely scattered around the origin are roughtly within 3 to 4 standard deviations, as the red circles (with a radious of 1, 2, 3 and 4, respectively) show.
+It is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(z_1, z_2)$ that produce the closest match.
 
 
 ```python
@@ -426,8 +429,8 @@ ax0.set_xlabel('x')
 ax0.set_ylabel('β(x; α, β)')
 ax0.set_title('PDF')
 ax1.set_xlabel('x')
-ax1.set_ylabel('Error')
-ax1.set_title('β(x; α, β) - β_NN(x; c_1, c_2)')
+ax1.set_title('Error')
+ax1.set_xlabel('$β(x; α, β) - \hat{β}(x; z_1, z_2)$')
 fig.tight_layout()
 ```
 
@@ -437,7 +440,9 @@ fig.tight_layout()
     
 
 
-The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
+The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. the oscillations can be resolved with more training data and more iterations, or by increasing the size of the neural networks. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
+
+And finally a nice example of what each latent variable represents by plotting, on a 10 by 10 grid, the result of the decoder for several values of $z_1$ and $z_2$, both ranging from -1 to 1, where can see the shape of the Beta distributions changing with the two parameters as we would expect. The dotted grey line indicates the zero axis; all plots share the same scale on the Y axis.
 
 
 ```python
