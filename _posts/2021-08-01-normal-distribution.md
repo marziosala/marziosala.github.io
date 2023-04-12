@@ -9,7 +9,7 @@ excerpt: "Autoencoders applied to mathematical functions."
 
 An [autoencoder](https://en.wikipedia.org/wiki/Autoencoder) is a type of neural network that is trained to attempt to copy its inputs into its outputs. Given an input $X \in \mathbb{R}^n$ and two functions $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$ and $g: \mathbb{R}^m \rightarrow \mathbb{R}^n$, they compute $\hat{X} = g(f(X))$ and aim for $Y \approx X$ by making a certain loss function $\mathcal{L}(X, \hat{X})$ as small as possible. We need $m \ll n$, as for $m \ge n$ one can simply take identity functions and perform a trivial transformation. 
 
-The function $f$ is called the *encoder* and $g$ the *decoder*, with $Z = f(X)$ the *code* in which a vector $X$ is transformed. The hope is that training will result in the codes $Z$ taking on useful properties, for example removing the noise on $X$ or perform a dimensionality reduction. The vectors $Z$ are often called the *latent* vectors.
+The function $f$ is called the *encoder* and $g$ the *decoder*, with $Z = f(X)$ the *code* in which a vector $X$ is transformed. The hope is that training will result in the codes $Z$ taking on useful properties, for example removing the noise on $X$ or perform a dimensionality reduction. The vectors $Z$ are often called the *latent* vectors, which is how we will call them here.
 
 The simplest kind of autoencoder has one layer, linear activations, and squared error loss,
 
@@ -17,7 +17,7 @@ $$
 \mathcal{L}(X, \hat{X}) = \|X - \hat{X}\|^2.
 $$
 
-This computes $\hat{x} = U V X$, which is a linear function; if $m \ge n$ we can shoose $U$ and $V$ such that $U V = I$, which is not very interesting. If instead $m \ll n$ the encoder is reducing the dimensionality; the output $\hat{X}$ must lie in the column space of $U$. This is equivalent to [principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis), or PCA.
+This computes $\hat{X} = U V X$, with $U$ and $V$ two matrices. This is a linear function; if $m \ge n$ we can shoose $U$ and $V$ such that $U V = I$, which is not very interesting. If instead $m \ll n$ the encoder is reducing the dimensionality; the output $\hat{X}$ must lie in the column space of $U$. This is equivalent to [principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis), or PCA.
 
 The idea of autoencoders is to go a step further and add nonlinearities to project the data not on a subspace, but on a nonlinear manifold. As such, they are more powerful than PCA for a given dimensionality. The learning is unsupervised – they try to reconstruct the inputs from the inputs themselves.
 
@@ -27,7 +27,8 @@ $$
 \varphi(x; μ, σ) = \frac{1}{\sigma \sqrt{2 \pi}} \exp \left(-\frac{1}{2}\left( \frac{x - \mu}{\sigma} \right)^2 \right).
 $$
 
-This function has two parameters, $\mu$ and $\sigma$, apart from the input variable $x$. What we do is to create a grid of points, fixed and identical for all values of the parameters. $[x_1, x_2, \ldots, x_n]$ on which we will sample $\varphi(x; μ, σ)$ for given values of $\mu$ and $\sigma$; this vector of $n$ points is the quantity that the autoencoder will operator upon. Ideally the autoencoder should learn how to represent this function on the provided grid.
+This function has two parameters, $\mu$ and $\sigma$, apart from the input variable $x$. What we do is to create a grid of points $[x_1, x_2, \ldots, x_n]$ on which we will sample $\varphi(x; μ, σ)$ for given values of $\mu$ and $\sigma$.
+The grid is fixed and identical for all values of the parameters. The sampled function on the grid has length $n$ and is the quantity that the autoencoder will operator upon. Ideally the autoencoder should learn how to represent this function on the provided grid. We expect a latent space of dimension two to suffice, and we will check that.
 
 We start by creating the environment for the code:
 
@@ -36,6 +37,8 @@ conda create --name normal-distribution python==3.9 --no-default-packages -y
 conda activate normal-distribution
 pip install torch numpy scipy matplotlib seaborn
 ```
+
+We import the required packages:
 
 
 ```python
@@ -63,7 +66,7 @@ print(f"Using device {device}.")
     Using device cpu.
     
 
-The first phase is the generation of the training dataset. The dataset is composed by a vector sampling out target function, on a predefined grid, for some values of $\mu$ and $\sigma$ that are given by a random number generator. We have to limit ourselves to a range of the parameters -- we assume $-3 \le \mu \le 3$ and $1/2 \le \sigma \le 3$, while the grid is a discretization of the $[-5, 5]$ interval.
+The first phase is the generation of the training dataset. The dataset is composed by a vector sampling out target function, on a predefined grid, for some values of $\mu$ and $\sigma$ that are given by a random number generator. We have to limit ourselves to a range of the parameters as we can't cover them all: we assume $-3 \le \mu \le 3$ and $1/2 \le \sigma \le 3$, while the grid is a discretized uniformly over the $[-5, 5]$ interval.
 
 
 ```python
@@ -137,7 +140,7 @@ class Encoder(nn.Module):
         return self.linear4(x)
 ```
 
- The decoder is symmetric and quite simple as well. As we will see, this suffices for our goals so we won't try more complicated architectures. Since the output is a probability density, we can use RELU to remove negative values.
+ The decoder is symmetric and quite simple as well. As we will see, this suffices for our goals so we won't try more complicated architectures. Since the output is a probability density, we can use RELU to remove negative values from $\hat{X}$.
 
 
 ```python
@@ -200,6 +203,8 @@ class FuncDataset(Dataset):
 ```python
 data_loader = DataLoader(FuncDataset(X), batch_size=256, shuffle=True)
 ```
+
+The training goes through the specified epochs; for each epoch we iterate over the batches, compute $\hat{X}$ given $X$ and evaluate the loss function, whose gradients are used by the optimizer to converge.
 
 
 ```python
@@ -269,7 +274,7 @@ plt.ylabel('Loss');
     
 
 
-It is important at this point to look at the latent space. as we have no control on how to is defined and which shape it has. To do that, we apply the encoder to all out dataset and store the results in the `Z` array; we then plot the distribution of $Z_1$ and $Z_2$, as well as all the points $(z_1, z_2)$. From the first two graphs we can appreciate that the first latent dimension goes from about -3 to 2, while the second from -4 to about 1.5. The third graph is the most interesting: the points have a peculiar shape and are not well distributed around the origin. The dashed red line represents the $(-1, 1) \times (-1, 1)$ square, and we can see that the lower part of the square has not been covered while training. This means that points generated by the decoder when $z_1=-1$ and $z_2=-1$ will be based on extrapolation rather than interpolation and will probably be of poor quality.
+It is important at this point to look at the latent space. as we have no control on how to is defined and which shape it has. To do that, we apply the encoder to all out dataset and store the results in the `Z` array; we then plot the distribution of $Z_1$ and $Z_2$, as well as all the points $(Z_1, Z_2)$. From the first two graphs we can appreciate that the first latent dimension goes from about -1.5 to 1.5, while the second from -0.5 to about 1.5. The scatter plot on the right is the most interesting: the points have a peculiar shape and are not well distributed around the origin. The dashed red line represents the $(-1, 1) \times (-1, 1)$ square, and we can see that the lower part of the square has not been covered while training. This means that points generated by the decoder when $z_1=-1$ and $z_2=-1$ will be based on extrapolation rather than interpolation and will probably be of poor quality.
 
 
 ```python
@@ -295,7 +300,7 @@ fig.tight_layout()
     
 
 
-We can also plot the reconstructed function over a few points in the $[-1, 1] \times [-1, 1]$ square of the picture above. We do this on a 10 by 10 grid, showing the result of the decoder for several values of $z_1$ and $z_2$ in the square region. In the zone that was not well covered in the trainig phase we expect poor results, and indeed the results aren't very meaningful there; otherise we can see our distributions changing with the two parameters. 
+We can also plot the reconstructed function over a few points in the $[-1, 1] \times [-1, 1]$ square of the picture above. We do this on a 10 by 10 grid, showing the result of the decoder for several values of $Z_1$ and $Z_2$ in the square region. In the zone that was not well covered in the trainig phase we expect poor results, and indeed the results aren't very meaningful there; otherwise we can see the shape of $\hat{X}$ changing with the two parameters as we would expect from a normal distribution. 
 
 
 ```python
@@ -316,7 +321,7 @@ fig.tight_layout()
     
 
 
-Another thing that can be easily done is to search for the latent values that fit a given $X$. To that aim, we define new random values for $\mu$ and $\sigma$ and look for the latent variables that provide the best fit. The search is performed using SciPy's `minimize` and is extremely fast.
+Another thing that can be easily done is to search for the latent values that fit a given $X$, that is looking for the $\hat{X}$ that is closest to the specified $X$. To that aim, we define new random values for $\mu$ and $\sigma$ and look for the latent variables that provide the best fit. The search is performed using SciPy's `minimize` and is extremely fast.
 
 
 ```python
