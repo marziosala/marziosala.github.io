@@ -144,7 +144,7 @@ plt.legend()
 
 
 
-    <matplotlib.legend.Legend at 0x257fd291d60>
+    <matplotlib.legend.Legend at 0x16e68326b80>
 
 
 
@@ -221,8 +221,8 @@ class VariationalAutoencoder(nn.Module):
     
     def compute_log_likelihood(self, X, X_hat, η):
         ξ = normal_dist.sample(X_hat.shape)
-        X_sampled = X_hat + η * ξ
-        return 0.5 * F.mse_loss(X, X_sampled) / η**2 + η.log()
+        X_sampled = X_hat + η.sqrt() * ξ
+        return 0.5 * F.mse_loss(X, X_sampled) / η #+ η.log()
 ```
 
 
@@ -263,7 +263,7 @@ def train(vae, data, epochs, lr, gamma, η, β, print_every):
         last_lr = scheduler.get_last_lr()
         total_log_loss, total_kl_loss, total_loss = 0.0, 0.0, 0.0
         for x in data:
-            x = x.to(device) # GPU
+            x = x.to(device)  # GPU
             optimizer.zero_grad()
             x_hat, kl_loss = vae(x)
             log_loss = vae.compute_log_likelihood(x, x_hat, η)
@@ -289,8 +289,30 @@ data_loader = DataLoader(FuncDataset(X), batch_size=256, shuffle=True)
 latent_dims = 2
 vae = VariationalAutoencoder(latent_dims, num_hidden=32).to(device)
 vae.apply(init_weights)
-history = train(vae, data_loader, epochs=500, lr=1e-4, gamma=0.99, η=0.1, β=0.1, print_every=50)
+history = train(vae, data_loader, epochs=1_000, lr=1e-3, gamma=0.99, η=0.1**2, β=1, print_every=50)
 ```
+
+    Epoch:  50, lr: 6.1112e-04, total log loss: 172.4695, total KL loss: 216.1071, total loss: 3.8858e+02
+    Epoch: 100, lr: 3.6973e-04, total log loss: 87.6573, total KL loss: 210.6503, total loss: 2.9831e+02
+    Epoch: 150, lr: 2.2369e-04, total log loss: 73.5103, total KL loss: 209.3993, total loss: 2.8291e+02
+    Epoch: 200, lr: 1.3533e-04, total log loss: 69.3126, total KL loss: 208.9647, total loss: 2.7828e+02
+    Epoch: 250, lr: 8.1877e-05, total log loss: 66.7518, total KL loss: 210.3983, total loss: 2.7715e+02
+    Epoch: 300, lr: 4.9536e-05, total log loss: 65.2317, total KL loss: 208.2934, total loss: 2.7353e+02
+    Epoch: 350, lr: 2.9970e-05, total log loss: 65.0135, total KL loss: 208.5284, total loss: 2.7354e+02
+    Epoch: 400, lr: 1.8132e-05, total log loss: 64.8618, total KL loss: 208.3012, total loss: 2.7316e+02
+    Epoch: 450, lr: 1.0970e-05, total log loss: 65.0291, total KL loss: 208.7231, total loss: 2.7375e+02
+    Epoch: 500, lr: 6.6369e-06, total log loss: 64.8451, total KL loss: 208.4879, total loss: 2.7333e+02
+    Epoch: 550, lr: 4.0153e-06, total log loss: 64.3602, total KL loss: 208.6472, total loss: 2.7301e+02
+    Epoch: 600, lr: 2.4293e-06, total log loss: 63.9771, total KL loss: 208.3997, total loss: 2.7238e+02
+    Epoch: 650, lr: 1.4697e-06, total log loss: 64.4275, total KL loss: 208.3166, total loss: 2.7274e+02
+    Epoch: 700, lr: 8.8920e-07, total log loss: 64.6008, total KL loss: 208.7841, total loss: 2.7338e+02
+    Epoch: 750, lr: 5.3797e-07, total log loss: 64.3160, total KL loss: 208.5707, total loss: 2.7289e+02
+    Epoch: 800, lr: 3.2548e-07, total log loss: 63.8710, total KL loss: 208.4223, total loss: 2.7229e+02
+    Epoch: 850, lr: 1.9692e-07, total log loss: 64.5717, total KL loss: 208.6061, total loss: 2.7318e+02
+    Epoch: 900, lr: 1.1914e-07, total log loss: 63.6378, total KL loss: 207.9878, total loss: 2.7163e+02
+    Epoch: 950, lr: 7.2077e-08, total log loss: 64.7554, total KL loss: 208.2642, total loss: 2.7302e+02
+    Epoch: 1000, lr: 4.3607e-08, total log loss: 63.8177, total KL loss: 208.0312, total loss: 2.7185e+02
+    
 
 
 ```python
@@ -347,13 +369,13 @@ As an example of what each latent variable represents we plot, on a 10 by 10 gri
 ```python
 n = 10
 fig, axes = plt.subplots(nrows=n, ncols=n, figsize=(8, 8), sharex=True, sharey=True)
-for i, c_1 in enumerate(np.linspace(-3, 3, n)):
-    for j, c_2 in enumerate(np.linspace(-3, 3, n)):
-        y = vae.decoder(torch.FloatTensor([c_1, c_2]).to(device)).detach().cpu().exp()
+for i, z_1 in enumerate(np.linspace(-3, 3, n)):
+    for j, z_2 in enumerate(np.linspace(-3, 3, n)):
+        y = vae.decoder(torch.FloatTensor([z_1, z_2]).to(device)).detach().cpu().exp()
         axes[n - 1 - j, i].plot(grid, y)
         axes[n - 1 - j, i].plot(grid, np.zeros_like(grid), color='grey', linestyle='dashed')
         axes[n - 1 - j, i].axis('off')
-        axes[n - 1 - j, i].set_title(f'{c_1:.2f},{c_2:.2f}', fontsize=6)
+        axes[n - 1 - j, i].set_title(f'{z_1:.2f},{z_2:.2f}', fontsize=6)
         axes[n - 1 - j, i].set_ylim(0, 3)
 fig.tight_layout()
 ```
@@ -383,7 +405,7 @@ res = minimize(func, [0.0, 0.0], method='Nelder-Mead')
 res
 ```
 
-    Params for the test: α=0.1558, β=2.0741
+    Params for the test: α=3.4180, β=0.2701
     
 
 
@@ -392,13 +414,13 @@ res
            message: Optimization terminated successfully.
            success: True
             status: 0
-               fun: 0.8427226543426514
-                 x: [-1.586e+00  5.902e-01]
-               nit: 68
+               fun: 0.26235488057136536
+                 x: [-1.498e+00  6.091e-01]
+               nit: 69
               nfev: 132
-     final_simplex: (array([[-1.586e+00,  5.902e-01],
-                           [-1.586e+00,  5.902e-01],
-                           [-1.586e+00,  5.902e-01]]), array([ 8.427e-01,  8.427e-01,  8.427e-01]))
+     final_simplex: (array([[-1.498e+00,  6.091e-01],
+                           [-1.498e+00,  6.091e-01],
+                           [-1.498e+00,  6.091e-01]]), array([ 2.624e-01,  2.624e-01,  2.624e-01]))
 
 
 
