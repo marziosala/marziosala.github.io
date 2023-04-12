@@ -9,7 +9,7 @@ excerpt: "Autoencoders applied to mathematical functions."
 
 An [autoencoder](https://en.wikipedia.org/wiki/Autoencoder) is a type of neural network that is trained to attempt to copy its inputs into its outputs. Given an input $X \in \mathbb{R}^n$ and two functions $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$ and $g: \mathbb{R}^m \rightarrow \mathbb{R}^n$, they compute $\hat{X} = g(f(X))$ and aim for $Y \approx X$ by making a certain loss function $\mathcal{L}(X, \hat{X})$ as small as possible. We need $m \ll n$, as for $m \ge n$ one can simply take identity functions and perform a trivial transformation. 
 
-The function $f$ is called the *encoder* and $g$ the *decoder$, with $Z = f(X)$ the *code* in which a vector $X$ is transformed. The hope is that training will result in the codes $Z$ taking on useful properties, for example removing the noise on $X$ or perform a dimensionality reduction. The vectors $Z$ are often called the *latent* vectors.
+The function $f$ is called the *encoder* and $g$ the *decoder*, with $Z = f(X)$ the *code* in which a vector $X$ is transformed. The hope is that training will result in the codes $Z$ taking on useful properties, for example removing the noise on $X$ or perform a dimensionality reduction. The vectors $Z$ are often called the *latent* vectors.
 
 The simplest kind of autoencoder has one layer, linear activations, and squared error loss,
 
@@ -19,7 +19,7 @@ $$
 
 This computes $\hat{x} = U V X$, which is a linear function; if $m \ge n$ we can shoose $U$ and $V$ such that $U V = I$, which is not very interesting. If instead $m \ll n$ the encoder is reducing the dimensionality; the output $\hat{X}$ must lie in the column space of $U$. This is equivalent to [principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis), or PCA.
 
-The idea of autoencoders is to go a step further and add nonlinearities to project the data not on a subspace, but on a nonlinear manifold. As such, they are more powerful than PCA for a given dimensionality.
+The idea of autoencoders is to go a step further and add nonlinearities to project the data not on a subspace, but on a nonlinear manifold. As such, they are more powerful than PCA for a given dimensionality. The learning is unsupervised – they try to reconstruct the inputs from the inputs themselves.
 
 In this article we look at autoencoders as tools for dimensionality reduction. Most of the tutorials on autoencoders do so on images, which are a very important application of generative machine learning models. Here, instead, we will work with mathematical functions and in particular with the well-known the probability density function of the [normal distribution](https://en.wikipedia.org/wiki/Normal_distribution),
 
@@ -231,29 +231,29 @@ torch.manual_seed(0)
 latent_dims = 2
 autoencoder = Autoencoder(latent_dims=latent_dims, num_hidden=16).to(device)
 autoencoder.apply(init_weights)
-history = train(autoencoder, data_loader, epochs=200, lr=1e-3, gamma=0.98, print_every=10)
+history = train(autoencoder, data_loader, epochs=100, lr=1e-3, gamma=0.98, print_every=10)
 ```
 
-    Epoch:  10, lr: 8.3375e-04, avg loss: 2978.8102
-    Epoch:  20, lr: 6.8123e-04, avg loss: 1596.3543
-    Epoch:  30, lr: 5.5662e-04, avg loss: 1100.5824
-    Epoch:  40, lr: 4.5480e-04, avg loss: 905.0095
-    Epoch:  50, lr: 3.7160e-04, avg loss: 779.6560
-    Epoch:  60, lr: 3.0363e-04, avg loss: 696.5421
-    Epoch:  70, lr: 2.4808e-04, avg loss: 641.5026
-    Epoch:  80, lr: 2.0270e-04, avg loss: 600.6263
-    Epoch:  90, lr: 1.6562e-04, avg loss: 572.4385
-    Epoch: 100, lr: 1.3533e-04, avg loss: 546.6655
-    Epoch: 110, lr: 1.1057e-04, avg loss: 528.8666
-    Epoch: 120, lr: 9.0345e-05, avg loss: 513.7626
-    Epoch: 130, lr: 7.3818e-05, avg loss: 501.3278
-    Epoch: 140, lr: 6.0315e-05, avg loss: 491.5679
-    Epoch: 150, lr: 4.9282e-05, avg loss: 483.1427
-    Epoch: 160, lr: 4.0267e-05, avg loss: 476.8771
-    Epoch: 170, lr: 3.2901e-05, avg loss: 471.3284
-    Epoch: 180, lr: 2.6882e-05, avg loss: 466.7106
-    Epoch: 190, lr: 2.1965e-05, avg loss: 462.8381
-    Epoch: 200, lr: 1.7947e-05, avg loss: 459.6428
+    Epoch:  10, lr: 8.3375e-04, avg loss: 0.0119
+    Epoch:  20, lr: 6.8123e-04, avg loss: 0.0063
+    Epoch:  30, lr: 5.5662e-04, avg loss: 0.0046
+    Epoch:  40, lr: 4.5480e-04, avg loss: 0.0037
+    Epoch:  50, lr: 3.7160e-04, avg loss: 0.0033
+    Epoch:  60, lr: 3.0363e-04, avg loss: 0.0029
+    Epoch:  70, lr: 2.4808e-04, avg loss: 0.0027
+    Epoch:  80, lr: 2.0270e-04, avg loss: 0.0025
+    Epoch:  90, lr: 1.6562e-04, avg loss: 0.0024
+    Epoch: 100, lr: 1.3533e-04, avg loss: 0.0023
+    Epoch: 110, lr: 1.1057e-04, avg loss: 0.0023
+    Epoch: 120, lr: 9.0345e-05, avg loss: 0.0022
+    Epoch: 130, lr: 7.3818e-05, avg loss: 0.0022
+    Epoch: 140, lr: 6.0315e-05, avg loss: 0.0021
+    Epoch: 150, lr: 4.9282e-05, avg loss: 0.0021
+    Epoch: 160, lr: 4.0267e-05, avg loss: 0.0021
+    Epoch: 170, lr: 3.2901e-05, avg loss: 0.0020
+    Epoch: 180, lr: 2.6882e-05, avg loss: 0.0020
+    Epoch: 190, lr: 2.1965e-05, avg loss: 0.0020
+    Epoch: 200, lr: 1.7947e-05, avg loss: 0.0020
     
 
 
@@ -269,7 +269,7 @@ plt.ylabel('Loss');
     
 
 
-It is important at this point to look at the latent space. as we have no control on how to is defined and which shape it has. To do that, we apply the encoder to all out dataset and store the results in the `Z` array; we then plot the distribution of $Z_1$ and $Z_2$, as well as all the points $(z_1, z_2)$. From the first two graphs we can appreciate that the first latent dimension goes from about -3 to 2, while the second from -4 to about 1.5. The third graph is the most interesting: the points have a peculiar shape and are not well distributed around the origin. The dashed red line represents the $(-1, 1) \times (-1, 1)$ square, and we can see that the lower left corner has not been touched in training. This means that points generated by the decoder when $z_1=-1$ and $z_2=-1$ will be based on extrapolation rather than interpolation and will probably be of poor quality.
+It is important at this point to look at the latent space. as we have no control on how to is defined and which shape it has. To do that, we apply the encoder to all out dataset and store the results in the `Z` array; we then plot the distribution of $Z_1$ and $Z_2$, as well as all the points $(z_1, z_2)$. From the first two graphs we can appreciate that the first latent dimension goes from about -3 to 2, while the second from -4 to about 1.5. The third graph is the most interesting: the points have a peculiar shape and are not well distributed around the origin. The dashed red line represents the $(-1, 1) \times (-1, 1)$ square, and we can see that the lower part of the square has not been covered while training. This means that points generated by the decoder when $z_1=-1$ and $z_2=-1$ will be based on extrapolation rather than interpolation and will probably be of poor quality.
 
 
 ```python
@@ -342,13 +342,13 @@ print(res)
            message: Optimization terminated successfully.
            success: True
             status: 0
-               fun: 0.040829580277204514
-                 x: [-1.353e-01  2.750e-01]
-               nit: 56
-              nfev: 106
-     final_simplex: (array([[-1.353e-01,  2.750e-01],
-                           [-1.353e-01,  2.749e-01],
-                           [-1.353e-01,  2.749e-01]]), array([ 4.083e-02,  4.083e-02,  4.083e-02]))
+               fun: 0.04326499626040459
+                 x: [-1.309e-01  3.460e-01]
+               nit: 53
+              nfev: 103
+     final_simplex: (array([[-1.309e-01,  3.460e-01],
+                           [-1.310e-01,  3.460e-01],
+                           [-1.309e-01,  3.461e-01]]), array([ 4.326e-02,  4.327e-02,  4.327e-02]))
     
 
 Plotting the results shows quite a good agreement between the exact solution and the one produced by the decoder; increasing the size of the training dataset or the number of epoch would increase the quality.
