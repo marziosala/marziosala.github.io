@@ -179,7 +179,7 @@ The architecture is reported in the picture below. Note that the dense layer is 
 
 <img src='/assets/images/beta-distribution/variational-autoencoders-net.png' />
 
-The implementation is quite close to that of an autoencoder.
+The implementation is quite close to that of an autoencoder; the differences are in the final part of the encoder, with application of the $\mu_\phi$ and $\sigma_\phi$ to the output of $E_\phi(x)$, and the loss function, which contains the two terms we have been above.
 
 
 ```python
@@ -203,17 +203,15 @@ device = 'cpu' # if torch.cuda.is_available() else 'cpu'
 
 
 ```python
-uniform_dist = torch.distributions.uniform.Uniform(0, 5)
-```
-
-
-```python
 num_inputs = 10_000
 num_points = 100
 ```
 
+To test the method, we build a dataset that is composed by the sampling on a uniform grid of the probability density function of the [beta distribution](https://en.wikipedia.org/wiki/Beta_distribution), for some values of the parameters $\alpha$ and $\beta$. In particular, we look at $\alpha \in [0, 5], \beta in [0, 5]$. Ideally, the final variational autoencoder will be capable of generating distributions that look reasonable in that class.
+
 
 ```python
+uniform_dist = torch.distributions.uniform.Uniform(0, 5)
 grid = torch.linspace(0.01, 0.99, num_points)
 ```
 
@@ -223,6 +221,8 @@ def target_func(grid, α, β):
     # return the log of the probability, not the probability itself
     return torch.distributions.Beta(α, β).log_prob(grid)
 ```
+
+The generation of the dataset is in a simple loop. For simplicity we don't define a training and a test dataset.
 
 
 ```python
@@ -239,6 +239,8 @@ assert X.shape[0] == num_inputs
 assert X.shape[1] == num_points
 assert X.isnan().sum() == 0.0
 ```
+
+We plot the first 5 entries of the dataset, seeing -- as expected -- that the shapes can be quite different.
 
 
 ```python
@@ -268,6 +270,8 @@ if device == 'cuda':
     normal_dist.scale = normal_dist.scale.cuda()
 ```
 
+The encoder is a bit different from the corresponding one for non-variational autoencoders, but not by much. The definition of $E_\phi(x)$ is indeed the same, however it is followed by the application of the $\mu_\phi$ and $\Sigma_\phi$ and the computation of the KL divergence. Codewise, though, it is a small change.
+
 
 ```python
 class VariationalEncoder(nn.Module):
@@ -293,6 +297,8 @@ class VariationalEncoder(nn.Module):
         return z, kl
 ```
 
+The decoder is instead the same.
+
 
 ```python
 class Decoder(nn.Module):
@@ -310,6 +316,8 @@ class Decoder(nn.Module):
         z = torch.tanh(self.linear3(z))
         return self.linear4(z)
 ```
+
+The variational autoencoder is simply the composition of the encoder and the decoder, exactly as it was for the non-variational case. There are two small differences: the `forward()` method returns the KL divergence as well, and we have a method to compute the term (B) with the appropriate scaling by $\eta$ and the reparametrization trick. Sometimes the scaling $\eta$ is omitted; here we keep it.
 
 
 ```python
@@ -339,6 +347,8 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
 ```
 
+To use the `DataLoader` we define a simple customization of the `Dataset` class.
+
 
 ```python
 class FuncDataset(Dataset):
@@ -357,6 +367,8 @@ class FuncDataset(Dataset):
 ```python
 data_loader = DataLoader(FuncDataset(X), batch_size=32, shuffle=True)
 ```
+
+We are ready for the training, which is almost identical to the non-variational part. The optimizer doesn't seem to make much of a difference.
 
 
 ```python
@@ -437,6 +449,8 @@ fig.tight_layout()
 ![png](/assets/images/beta-distribution/beta-distribution-2.png)
     
 
+
+The first thing we do is to apply the encoder to the entire dataset and check the distribution of the latent variables.
 
 
 ```python
