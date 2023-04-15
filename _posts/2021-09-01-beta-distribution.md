@@ -177,7 +177,7 @@ where $\epsilon_i \sim \mathcal{N}(0, 1)$, while $\mu_i$ and $\sigma_i$ are the 
 
 The architecture is reported in the picture below. Note that the dense layer is connected to two separate blocks, one of which generates $\mu$ and the other $\sigma$. The part is the *encoder*. Once $Z$ has been generated, we enter the *decoder* that rebuilds the inputs from the encodings. 
 
-![](variational-autoencoders-net.png)
+<img src='/assets/images/beta-distribution/variational-autoencoders-net.png' />
 
 The implementation is quite close to that of an autoencoder.
 
