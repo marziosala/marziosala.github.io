@@ -35,7 +35,7 @@ $$
 
 where both $p_\theta(x\vert z)$ and $p_\theta(z)$ will be specified by us.
 
-Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x\vert z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z\vert x)$, depending on some parameters $\phi$, which we will define later on.
+Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x\vert z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z\vert x)$, depending on some parameters $\phi$ to be optimized as well, which we will define later on.
 
 We have:
 
@@ -111,7 +111,7 @@ $$
 q_\phi(z | x) \sim \mathcal{N}(z; \mu_\phi(x), \Sigma_\phi(x)),
 $$
 
-where $\mu_\phi(x)$ and $\Sigma_\phi(x)$ are the output of a neural network with parameters $phi$ and acting on $E_\phi(x)$,
+where $\mu_\phi(x)$ and $\Sigma_\phi(x)$ are the mean and the variance of the distribution, and the output of a neural network with parameters $\phi$ and acting on $E_\phi(x)$,
 where $E_\phi(x)$ is another neural network, called the $encoder$, that acts on the observations. By notation we define the vector 
 $\mu_\phi(x)$ to be
 
@@ -125,7 +125,7 @@ $$
 \Sigma_\phi(x) = diag (\sigma^2_{\phi, 1}(x), \ldots, \sigma^2_{\phi, m}(x)).
 $$
 
-Because of this choice, the KL divergence can be computed explicilty,
+Because of this choice, the KL divergence can be computed explicitly,
 
 $$
 \begin{aligned}
@@ -167,7 +167,7 @@ D_{KL} & = \int \log \frac{q_\phi(z | x)}{p_\theta(z)} q_\phi(z | x) dz \\
 \end{aligned}
 $$
 
-There is still an issue to be solved: to apply $p_\theta(x | z)$ and $q_\phi(z | x)$, we need to draw random number from the corresponding probability distributions. In general it is difficult to differentiate in such cases, but since we have selected Gaussian variates we can use the *reparametrization trick*. For example to apply $q_\phi(z | x)$ we would have
+There is still an issue to be solved: to apply $p_\theta(x \vert z)$ and $q_\phi(z \vert x)$, we need to draw random number from the corresponding probability distributions. In general it is difficult to differentiate in such cases, but since we have selected Gaussian variates we can use the *reparametrization trick*. For example to apply $q_\phi(z \vert x)$ we would have
 
 $$
 z_i = \mu_i + \epsilon_i \sigma_i,
