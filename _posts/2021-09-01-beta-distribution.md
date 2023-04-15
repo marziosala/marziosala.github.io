@@ -7,73 +7,177 @@ header:
 excerpt: "Variational autoencoders applied to mathematical functions."
 ---
 
-In the previous post we have seen how autoencoders work. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. *Variational autoencoders* fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from. This distribution typically is the standard normal distribution. So, if we have $N_C$ encodings, our goal is to have $N_C$ independent and normally distributed encodings. In order to do that, we want to learn the mean $\mu$ and the standard deviation $\sigma$ that are close to that of a standard normal distribution, while at the same time having outputs that are close to the inputs.
+In the [previous article](/normal-distribution) we looked at how autoencoders work. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. [Variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from.
 
-A useful trick to achieve what we want is to write the $i-$th component of the encoding vector
-$Z=(z_1, z_2, \ldots, z_C) $ as
+The derivation of variational autoencoers is substantially more involved than that of autoencoeders. We assume that the ech observation variables $x$ is a sample from an unknown underlying process, whose true distribution $p^\star(x)$ is unknown. We attempt to approximate this process with a chosen model with parameters $\theta$,
+
 $$
-z_i = \mu_i  + \sigma_i \cdot \xi,
+x \sim p_\theta(x),
 $$
-where $\xi \sim N(0,1)$ is a random number coming from the standard normal distribution. Why do we do this? Because the random number generation is a non-differentiable operation, so if we did specify the mean and standard deviation of the distribution directly we would not be able to backpropagate the gradients.
+
+with the goal of finding $\theta$ such that
+
+$$
+p_\theta(x) \approx p^\star(x).
+$$
+
+As first step, we xtend our model to include latent variables -- that is, variables that are part of our model but we don't observe, and therefore are not explicitly present in our dataset. These variables are denoted as $z$; $p(x, z)$ is the joint distribution over the observation variables $x$ and the latent variables $z$. The marginal distribution over teh observation variables $p_\theta(x)$ is
+
+$$
+p_\theta(x) = \int p_\theta(x, z) dz.
+$$
+
+Such implicit distribution over $z$ can be quite flexible; this expressivity makes it attractive for approximating complicated underlying distributions $p^\star(x)$. We will write
+
+$$
+p_\theta(x, z) = p_\theta(x | z) p_\theta(z),
+$$
+
+where both $p_\theta(x | z)$ and $p_\theta(z)$ will be specified by us. Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x | z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z | x)$, depending on some parameters $\phi$, which we will define later on.
+
+We have:
+
+
+$$
+\begin{aligned}
+\log p_\theta(x)  & = \log \int p_\theta(x | z) p_\theta(z) dz \\
+%
+& = \log \int p_\theta(x | z) \frac{q_\phi(z | x)}{q_\phi(z | x)} p_\theta(z) dz \\
+%
+& \ge \int \log \left[
+\frac{p_\theta(z)}{q_\phi(z | x)} p_\theta(x | z)
+\right] q_\phi(z | x) dz \\
+%
+& =
+\underbrace{\mathbb{E}_{q_\phi(z | x)} \left[ \log{\frac{p_\theta(z)}{q_\phi(z | x)} } \right]}_{(A)}
++ 
+\underbrace{\mathbb{E}_{q_\phi(z | x)}\left[ \log p_\theta(x | z) \right]}_{(B)},
+\end{aligned}
+$$
+
+where the inequality is a consequence of Jensen's inequality.
+
+Let's look at the (B) first. We assume a Gaussian observation model, that is
+
+$$
+p_\theta(x | z) \sim \mathcal{N}(x; D_\theta(\zeta), \eta I),
+$$
+
+that is each term $x$ is obtained from a Gaussian distribution with mean $D_\theta(z)$, acting on the latent variables $z$, and variance $\eta$, with $I$ the identity matrix whose size equals the dimension of the latent space $m$. The function $D_\theta(z)$ is called he *decoder*, as it converts the latest space into the observation space. Because of our choice, we have
+
+$$
+\begin{aligned}
+\log p_\theta(x | z) & = \log \mathcal{N}(x; D_\theta(\zeta), \eta I) \\
+%
+& = \log \left[
+\frac{1}{\left( 2 \pi \eta \right)^{m / 2}}
+\exp\left(
+- \frac{1}{2 \eta} \|x - D_\theta(z) \|^2
+\right)
+\right] \\
+%
+& = -\frac{1}{2 \eta} \|x - D_\theta(z) \|^2 + const,
+\end{aligned}
+$$
+
+to be evaluated on $q_\phi(z | x)$ using a Monte Carlo approximation.
+
+Term (A) is
+
+$$
+\begin{aligned}
+\mathbb{E}_{q_\phi(z | x)} \left[
+\log \frac{p_\theta(z)}{ q_\phi(z | x)}
+\right] & =
+\int \left[
+\log p_\theta(z) - \log q_\phi(z | x)
+\right] dq_\phi(z | x) \\
+%
+& = - D_{KL}(q_\phi(z | x) || p_\theta(z)).
+\end{aligned}
+$$
+
+The [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) term $D_{KL}$ is widely used as a measure of probability distance (though it doesn't satisfy the axioms to be a distance metric); as part of our optimization procedure, it will encourage $q_\phi(z | x)$ to be as close as possible to $p_\theta(z)$, which we model as
+
+$$
+p_\theta(z) \sim \mathcal{N}(0, I).
+$$
+
+we still need to define a model for $q_\phi(z | x)$. Sticking to our Gaussian mixtures, we take
+
+$$
+q_\phi(z | x) \sim \mathcal{N}(z; \mu_\phi(x), \Sigma_\phi(x)),
+$$
+
+where $\mu_\phi(x)$ and $\Sigma_\phi(x)$ are the output of a neural network with parameters $phi$ and acting on $E_\phi(x)$,
+where $E_\phi(x)$ is another neural network, called the $encoder$, that acts on the observations. By notation we define the vector 
+$\mu_\phi(x)$ to be
+
+$$
+\mu_\phi(x) = (\mu_{\phi, 1}(x), \ldots, \mu_{\phi, m} (x))
+$$
+
+and we take to covariance matrix as
+
+$$
+\Sigma_\phi(x) = diag (\sigma^2_{\phi, 1}(x), \ldots, \sigma^2_{\phi, m}(x)).
+$$
+
+Because of this choice, the KL divergence can be computed explicilty,
+
+$$
+\begin{aligned}
+D_{KL} & = \int \log \frac{q_\phi(z | x)}{p_\theta(z)} q_\phi(z | x) dz \\
+%
+& = \int \left[
+\log q_\phi(z | x) - \log p_\theta(z)
+\right] q_\phi(z | x) dz \\
+%
+& = \int \left[
+  \log \Pi_i \frac{1}{\sigma_{\phi,i} \sqrt{2 \pi}}
+  \exp \left( -\frac{1}{2} \left( \frac{z - \mu_{\phi, i}(x)}{\sigma_{\phi, i}(x)} \right)^2 \right)
+  - \log \Pi_i \frac{1}{\sqrt{2 \pi}}
+  \exp \left( -\frac{z^2}{2} \right)
+\right] \\
+%
+& \quad \quad \times
+\Pi_i \frac{1}{\sigma_{\phi,i} \sqrt{2 \pi}}
+  \exp \left( -\frac{1}{2} \left( \frac{z - \mu_{\phi, i}(x)}{\sigma_{\phi, i}(x)} \right)^2 \right) dz \\
+%
+& = \sum_i \int \left(
+\log \frac{1}{\sigma_{\phi, i}} - \frac{1}{2}
+\left(
+\frac{z - \mu_{\phi, i}}{\sigma_{\phi, i}}
+\right)^2 + \frac{1}{2} z^2
+\right) \frac{1}{\sigma_{\phi,i} \sqrt{2 \pi}} \\
+%
+& \quad \quad \times
+  \exp \left( -\frac{1}{2} \left( \frac{z - \mu_{\phi, i}(x)}{\sigma_{\phi, i}(x)} \right)^2 \right) dz \\
+%
+& = \sum_i \left(
+\log \frac{1}{\sigma_{\phi, i}(x)} - \frac{1}{2} + \frac{1}{2}
+\left( \sigma_{\phi, i}^2 + \mu_{\phi, i}^2 \right)
+\right) \\
+%
+& = 
+\sum_i \frac{1}{2} \left(
+\sigma_{\phi, i}^2 + \mu_{\phi, i}^2 - 1 - \log \sigma_{\phi, i}(x)^2 \right).
+\end{aligned}
+$$
+
+There is still an issue to be solved: to apply $p_\theta(x | z)$ and $q_\phi(z | x)$, we need to draw random number from the corresponding probability distributions. In general it is difficult to differentiate in such cases, but since we have selected Gaussian variates we can use the *reparametrization trick*. For example to apply $q_\phi(z | x)$ we would have
+
+$$
+z_i = \mu_i + \epsilon_i \sigma_i,
+$$
+
+where $\epsilon_i \sim \mathcal{N}(0, 1)$, while $\mu_i$ and $\sigma_i$ are the output of the neural network.
 
 The architecture is reported in the picture below. Note that the dense layer is connected to two separate blocks, one of which generates $\mu$ and the other $\sigma$. The part is the *encoder*. Once $Z$ has been generated, we enter the *decoder* that rebuilds the inputs from the encodings. 
 
 ![](variational-autoencoders-net.png)
 
-The implementation is quite close to that of an autoencoder. The loss function is trickier though as now we have to goals:
-- a good reconstruction of the inputs; and
-- a coding space that is normally distributed.
-
-The first goal is treated as for the autoencoder; the second requires us to compute the distance between two probability distributions, and this is done using the Kullback-Leibler divergence. If we assume that the encodings are independent we can simplify our analysis and work with univariate $\mu$ and $\sigma$.
-
-The Kullback-Leibler divergence between two probability distributions $P$ and $Q$ is defined as
-
-$$
-D_{KL}(P || Q) = \int_\mathcal{X} p(x) \ln \frac{q(x)}{p(x)} dx
-$$
-
-where $p(x)$ and $q(x)$ are the probability density functions pf $P$ and $Q$, respectively, and the integral is taken over the sample space $\mathcal{X}$. For us, $P$ and $Q$ are Gaussians, so $\mathcal{X} = \mathbb{R}$, and
-
-$$
-\begin{align}
-p(x) & = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp \left( -\frac{(x - \mu)^2}{2 \sigma^2} \right) \\
-q(x) & = \frac{1}{\sqrt{2 \pi}} \exp \left( -\frac{x^2}{2} \right).
-\end{align}
-$$
-
-Plugging the definitions of $p(x)$ and $q(x)$ into the equation of the KL divergence gives
-
-$$
-\begin{align}
-D_{KL}(P || Q) & = \int_\mathcal{R} (\ln p(x) -\ln q(x)) p(x) dx \\
-& = \int_\mathcal{R} \left[
-\ln \frac{1}{\sigma^2} - \frac{1}{2} \left( \frac{x - \mu}{\sigma} \right)^2 + \frac{1}{2} x^2
-\right] p(x) dx \\
-& = \mathbb{E}_P\left[ \ln \frac{1}{\sigma} + \frac{1}{2} X^2 - \frac{1}{2} 
-\left( \frac{X - \mu}{\sigma} \right)^2
-\right] \\
-& = \ln \frac{1}{\sigma} + \frac{1}{2} (\sigma^2 + \mu^2) + \frac{1}{2},
-\end{align}
-$$
-
-after noting that
-
-$$
-\begin{align}
-\mathbb{E}_P[X^2] & = \mathbb{E}_P[X^2 - 2 \mu X + \mu^2 + 2 \mu X - \mu^2] \\
-& = \mathbb{E}_P[(X - \mu)^2] + 2 \mu \mathbb{E}_P[X] - \mu^2 \\
-& = \sigma^2 + 2 \mu^2 - \mu^2 \\
-& = \sigma^2 + \mu^2.
-\end{align}
-$$
-
-Therefore,
-
-$$
-D_{KL}(P || Q) = \frac{1}{2} \left( \mu^2 + \sigma^2 -1 - \ln \sigma^2 \right)
-$$
-
-which we can easily compute given $\mu$ and $\sigma$.
+The implementation is quite close to that of an autoencoder.
 
 
 ```python
@@ -360,8 +464,7 @@ fig.tight_layout()
     
 
 
-Both latent dimensions $Z_1$ and $Z_2$ have a distribution resembling the one of a Normal variate; their joint distribution is nicely scattered around the origin are roughtly within 3 to 4 standard deviations, as the red circles (with a radius of 1, 2, 3 and 4, respectively) show.
-It is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(Z_1, Z_2)$ that produce the closest match.
+Both latent dimensions $Z_1$ and $Z_2$ have a distribution resembling the one of a normal variate; their joint distribution is nicely scattered around the origin are roughtly within 3 to 4 standard deviations, as the red circles (with a radius of 1, 2, 3 and 4, respectively) show.
 
 As an example of what each latent variable represents we plot, on a 10 by 10 grid, the result of the decoder for several values of $z_1$ and $z_2$, both ranging from -1 to 1, where can see the shape of the Beta distributions changing with the two parameters as we would expect. The dotted grey line indicates the zero axis; all plots share the same scale on the Y axis.
 
@@ -385,6 +488,8 @@ fig.tight_layout()
 ![png](/assets/images/beta-distribution/beta-distribution-4.png)
     
 
+
+Because of the distribution of the latent variables, it is then much easier to generate new values or look for the optimal ones that match a given, which is what we try now to do. First, we generate two random values for $\alpha$ and $\beta$ and compute the corresponding exact PDF; then we use `scipy` to find the values of $(Z_1, Z_2)$ that produce the closest match.
 
 
 ```python
