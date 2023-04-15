@@ -569,5 +569,3 @@ fig.tight_layout()
 
 
 The results isn't too bad -- true, the reconstructed curve oscillates a bit, but at a small scale. the oscillations can be resolved with more training data and more iterations, or by increasing the size of the neural networks. We can say that the encoder has managed to compress the input data to two parameters and the decoder to define how to build the PDF of the beta distribution from those.
-
-To conclude, two references that have largely inspired this contribution: https://avandekleut.github.io/vae/ for the code and https://mathybit.github.io/auto-var/ for the math.
