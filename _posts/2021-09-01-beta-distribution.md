@@ -7,9 +7,9 @@ header:
 excerpt: "Variational autoencoders applied to mathematical functions."
 ---
 
-In the [previous article](/normal-distribution) we looked at how autoencoders work. As we noticed, in general the encoding space is a non-convex manifold and the codes have arbitrary scales. This makes basic autoencoders a poor choice for generative models. [Variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) fix this issue by ensuring that the coding space follows a desirable distribution from which we can easily sample from.
+In the [previous article](/normal-distribution) we looked at how autoencoders work. As we noticed, in general the latent space is a non-convex manifold and the latent variables have arbitrary scales. This makes basic autoencoders a poor choice for generative models. [Variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) fix this issue by ensuring that the latent variables follows a desirable distribution from which we can easily sample from.
 
-The derivation of variational autoencoers is substantially more involved than that of autoencoeders. We assume that the ech observation variables $x$ is a sample from an unknown underlying process, whose true distribution $p^\star(x)$ is unknown. We attempt to approximate this process with a chosen model with parameters $\theta$,
+The derivation of variational autoencoers is substantially more involved than that of autoencoeders. We assume that the each observation variables $x$ is a sample from an unknown underlying process, whose true distribution $p^\star(x)$ is unknown. We attempt to approximate this process with a chosen model with parameters $\theta$,
 
 $$
 x \sim p_\theta(x),
@@ -21,7 +21,7 @@ $$
 p_\theta(x) \approx p^\star(x).
 $$
 
-As first step, we xtend our model to include latent variables -- that is, variables that are part of our model but we don't observe, and therefore are not explicitly present in our dataset. These variables are denoted as $z$; $p(x, z)$ is the joint distribution over the observation variables $x$ and the latent variables $z$. The marginal distribution over teh observation variables $p_\theta(x)$ is
+The first step is to extend our model to include latent variables -- that is, variables that are part of our model but we don't observe, and therefore are not explicitly present in our dataset. These variables are denoted as $z$, with $p(x, z)$ the joint distribution over the observation variables $x$ and the latent variables $z$. The marginal distribution over teh observation variables $p_\theta(x)$ is
 
 $$
 p_\theta(x) = \int p_\theta(x, z) dz.
@@ -33,7 +33,7 @@ $$
 p_\theta(x, z) = p_\theta(x | z) p_\theta(z),
 $$
 
-where both $p_\theta(x | z)$ and $p_\theta(z)$ will be specified by us. Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x | z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z | x)$, depending on some parameters $\phi$, which we will define later on.
+where both $p_\theta(x|z)$ and $p_\theta(z)$ will be specified by us. Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x | z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z | x)$, depending on some parameters $\phi$, which we will define later on.
 
 We have:
 
