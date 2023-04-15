@@ -35,7 +35,8 @@ $$
 
 where both $p_\theta(x|z)$ and $p_\theta(z)$ will be specified by us.
 
-Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x | z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z | x)$, depending on some parameters $\phi$, which we will define later on.
+
+Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x|z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z|x)$, depending on some parameters $\phi$, which we will define later on.
 
 We have:
 
@@ -65,7 +66,7 @@ $$
 p_\theta(x | z) \sim \mathcal{N}(x; D_\theta(z), \eta I),
 $$
 
-that is each term $x$ is obtained from a Gaussian distribution with mean $D_\theta(z)$, acting on the latent variables $z$, and variance $\eta$, with $I$ the identity matrix whose size equals the dimension of the latent space $m$. The function $D_\theta(z)$ is called he *decoder*, as it converts the latest space into the observation space. Because of our choice, we have
+that is each term $x$ is obtained from a Gaussian distribution with mean $D_\theta(z)$, acting on the latent variables $z$, and variance $\eta$, with $I$ the identity matrix whose size equals the dimension of the latent space $m$. The function $D_\theta(z)$ is called the *decoder*, as it converts the latest space into the observation space. Because of our choice, we have
 
 $$
 \begin{aligned}
@@ -82,7 +83,7 @@ $$
 \end{aligned}
 $$
 
-to be evaluated on $q_\phi(z | x)$ using a Monte Carlo approximation.
+to be evaluated on $q_\phi(z|x)$ using a Monte Carlo approximation.
 
 Term (A) is
 
