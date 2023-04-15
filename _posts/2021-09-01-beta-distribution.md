@@ -35,7 +35,7 @@ $$
 
 where both $p_\theta(x\vert z)$ and $p_\theta(z)$ will be specified by us.
 
-Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x|z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z|x)$, depending on some parameters $\phi$, which we will define later on.
+Since $p_\theta(z)$ is not conditioned on any observation, it is called the prior. Once $p_\theta(z)$ and $p_\theta(x\vert z)$ are defined, we would use maximum likelyhood to define the model parameters $\theta$. More precisely, we will maximize $\log p_\theta(x)$. We also introduce a distribution $q_\phi(z\vert x)$, depending on some parameters $\phi$, which we will define later on.
 
 We have:
 
@@ -82,7 +82,7 @@ $$
 \end{aligned}
 $$
 
-to be evaluated on $q_\phi(z|x)$ using a Monte Carlo approximation.
+to be evaluated on $q_\phi(z\vert x)$ using a Monte Carlo approximation.
 
 Term (A) is
 
@@ -99,13 +99,13 @@ $$
 \end{aligned}
 $$
 
-The [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) term $D_{KL}$ is widely used as a measure of probability distance (though it doesn't satisfy the axioms to be a distance metric); as part of our optimization procedure, it will encourage $q_\phi(z | x)$ to be as close as possible to $p_\theta(z)$, which we model as
+The [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) term $D_{KL}$ is widely used as a measure of probability distance (though it doesn't satisfy the axioms to be a distance metric); as part of our optimization procedure, it will encourage $q_\phi(z \vert x)$ to be as close as possible to $p_\theta(z)$, which we model as
 
 $$
 p_\theta(z) \sim \mathcal{N}(0, I).
 $$
 
-we still need to define a model for $q_\phi(z | x)$. Sticking to our Gaussian mixtures, we take
+we still need to define a model for $q_\phi(z \vert x)$. Sticking to our Gaussian mixtures, we take
 
 $$
 q_\phi(z | x) \sim \mathcal{N}(z; \mu_\phi(x), \Sigma_\phi(x)),
