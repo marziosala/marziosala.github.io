@@ -182,24 +182,7 @@ The architecture is reported in the picture below. Note that the dense layer is 
 
 The implementation is quite close to that of an autoencoder; the differences are in the final part of the encoder, with application of the $\mu_\phi$ and $\sigma_\phi$ to the output of $E_\phi(x)$, and the loss function, which contains the two terms we have been above. The diagram below shows the different assumptions on the probability distributions.
 
-```mermaid
-graph LR;
-    subgraph Observations
-    A["Dataset <i>X</i><br>p<sub>θ</sub>(x) ≈ p<sup>*</sup>(x)"]
-    end
-    subgraph Transformations
-    B["Encoder<br>q<sub>ϕ</sub>(z|x) ~ N(z; μ<sub>ϕ</sub>(x), Σ<sub>ϕ</sub>(x))"]
-    D["Decoder<br>p<sub>θ</sub>(x|z) ~ N(x; D<sub>θ</sub>(z), μ I)"]
-    end
-    subgraph Latent
-    C["Latent Space <i>Z</i><br>p<sub>θ</sub>(x) ~ N(0, I)"]
-    end
-
-    A-->B;
-    B-->C;
-    C-->D;
-    D-->A;
-```
+<img src='/assets/images/beta-distribution/flowchart.png' />
 
 
 ```python
