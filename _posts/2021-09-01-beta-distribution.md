@@ -1,15 +1,16 @@
 ---
 layout: splash
 permalink: /beta-distribution/
-title: "Variational Autoencoders"
+title: "Understanding Variational Autoencoders"
 header:
   overlay_image: /assets/images/beta-distribution/beta-distribution-splash.png
-excerpt: "Variational autoencoders applied to mathematical functions."
+excerpt: "Understanding the modeling assumptions that are used to define variational autoencoders."
 ---
 
 In the [previous article](/normal-distribution) we looked at how autoencoders work. As we noticed, in general the latent space is a non-convex manifold and the latent variables have arbitrary scales. This makes basic autoencoders a poor choice for generative models. [Variational autoencoders](https://en.wikipedia.org/wiki/Variational_autoencoder) fix this issue by ensuring that the latent variables follows a desirable distribution from which we can easily sample from.
 
-The derivation of variational autoencoers is substantially more involved than that of autoencoeders. We assume that the each observation variables $x$ is a sample from an unknown underlying process, whose true distribution $p^\star(x)$ is unknown. We attempt to approximate this process with a chosen model with parameters $\theta$,
+Variational autoencoders were introduced by [Kingma and Welling](https://arxiv.org/abs/1312.6114).
+Their derivation of variational autoencoers is substantially more involved than that of autoencoeders. We assume that the each observation variables $x$ is a sample from an unknown underlying process, whose true distribution $p^\star(x)$ is unknown. We attempt to approximate this process with a chosen model with parameters $\theta$,
 
 $$
 x \sim p_\theta(x),
@@ -179,7 +180,26 @@ The architecture is reported in the picture below. Note that the dense layer is 
 
 <img src='/assets/images/beta-distribution/variational-autoencoders-net.png' />
 
-The implementation is quite close to that of an autoencoder; the differences are in the final part of the encoder, with application of the $\mu_\phi$ and $\sigma_\phi$ to the output of $E_\phi(x)$, and the loss function, which contains the two terms we have been above.
+The implementation is quite close to that of an autoencoder; the differences are in the final part of the encoder, with application of the $\mu_\phi$ and $\sigma_\phi$ to the output of $E_\phi(x)$, and the loss function, which contains the two terms we have been above. The diagram below shows the different assumptions on the probability distributions.
+
+```mermaid
+graph LR;
+    subgraph Observations
+    A["Dataset <i>X</i><br>p<sub>θ</sub>(x) ≈ p<sup>*</sup>(x)"]
+    end
+    subgraph Transformations
+    B["Encoder<br>q<sub>ϕ</sub>(z|x) ~ N(z; μ<sub>ϕ</sub>(x), Σ<sub>ϕ</sub>(x))"]
+    D["Decoder<br>p<sub>θ</sub>(x|z) ~ N(x; D<sub>θ</sub>(z), μ I)"]
+    end
+    subgraph Latent
+    C["Latent Space <i>Z</i><br>p<sub>θ</sub>(x) ~ N(0, I)"]
+    end
+
+    A-->B;
+    B-->C;
+    C-->D;
+    D-->A;
+```
 
 
 ```python
