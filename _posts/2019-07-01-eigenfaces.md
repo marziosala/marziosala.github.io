@@ -85,15 +85,8 @@ ax0.axis('off')
 ax0.set_title('Train Average Image')
 ax1.imshow(np.mean(X_test, axis=0).reshape((64, 64)), cmap=plt.cm.gray)
 ax1.axis('off')
-ax1.set_title('Test Average Image')
+ax1.set_title('Test Average Image');
 ```
-
-
-
-
-    Text(0.5, 1.0, 'Test Average Image')
-
-
 
 
     
