@@ -7,7 +7,11 @@ header:
 excerpt: "Principal Component Analysis for Image Recognition."
 ---
 
-https://sandipanweb.wordpress.com/2018/01/06/eigenfaces-and-a-simple-face-detector-with-pca-svd-in-python/
+The [Olivetti faces](https://scikit-learn.org/stable/datasets/real_world.html#olivetti-faces-dataset) dataset is a small dataset that is part of the `sklearn` package. It contains 400 images, taken between April 1992 and April 1994 at AT&T Laboratories Cambridge. There are 40 different subjects, and for each subject there are ten different images, from a (slightly) different angle and with different conditions in lighting and facial expressions.  All the images were taken against a dark homogeneous background with the subjects in an upright, frontal position (with tolerance for some side movement).
+
+By today's standards it is tiny; images are in black-and-white, with 256 levels of grey. The targets are numbers from 0 to 39, each of them corresponding to a different individual. In `sklearn`'s version, the images have a resolution of $64 \times 64$.
+
+The goal of this article is to apply *principal component analysis*, or PCA, as a tool for dimensionality reduction.
 
 
 ```python
@@ -17,72 +21,39 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 ```
 
 
 ```python
-faces_data = fetch_olivetti_faces()
+olivetti_faces = fetch_olivetti_faces()
 ```
 
 
 ```python
-n_samples, height, width = faces_data.images.shape
-X = faces_data.data
-n_features = X.shape[1]
-Y = faces_data.target
-n_classes = max(Y)+1
+num_samples, height, width = olivetti_faces.images.shape
+X = olivetti_faces.data
+num_features = X.shape[1]
+y = olivetti_faces.target
+num_classes = max(y) + 1
 
-print("""
-Number of samples: {}, 
-Height of each image: {},
-Width of each image: {},
-Number of input features: {},
-Number of output classes: {}""".format(n_samples,height,
-                                        width,n_features,n_classes))
+print(f"Number of samples: {num_samples}")
+print(f"Images have height {height} and width {width}, total number of features: {num_features}") 
+print(f"Number of classes: {num_classes}")
 ```
 
+    Number of samples: 400
+    Images have height 64 and width 64, total number of features: 4096
+    Number of classes: 40
     
-    Number of samples: 400, 
-    Height of each image: 64,
-    Width of each image: 64,
-    Number of input features: 4096,
-    Number of output classes: 40
-    
+
+Since this is a very small dataset, we can plot it all. On each line, we render all the ten images for a given person. Those then images aren't very different; they all represent the same part of the face (that is, they are well-centered already). Most of the subjects are male; 13 of them have glasses (of the shape then fashionable).
 
 
 ```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, test_size=0.25, random_state=42)
-```
-
-
-```python
-mean_image = np.mean(X_train, axis=0)
-plt.imshow(mean_image.reshape((64, 64)), cmap=plt.cm.gray)
-```
-
-
-
-
-    <matplotlib.image.AxesImage at 0x26d29aab190>
-
-
-
-
-    
-![png](/assets/images/eigenfaces/eigenfaces-1.png)
-    
-
-
-
-```python
-fig, axes = plt.subplots(figsize=(10, 50), ncols=10, nrows=40)
+fig, axes = plt.subplots(figsize=(20, 100), ncols=10, nrows=40)
 for i in range(40):
-    current = X_train[y_train == i]
+    current = X[y == i]
     for j in range(min(10, len(current))):
         axes[i, j].imshow(current[j].reshape((64, 64)), cmap=plt.cm.gray)
         axes[i, j].set_title(f'Person #{i}', fontsize=8)
@@ -93,19 +64,52 @@ fig.tight_layout()
 
 
     
+![png](/assets/images/eigenfaces/eigenfaces-1.png)
+    
+
+
+We will split randomly the dataset into two parts as customary, with the training set taking 75% of the data and the test set 25%.
+
+
+```python
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+```
+
+The average image is similar for the training and test sets, suggesting the split was balanced.
+
+
+```python
+fig, (ax0, ax1) = plt.subplots(figsize=(8, 4), ncols=2)
+ax0.imshow(np.mean(X_train, axis=0).reshape((64, 64)), cmap=plt.cm.gray)
+ax0.axis('off')
+ax0.set_title('Train Average Image')
+ax1.imshow(np.mean(X_test, axis=0).reshape((64, 64)), cmap=plt.cm.gray)
+ax1.axis('off')
+ax1.set_title('Test Average Image')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Test Average Image')
+
+
+
+
+    
 ![png](/assets/images/eigenfaces/eigenfaces-2.png)
     
 
 
-
-```python
-n_components = 300
-```
+Computing PCA with `sklearn` is quite simple and, given the number of features and the size of the dataset, quite quick. Since the goal here is to understand what PCA does, we use 300 components, while in general people would use a smaller number.
 
 
 ```python
-pca = PCA(n_components=n_components, whiten=False).fit(X_train)
+num_components = 300
+pca = PCA(n_components=num_components, whiten=False).fit(X_train)
 ```
+
+The main idea of PCA is to take the first $n$ eigenvectors as they will explain most of the variance in the dataset. The plot below shows the explained variance (scaled such that the total variance is 1), while the horizontal lines report the values for 50%, 75% and 95% of the variance. A few eigenvalues easily explain 50% of the variance; we need between 20 and 30 for 75% of the variance, and about 100 for 95% of it.
 
 
 ```python
@@ -125,13 +129,11 @@ plt.grid();
     
 
 
-
-```python
-eigenfaces = pca.components_.reshape((n_components, height, width))
-```
+We can plot the so-called *eigenfaces*, that is the eigenvalues reshaped as an image. The first ones can be recognized as the main traits of a face, then changing slowly to what resembles more noise (or higher-frequency details).
 
 
 ```python
+eigenfaces = pca.components_.reshape((num_components, height, width))
 fig, axes = plt.subplots(figsize=(20, 20), nrows=10, ncols=10)
 axes = axes.flatten()
 for i in range(100):
@@ -152,6 +154,8 @@ fig.tight_layout()
 X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
 ```
+
+Another interesting analysis is to visualize the projection of the images into the subspace spanned by the first $n$ eigenvalues. The image on the left is the original one (from the test dataset); then we plot the projected image with the first 25, 50, 100 and 200 eigenfaces. Funnily, most projected images have some shapes around the eyes, even when the original one doesn't.
 
 
 ```python
@@ -234,105 +238,31 @@ plot_reduced(70)
     
 
 
+We conclude this analysis by training a classifier.
+
 
 ```python
-print("Current shape of input data matrix: ", X_train_pca.shape)
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn import metrics
 ```
 
-    Current shape of input data matrix:  (300, 150)
-    
-
 
 ```python
-svm_classifier = SVMClassifier(n_neighbors = 5)
-svm_classifier.fit(X_train_pca, y_train)
-
-y_pred_test = svm_classifier.predict(X_test_pca)
-correct_count = 0.0
-for i in range(len(y_test)):
-    if y_pred_test[i] == y_test[i]:
-        correct_count += 1.0
-accuracy = correct_count/float(len(y_test))
-print("Accuracy:", accuracy)
-print(classification_report(y_test, y_pred_test))
-print(confusion_matrix(y_test, y_pred_test, labels=range(n_classes)))
+clf = SVC()
+clf.fit(X_train_pca, y_train)
+y_test_pred = clf.predict(X_test_pca)
+print("accuracy score:{:.2f}".format(metrics.accuracy_score(y_test, y_test_pred)))
 ```
 
-    Accuracy: 0.58
-                  precision    recall  f1-score   support
-    
-               0       0.00      0.00      0.00         4
-               1       0.00      0.00      0.00         2
-               2       1.00      0.50      0.67         2
-               3       1.00      0.25      0.40         4
-               4       0.43      1.00      0.60         3
-               5       0.60      1.00      0.75         3
-               6       0.00      0.00      0.00         1
-               7       1.00      0.29      0.44         7
-               8       0.50      1.00      0.67         2
-               9       0.75      1.00      0.86         3
-              10       1.00      0.67      0.80         3
-              11       1.00      0.50      0.67         4
-              12       1.00      1.00      1.00         2
-              13       1.00      1.00      1.00         1
-              14       0.27      1.00      0.43         3
-              15       1.00      0.50      0.67         2
-              17       0.67      0.67      0.67         3
-              18       0.50      1.00      0.67         2
-              19       0.00      0.00      0.00         1
-              20       0.50      0.50      0.50         2
-              21       1.00      1.00      1.00         1
-              22       0.60      0.75      0.67         4
-              23       1.00      1.00      1.00         4
-              24       0.67      1.00      0.80         2
-              25       1.00      0.50      0.67         2
-              26       1.00      0.50      0.67         4
-              27       0.00      0.00      0.00         3
-              28       1.00      1.00      1.00         2
-              29       0.06      1.00      0.11         1
-              30       0.00      0.00      0.00         1
-              31       0.00      0.00      0.00         1
-              32       1.00      0.33      0.50         3
-              33       1.00      1.00      1.00         2
-              34       0.00      0.00      0.00         1
-              35       1.00      1.00      1.00         1
-              36       1.00      0.50      0.67         2
-              37       1.00      0.67      0.80         3
-              38       1.00      0.40      0.57         5
-              39       1.00      0.50      0.67         4
-    
-        accuracy                           0.58       100
-       macro avg       0.65      0.59      0.56       100
-    weighted avg       0.73      0.58      0.58       100
-    
-    [[0 0 0 ... 0 0 0]
-     [0 0 0 ... 0 0 0]
-     [0 0 1 ... 0 0 0]
-     ...
-     [0 0 0 ... 2 0 0]
-     [0 0 0 ... 0 2 0]
-     [0 0 0 ... 0 0 2]]
-    
-
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\sklearn\metrics\_classification.py:1334: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
-      _warn_prf(average, modifier, msg_start, len(result))
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\sklearn\metrics\_classification.py:1334: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
-      _warn_prf(average, modifier, msg_start, len(result))
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\sklearn\metrics\_classification.py:1334: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
-      _warn_prf(average, modifier, msg_start, len(result))
+    accuracy score:0.92
     
 
 
 ```python
-def title(y_pred, y_test, target_names, i):
-    pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
-    true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
-    return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
-target_names = [str(element) for element in np.arange(40)+1]
-prediction_titles = [title(y_pred_test, y_test, target_names, i)
-                     for i in range(y_pred_test.shape[0])]
-plot_gallery(X_test, height, width, prediction_titles, n_row=2, n_col=6)
-plt.show()
+plt.figure(1, figsize=(12,8))
+sns.heatmap(metrics.confusion_matrix(y_test, y_test_pred));
 ```
 
 
@@ -343,20 +273,56 @@ plt.show()
 
 
 ```python
-
+import warnings
+warnings.filterwarnings("ignore")
+print(metrics.classification_report(y_test, y_test_pred))
 ```
 
-
-```python
-
-```
-
-
-```python
-https://scikit-learn.org/stable/auto_examples/applications/plot_face_recognition.html
-```
-
-
-```python
-https://github.com/Manaliagarwal/Eigen-Faces-fetch_olivetti_faces-/blob/main/EigneFaces.ipynb
-```
+                  precision    recall  f1-score   support
+    
+               0       0.50      0.50      0.50         4
+               1       1.00      1.00      1.00         2
+               2       1.00      1.00      1.00         2
+               3       1.00      1.00      1.00         4
+               4       0.60      1.00      0.75         3
+               5       1.00      1.00      1.00         3
+               6       1.00      1.00      1.00         1
+               7       1.00      0.57      0.73         7
+               8       1.00      1.00      1.00         2
+               9       0.75      1.00      0.86         3
+              10       1.00      1.00      1.00         3
+              11       1.00      1.00      1.00         4
+              12       1.00      1.00      1.00         2
+              13       1.00      1.00      1.00         1
+              14       1.00      1.00      1.00         3
+              15       1.00      1.00      1.00         2
+              16       0.00      0.00      0.00         0
+              17       1.00      1.00      1.00         3
+              18       1.00      1.00      1.00         2
+              19       1.00      1.00      1.00         1
+              20       0.67      1.00      0.80         2
+              21       1.00      1.00      1.00         1
+              22       1.00      1.00      1.00         4
+              23       1.00      1.00      1.00         4
+              24       1.00      1.00      1.00         2
+              25       1.00      1.00      1.00         2
+              26       1.00      1.00      1.00         4
+              27       1.00      1.00      1.00         3
+              28       1.00      1.00      1.00         2
+              29       1.00      1.00      1.00         1
+              30       1.00      1.00      1.00         1
+              31       1.00      1.00      1.00         1
+              32       1.00      1.00      1.00         3
+              33       1.00      1.00      1.00         2
+              34       0.00      0.00      0.00         1
+              35       1.00      1.00      1.00         1
+              36       1.00      1.00      1.00         2
+              37       1.00      1.00      1.00         3
+              38       1.00      1.00      1.00         5
+              39       0.67      0.50      0.57         4
+    
+        accuracy                           0.92       100
+       macro avg       0.90      0.91      0.91       100
+    weighted avg       0.93      0.92      0.92       100
+    
+    
