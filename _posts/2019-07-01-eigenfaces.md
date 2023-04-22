@@ -148,6 +148,46 @@ X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
 ```
 
+For a few images we can analyze their location on the coordinates given by the eigenvalues. We have selected four, three women and one man. Person #7 and person #9 are not very different; person #34 is a woman but different from #7 and #9, while #36 is quite different from the other three. Plotting the values on the first two dimensions of the eigenspace shows that the images for #7, #9 and #34 in separate clusters, with some points for #34 being close to that of #36; conclusions are less straightforward though on the scatter plot for the first and third eigenvalues and the second and third ones.
+
+
+```python
+selected_ids = [7, 9, 34, 36]
+fig, axes = plt.subplots(figsize=(16, 4), ncols=4)
+for i, id in enumerate(selected_ids):
+    axes[i].imshow(X_train[y_train == id][0].reshape(64, 64), cmap=plt.cm.gray)
+    axes[i].axis('off')
+    axes[i].set_title(f'Person #{id}')
+fig.tight_layout()
+```
+
+
+    
+![png](/assets/images/eigenfaces/eigenfaces-5.png)
+    
+
+
+
+```python
+subset = np.isin(y_train, selected_ids)
+fix, (ax0, ax1, ax2) = plt.subplots(figsize=(15, 5), ncols=3)
+df = pd.DataFrame({
+    'First Dim': X_train_pca[subset, 0],
+    'Second Dim': X_train_pca[subset, 1], 
+    'Third Dim': X_train_pca[subset, 2], 
+    'Person #': y_train[subset].astype(str),
+})
+sns.scatterplot(data=df, x='First Dim', y='Second Dim', hue='Person #', ax=ax0);
+sns.scatterplot(data=df, x='Second Dim', y='Third Dim', hue='Person #', ax=ax1);
+sns.scatterplot(data=df, x='First Dim', y='Third Dim', hue='Person #', ax=ax2);
+```
+
+
+    
+![png](/assets/images/eigenfaces/eigenfaces-6.png)
+    
+
+
 Another interesting analysis is to visualize the projection of the images into the subspace spanned by the first $n$ eigenvalues. The image on the left is the original one (from the test dataset); then we plot the projected image with the first 25, 50, 100 and 200 eigenfaces. Funnily, most projected images have some shapes around the eyes, even when the original one doesn't.
 
 
@@ -172,7 +212,7 @@ plot_reduced(0)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-5.png)
+![png](/assets/images/eigenfaces/eigenfaces-7.png)
     
 
 
@@ -183,7 +223,7 @@ plot_reduced(4)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-6.png)
+![png](/assets/images/eigenfaces/eigenfaces-8.png)
     
 
 
@@ -194,7 +234,7 @@ plot_reduced(13)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-7.png)
+![png](/assets/images/eigenfaces/eigenfaces-9.png)
     
 
 
@@ -205,7 +245,7 @@ plot_reduced(32)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-8.png)
+![png](/assets/images/eigenfaces/eigenfaces-10.png)
     
 
 
@@ -216,7 +256,7 @@ plot_reduced(40)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-9.png)
+![png](/assets/images/eigenfaces/eigenfaces-11.png)
     
 
 
@@ -227,7 +267,7 @@ plot_reduced(70)
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-10.png)
+![png](/assets/images/eigenfaces/eigenfaces-12.png)
     
 
 
@@ -260,7 +300,7 @@ sns.heatmap(metrics.confusion_matrix(y_test, y_test_pred));
 
 
     
-![png](/assets/images/eigenfaces/eigenfaces-11.png)
+![png](/assets/images/eigenfaces/eigenfaces-13.png)
     
 
 
