@@ -7,6 +7,11 @@ header:
 excerpt: "An application of denoising autoencoders to the dirty document dataset."
 ---
 
+In this article we look at another application of autoencoders: denoising. We use the small dataset of the [denoising dirty documents](https://www.kaggle.com/competitions/denoising-dirty-documents/) Kaggle competition and show how to make it work.
+
+Denoising is a process in which an item, which is an image in this case, contains some 'noise', that is some unwanted and unessential feature. Image coffee stains on a paper, or some shades causes by the aging of the document itself, or signs coming from the printer: the goal is to remove them and obtain the original, not-dirty image.
+
+
 ```python
 import random
 from pathlib import Path
@@ -23,15 +28,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 ```
 
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\torchvision\io\image.py:11: UserWarning: Failed to load image Python extension: [WinError 127] Impossibile trovare la procedura specificata
-      warn(f"Failed to load image Python extension: {e}")
-    
-
 
 ```python
 random.seed(42)
 torch.manual_seed(43);
 ```
+
+The train dataset contains two images for each entry, one of which is 'clean' and the other is 'dirty'. As we will see, all the images are quite similar, rendering the same text with different fonts families and font sizes. There are only a few images: 144 in the training dataset and 72 in the test, but since they are all quite similar it will suffice.
 
 
 ```python
@@ -258,6 +261,8 @@ for i in range(20):
     
 
 
+The autoencoder itself is quite classical, with two layers of convolutional neural networks in the encoder and three such layers in the decoder. A max pool operator is used to reduce the image dimensions by half in each step, and an interpolator to extend the image dimensions in the decoder. The structure of the two is symmetric, as usual.
+
 
 ```python
 class DenoiserAutoencoder(nn.Module):
@@ -354,7 +359,7 @@ def train(model, train_loader, valid_loader, num_epochs):
 
 ```python
 train(model, train_loader, valid_loader, 50)
-torch.save(model.state_dict(), './mode.pt')
+torch.save(model.state_dict(), './model.pt')
 ```
 
     Epoch: 1/50    Training Loss: 0.273    Testing Loss: 0.228
@@ -411,8 +416,17 @@ torch.save(model.state_dict(), './mode.pt')
 
 
 ```python
-# model.load_state_dict(torch.load('./model.pt'))
+model.load_state_dict(torch.load('./model.pt'))
 ```
+
+
+
+
+    <All keys matched successfully>
+
+
+
+To analyze the performances, first we check the denoising on the training dataset, since we have the original clean image and the corresponding dirty one. Results are generally good, albeit sometimes the denoised image is too blurry.
 
 
 ```python
@@ -492,10 +506,12 @@ for n in random.sample(range(len(X)), 10):
     
 
 
+For the test dataset we only have the original (dirty image), so we plot that and the denoised one. When the noise is low-frequency compared with the text, results are excellent; instead when the text and the noise have similar frequencies, results are less good. Given the small size of the dataset, though, we can be quite satisfied by the performances of our autoencoder.
+
 
 ```python
 for n in random.sample(range(len(test_images)), 10):
-    image = test_images_transformed[i]
+    image = test_images_transformed[n]
     image = image.unsqueeze(0).to(device)
     output = model(image)
 
