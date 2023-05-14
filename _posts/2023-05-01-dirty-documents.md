@@ -83,7 +83,7 @@ for image in test_images:
 
 
 ```python
-def imshow(image, ax=None, title):
+def imshow(image, ax, title):
     if ax is None:
         fig, ax = plt.subplots()
     # PyTorch tensors assume the color channel is the first dimension
@@ -260,45 +260,45 @@ for i in range(20):
 
 
 ```python
-class ConvDenoiser(nn.Module):
+class DenoiserAutoencoder(nn.Module):
     
     def __init__(self):
         super().__init__();
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        
-        self.pool = nn.MaxPool2d(2,2)
-        
-        self.convt_1 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
-        self.convt_2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
-        self.convt_3 = nn.Conv2d(32, 1, kernel_size=3, padding=1)
+        self.encoder1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.encoder2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.decoder1 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.decoder2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
+        self.decoder3 = nn.Conv2d(32, 1, kernel_size=3, padding=1)
         
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        
-        x = F.relu(self.convt_1(x))
+        # encoding
+        x = F.relu(self.encoder1(x))
+        x = self.pool(x)
+        x = F.relu(self.encoder2(x))
+        x = self.pool(x)
+        # decoding
+        x = F.relu(self.decoder1(x))
         x = F.interpolate(x, scale_factor=2, mode='nearest')
-        x = F.relu(self.convt_2(x))
+        x = F.relu(self.decoder2(x))
         x = F.interpolate(x, scale_factor=2, mode='nearest')
-        x = torch.sigmoid(self.convt_3(x))
-        
+        x = torch.sigmoid(self.decoder3(x))
         return x
 ```
 
 
 ```python
-model = ConvDenoiser()
+model = DenoiserAutoencoder()
 print(model)
 ```
 
-    ConvDenoiser(
-      (conv1): Conv2d(1, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      (conv2): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    DenoiserAutoencoder(
+      (encoder1): Conv2d(1, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (encoder2): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
       (pool): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
-      (convt_1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      (convt_2): Conv2d(64, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-      (convt_3): Conv2d(32, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (decoder1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (decoder2): Conv2d(64, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (decoder3): Conv2d(32, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
     )
     
 
@@ -310,8 +310,14 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 device = 'cpu'
 if torch.cuda.is_available():
     device = 'cuda'
+elif torch.has_mps:
+    device = 'mps'
 model = model.to(device)
+print(f"Using device '{device}'")
 ```
+
+    Using device 'cpu'
+    
 
 
 ```python
@@ -341,62 +347,67 @@ def train(model, train_loader, valid_loader, num_epochs):
                 
                 valid_loss += loss.item()
         
-        print(f'Epoch: {epoch + 1}/{num_epochs}    Training Loss: {training_loss/len(train_loader):.3f}    ' \
+        print(f'Epoch: {epoch + 1: 2d}/{num_epochs}    Training Loss: {training_loss/len(train_loader):.3f}    ' \
               f'Testing Loss: {valid_loss/len(valid_loader):.3f}')
 ```
 
 
 ```python
-train(model, train_loader, valid_loader, 20)
+train(model, train_loader, valid_loader, 50)
 torch.save(model.state_dict(), './mode.pt')
 ```
 
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\torch\nn\functional.py:1960: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
-      warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+    Epoch: 1/50    Training Loss: 0.273    Testing Loss: 0.228
+    Epoch: 2/50    Training Loss: 0.228    Testing Loss: 0.214
+    Epoch: 3/50    Training Loss: 0.208    Testing Loss: 0.195
+    Epoch: 4/50    Training Loss: 0.182    Testing Loss: 0.167
+    Epoch: 5/50    Training Loss: 0.159    Testing Loss: 0.150
+    Epoch: 6/50    Training Loss: 0.147    Testing Loss: 0.141
+    Epoch: 7/50    Training Loss: 0.138    Testing Loss: 0.134
+    Epoch: 8/50    Training Loss: 0.131    Testing Loss: 0.124
+    Epoch: 9/50    Training Loss: 0.124    Testing Loss: 0.121
+    Epoch: 10/50    Training Loss: 0.119    Testing Loss: 0.117
+    Epoch: 11/50    Training Loss: 0.116    Testing Loss: 0.113
+    Epoch: 12/50    Training Loss: 0.110    Testing Loss: 0.110
+    Epoch: 13/50    Training Loss: 0.107    Testing Loss: 0.106
+    Epoch: 14/50    Training Loss: 0.104    Testing Loss: 0.103
+    Epoch: 15/50    Training Loss: 0.101    Testing Loss: 0.100
+    Epoch: 16/50    Training Loss: 0.098    Testing Loss: 0.098
+    Epoch: 17/50    Training Loss: 0.095    Testing Loss: 0.096
+    Epoch: 18/50    Training Loss: 0.093    Testing Loss: 0.094
+    Epoch: 19/50    Training Loss: 0.091    Testing Loss: 0.092
+    Epoch: 20/50    Training Loss: 0.090    Testing Loss: 0.091
+    Epoch: 21/50    Training Loss: 0.088    Testing Loss: 0.089
+    Epoch: 22/50    Training Loss: 0.087    Testing Loss: 0.088
+    Epoch: 23/50    Training Loss: 0.085    Testing Loss: 0.086
+    Epoch: 24/50    Training Loss: 0.084    Testing Loss: 0.085
+    Epoch: 25/50    Training Loss: 0.082    Testing Loss: 0.083
+    Epoch: 26/50    Training Loss: 0.081    Testing Loss: 0.082
+    Epoch: 27/50    Training Loss: 0.079    Testing Loss: 0.081
+    Epoch: 28/50    Training Loss: 0.078    Testing Loss: 0.080
+    Epoch: 29/50    Training Loss: 0.077    Testing Loss: 0.078
+    Epoch: 30/50    Training Loss: 0.076    Testing Loss: 0.077
+    Epoch: 31/50    Training Loss: 0.075    Testing Loss: 0.076
+    Epoch: 32/50    Training Loss: 0.074    Testing Loss: 0.075
+    Epoch: 33/50    Training Loss: 0.073    Testing Loss: 0.075
+    Epoch: 34/50    Training Loss: 0.072    Testing Loss: 0.074
+    Epoch: 35/50    Training Loss: 0.072    Testing Loss: 0.074
+    Epoch: 36/50    Training Loss: 0.071    Testing Loss: 0.074
+    Epoch: 37/50    Training Loss: 0.071    Testing Loss: 0.075
+    Epoch: 38/50    Training Loss: 0.071    Testing Loss: 0.079
+    Epoch: 39/50    Training Loss: 0.072    Testing Loss: 0.083
+    Epoch: 40/50    Training Loss: 0.076    Testing Loss: 0.072
+    Epoch: 41/50    Training Loss: 0.074    Testing Loss: 0.073
+    Epoch: 42/50    Training Loss: 0.070    Testing Loss: 0.069
+    Epoch: 43/50    Training Loss: 0.068    Testing Loss: 0.070
+    Epoch: 44/50    Training Loss: 0.068    Testing Loss: 0.068
+    Epoch: 45/50    Training Loss: 0.067    Testing Loss: 0.067
+    Epoch: 46/50    Training Loss: 0.066    Testing Loss: 0.067
+    Epoch: 47/50    Training Loss: 0.065    Testing Loss: 0.066
+    Epoch: 48/50    Training Loss: 0.065    Testing Loss: 0.065
+    Epoch: 49/50    Training Loss: 0.064    Testing Loss: 0.065
+    Epoch: 50/50    Training Loss: 0.064    Testing Loss: 0.064
     
-
-    Epoch: 1/20    Training Loss: 0.270    Testing Loss: 0.226
-    Epoch: 2/20    Training Loss: 0.225    Testing Loss: 0.211
-    Epoch: 3/20    Training Loss: 0.204    Testing Loss: 0.191
-    Epoch: 4/20    Training Loss: 0.178    Testing Loss: 0.162
-    Epoch: 5/20    Training Loss: 0.158    Testing Loss: 0.150
-    Epoch: 6/20    Training Loss: 0.148    Testing Loss: 0.147
-    Epoch: 7/20    Training Loss: 0.145    Testing Loss: 0.137
-    Epoch: 8/20    Training Loss: 0.138    Testing Loss: 0.131
-    Epoch: 9/20    Training Loss: 0.129    Testing Loss: 0.125
-    Epoch: 10/20    Training Loss: 0.123    Testing Loss: 0.120
-    Epoch: 11/20    Training Loss: 0.118    Testing Loss: 0.115
-    Epoch: 12/20    Training Loss: 0.113    Testing Loss: 0.112
-    Epoch: 13/20    Training Loss: 0.109    Testing Loss: 0.107
-    Epoch: 14/20    Training Loss: 0.105    Testing Loss: 0.103
-    Epoch: 15/20    Training Loss: 0.101    Testing Loss: 0.100
-    Epoch: 16/20    Training Loss: 0.097    Testing Loss: 0.097
-    Epoch: 17/20    Training Loss: 0.094    Testing Loss: 0.096
-    Epoch: 18/20    Training Loss: 0.092    Testing Loss: 0.093
-    Epoch: 19/20    Training Loss: 0.090    Testing Loss: 0.091
-    Epoch: 20/20    Training Loss: 0.088    Testing Loss: 0.088
-    
-
-
-    ---------------------------------------------------------------------------
-
-    AttributeError                            Traceback (most recent call last)
-
-    ~\AppData\Local\Temp/ipykernel_6600/4232275783.py in <module>
-          1 train(model, train_loader, valid_loader, 20)
-    ----> 2 model.save(model.state_dict(), './model.pt')
-    
-
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\torch\nn\modules\module.py in __getattr__(self, name)
-       1205             if name in modules:
-       1206                 return modules[name]
-    -> 1207         raise AttributeError("'{}' object has no attribute '{}'".format(
-       1208             type(self).__name__, name))
-       1209 
-    
-
-    AttributeError: 'ConvDenoiser' object has no attribute 'save'
-
 
 
 ```python
@@ -404,35 +415,22 @@ torch.save(model.state_dict(), './mode.pt')
 ```
 
 
-
-
-    <All keys matched successfully>
-
-
+```python
+def plot_triplet(n):
+    fig, (ax0, ax1, ax2) = plt.subplots(figsize=(14, 8), ncols=3)
+    image, image_clean = X[n], Y[n]
+    image_pred = model(image.unsqueeze(0).to(device)).cpu().detach().numpy()
+    imshow(image.numpy(), ax0, 'Original Dirty Image')
+    imshow(image_clean.numpy(), ax1, 'Original Clean Image')
+    imshow(image_pred.squeeze(0), ax2, 'Denoised Image')
+    fig.tight_layout()
+```
 
 
 ```python
-#testing on test set
-for i in range(10):
-    image = test_images_transformed[i]
-    image = image.unsqueeze(0).to(device)
-    output = model(image)
-
-    image, output = image.detach().cpu().numpy(), output.detach().cpu().numpy()
-
-    plt.figure(figsize=(12,14))
-    ax = plt.subplot(1,2,1)
-    imshow(image[0], ax, 'Original Image')
-
-    ax = plt.subplot(1,2,2)
-    imshow(output[0], ax, 'Denoised Image')
-    
-    plt.show()
+for n in random.sample(range(len(X)), 10):
+    plot_triplet(n)
 ```
-
-    c:\Users\dragh\miniconda3\envs\torch\lib\site-packages\torch\nn\functional.py:1960: UserWarning: nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.
-      warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
-    
 
 
     
@@ -491,5 +489,84 @@ for i in range(10):
 
     
 ![png](/assets/images/dirty-documents/dirty-documents-30.png)
+    
+
+
+
+```python
+for n in random.sample(range(len(test_images)), 10):
+    image = test_images_transformed[i]
+    image = image.unsqueeze(0).to(device)
+    output = model(image)
+
+    image, output = image.detach().cpu().numpy(), output.detach().cpu().numpy()
+
+    plt.figure(figsize=(12,14))
+    ax = plt.subplot(1,2,1)
+    imshow(image[0], ax, 'Original Image')
+
+    ax = plt.subplot(1,2,2)
+    imshow(output[0], ax, 'Denoised Image')
+    
+    plt.show()
+```
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-31.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-32.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-33.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-34.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-35.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-36.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-37.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-38.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-39.png)
+    
+
+
+
+    
+![png](/assets/images/dirty-documents/dirty-documents-40.png)
     
 
