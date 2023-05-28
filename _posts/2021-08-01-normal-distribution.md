@@ -126,9 +126,9 @@ The architecture of the encoder is quite simple: a classical sequential network 
 ```python
 class Encoder(nn.Module):
 
-    def __init__(self, latent_dims, num_hidden):
+    def __init__(self, num_inputs, latent_dims, num_hidden):
         super().__init__()
-        self.linear1 = nn.Linear(num_points, num_hidden)
+        self.linear1 = nn.Linear(num_inputs, num_hidden)
         self.linear2 = nn.Linear(num_hidden, num_hidden)
         self.linear3 = nn.Linear(num_hidden, num_hidden)
         self.linear4 = nn.Linear(num_hidden, latent_dims)
@@ -146,9 +146,9 @@ class Encoder(nn.Module):
 ```python
 class Decoder(nn.Module):
 
-    def __init__(self, latent_dims, num_hidden):
+    def __init__(self, num_inputs, latent_dims, num_hidden):
         super().__init__()
-        self.linear1 = nn.Linear(latent_dims, num_hidden)
+        self.linear1 = nn.Linear(num_inputs, num_hidden)
         self.linear2 = nn.Linear(num_hidden, num_hidden)
         self.linear3 = nn.Linear(num_hidden, num_hidden)
         self.linear4 = nn.Linear(num_hidden, num_points)
@@ -166,10 +166,10 @@ The autoencoder simply composes the encoder and the decoder, passing the input d
 ```python
 class Autoencoder(nn.Module):
 
-    def __init__(self, latent_dims, num_hidden):
+    def __init__(self, num_points, latent_dims, num_hidden):
         super().__init__()
-        self.encoder = Encoder(latent_dims, num_hidden)
-        self.decoder = Decoder(latent_dims, num_hidden)
+        self.encoder = Encoder(num_points, latent_dims, num_hidden)
+        self.decoder = Decoder(num_points, latent_dims, num_hidden)
 
     def forward(self, x):
         z = self.encoder(x)
@@ -234,7 +234,7 @@ def train(autoencoder, data_loader, epochs, lr, gamma, print_every):
 ```python
 torch.manual_seed(0)
 latent_dims = 2
-autoencoder = Autoencoder(latent_dims=latent_dims, num_hidden=16).to(device)
+autoencoder = Autoencoder(num_points, latent_dims=latent_dims, num_hidden=16).to(device)
 autoencoder.apply(init_weights)
 history = train(autoencoder, data_loader, epochs=100, lr=1e-3, gamma=0.98, print_every=10)
 ```
