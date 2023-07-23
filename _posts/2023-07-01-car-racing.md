@@ -609,4 +609,4 @@ env.close()
 env.env.generate('car-racing-video.gif')
 ```
 
-<img src='./car-racing-random.gif'>
+<img src='/assets/images/car-racing/car-racing-random.gif'>
