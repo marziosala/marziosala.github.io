@@ -7,9 +7,7 @@ header:
 excerpt: "Proximal Policy Optimization on the Car Racing environment."
 ---
 
-https://github.com/rym-oualha/CarRacing-V0_with_PPO
-
-In this article we look at another classical problem, the mountain car with discrete actions.
+In this article we look at another classical problem, the car racing one.
 
 The notebook can be run on an Ubuntu computer with the following conda environment:
 
@@ -131,7 +129,7 @@ env.close()
 env.generate('car-racing-random.gif')
 ```
 
-![](car-racing-random.gif)
+<img src='/assets/images/car-racing/car-racing-random.gif'>
 
 
 ```python
@@ -565,13 +563,6 @@ torch.save(agent.net.state_dict(), 'agent.pt')
 
 
 ```python
-# if np.mean(scores_deque) > reward_threshold:
-#     print("Solved environment! Running score is {:.2f}, Avg.Score: {:.2f} !" \
-#             .format(running_score, avg_score))
-```
-
-
-```python
 plt.plot(scores)
 plt.plot(avg_scores)
 ```
@@ -618,7 +609,4 @@ env.close()
 env.env.generate('car-racing-video.gif')
 ```
 
-
-```python
-
-```
+<img src='./car-racing-random.gif'>
