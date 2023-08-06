@@ -1,7 +1,7 @@
 ---
 layout: splash
 permalink: /mountain-car-continuous/
-title: "Solving with the Covariance matrix adaptation evolution strategyMethod "
+title: "Solving with the Covariance Matrix Adaptation Evolution Strategy Method "
 header:
   overlay_image: /assets/images/mountain-car-continuous/mountain-car-continuous-splash.jpeg
 excerpt: "Solving the mountain car continuous environment using CMA-ES."
