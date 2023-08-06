@@ -255,3 +255,5 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, frames=video.shape[
                                interval=100)
 anim.save('mountain-car-continuous-video.gif', writer='pillow', dpi=80, fps=24)
 ```
+
+<img src='/assets/images/mountain-car-continuous/mountain-car-continuous-video.gif'>
