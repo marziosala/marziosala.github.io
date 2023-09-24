@@ -411,7 +411,7 @@ Video('./half-cheetah-video.mp4')
 
 
 
-<video src="/assets/videos/half-cheetah-video.mp4" controls  >
+<video src="/assets/videos/half-cheetah/half-cheetah-video.mp4" controls  >
       Your browser does not support the <code>video</code> element.
     </video>
 
