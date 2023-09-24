@@ -56,7 +56,13 @@ $$
 \hat\ell = \frac{1}{N} \sum_{i=1}^N \mathbb{1}_{\varphi(X_i) \ge \gamma} \frac{f(X_i; \varphi)}{g(X_i)}
 $$
 
-The method just presented is for estimation of $\ell$, but it can be used for optimization too. Suppose the problem is to maximize some function $\varphi(x)$. We consider the associated stochastic problem of estimating $\mathbb{P}_\vartheta[\varphi (X) \ge \gamma]$ for a given $\gamma$ and a parametric family $f_\vartheta(\cdot; \vartheta)$. Hence, for a given $\gamma$, the goal is to find $\vartheta^\star$ such that
+The method just presented is for estimation of $\ell$, but it can be used for optimization too. Suppose the problem is to maximize some function $\varphi(x)$. We consider the associated stochastic problem of estimating
+
+$$
+\mathbb{P}_\vartheta[\varphi (X) \ge \gamma]
+$$
+
+for a given $\gamma$ and a parametric family $f_\vartheta(\cdot; \vartheta)$. Hence, for a given $\gamma$, the goal is to find $\vartheta^\star$ such that
 
 $$
 D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || f(\cdot; \vartheta))
