@@ -405,7 +405,7 @@ print(f"Evaluation - Mean returns achieved: {mean_eval_return}.")
 ```python
 from IPython.display import Video
 
-Video('./half-cheetah-video.mp4')
+Video("half-cheetah-video.mp4")
 ```
 
 
