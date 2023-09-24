@@ -357,7 +357,7 @@ anim.save('bipedal-walker-video.gif', dpi=80, fps=24)
 
 
 ```python
-# --- END
+# --- END --
 ```
 
 https://blog.otoro.net/2017/10/29/visual-evolution-strategies/
@@ -383,47 +383,10 @@ exporter.export()
 ```
 
     Using '2023-09-01' as date and 'bipedal-walker' as label
-    Creating directory c:\Users\dragh\git\blog\2023-09-01-bipedal-walker\..\..\marziosala.github.io\assets\images\bipedal-walker
-    Creating directory c:\Users\dragh\git\blog\2023-09-01-bipedal-walker\..\..\marziosala.github.io\assets\videos\bipedal-walker
+    bipedal-walker-video.gif c:\Users\dragh\git\blog\2023-09-01-bipedal-walker\..\..\marziosala.github.io\assets\images\bipedal-walker\bipedal-walker-video.gif
+    total-reward-history.jpg c:\Users\dragh\git\blog\2023-09-01-bipedal-walker\..\..\marziosala.github.io\assets\images\bipedal-walker\total-reward-history.jpg
+    total-original-reward-history.jpg c:\Users\dragh\git\blog\2023-09-01-bipedal-walker\..\..\marziosala.github.io\assets\images\bipedal-walker\total-original-reward-history.jpg
     
-
-
-    ---------------------------------------------------------------------------
-
-    FileNotFoundError                         Traceback (most recent call last)
-
-    ~\AppData\Local\Temp/ipykernel_16528/2573096955.py in <module>
-         10         'total-original-reward-history.jpg'
-         11     ])
-    ---> 12 exporter.export()
-    
-
-    c:\Users\dragh\git\blog\exporter.py in export(self)
-        124             fp.write(preamble + content)
-        125 
-    --> 126         shutil.copy(self.splash_image, images_dir / self.splash_image)
-        127 
-        128         for i in (TMP_DIR / f'{label}_files').glob('*.png'):
-    
-
-    c:\Users\dragh\miniconda3\envs\torch\lib\shutil.py in copy(src, dst, follow_symlinks)
-        424     if os.path.isdir(dst):
-        425         dst = os.path.join(dst, os.path.basename(src))
-    --> 426     copyfile(src, dst, follow_symlinks=follow_symlinks)
-        427     copymode(src, dst, follow_symlinks=follow_symlinks)
-        428     return dst
-    
-
-    c:\Users\dragh\miniconda3\envs\torch\lib\shutil.py in copyfile(src, dst, follow_symlinks)
-        263     else:
-        264         try:
-    --> 265             with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
-        266                 # macOS
-        267                 if _HAS_FCOPYFILE:
-    
-
-    FileNotFoundError: [Errno 2] No such file or directory: 'half-cheetah-splash.png'
-
 
 
 ```python
