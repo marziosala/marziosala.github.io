@@ -29,10 +29,14 @@ One of the simplest and oldest optimization methods for derivative-free optimiza
 - the standard deviation of the exploration noise $\nu$.
 
 At each step $j$, it samples $\delta_1, \delta_2, \ldots, \delta_N$, each of them of same size as $\theta_j$, using a standard normal distribution, and collects the corresponding rewards using the policies
-\begin{align*}
+
+$$
+\begin{aligned}
 \pi_{\theta,j,+}(x) & = \pi_{\theta_j + \nu \delta_k}(x) \\
 \pi_{\theta,j,-}(x) & = \pi_{\theta_j - \nu \delta_k}(x)
-\end{align*}
+\end{aligned}
+$$
+
 with $k \in \{1, 2, \ldots, N\}$. The update step is then
 $$
 \theta_{j + 1} = \theta_j + \frac{\alpha}{N} \sum{k=1}^N \left[
@@ -44,30 +48,42 @@ The procedure is repeated until some ending conditions are satisfied after setti
 The *augmented* version has more parameters: a matrix $M_0 =0 \in \mathbb{R}^{p \times n}$, 
 a vector $\mu_0 = 0 \in \mathbb{R}^n$, a matrix
 $\Sigma_0 = I_n \in \mathbb{R}^{n \times n}$, and the number of top-performing directions to use $b$, possibly set equal to $N$. The paper assumes linear policies, that is we simply have
+
 $$
 \pi_j(x) = M_j x,
 $$
+
 that is
-\begin{align*}
+
+$$
+\begin{aligned}
 \pi_{j, k, +}(x) & = (M_j + \nu \delta_k) x \\
 \pi_{j, k, }(x) & = (M_j - \nu \delta_k) x
-\end{align*}
+\end{aligned}
+$$
+
 for the V1 version of the algorith, or
-\begin{align*}
+
+$$
+\begin{aligned}
 \pi_{j, k, +}(x) & = (M_j + \nu \delta_k) \operatorname{diag}(\Sigma_j)^{-1/2} (x - \mu_j) \\
 \pi_{j, k, }(x) & = (M_j - \nu \delta_k) \operatorname{diag}(\Sigma_j)^{-1/2} (x - \mu_j)
-\end{align*}
+\end{aligned}
+$$
+
 for the V2 version and $k \in \{1, 2, \ldots, N\}$. The code in this notebook implementes the V1 version.
 
 Once the episodes (or rollouts) are collected, we sort the directions $\delta_k$ by the maximum difference in
 reward and denote by $\delta_{(k)}$ the $k$-largest direction and by
 $\pi_{j, (k), +}$ and $\pi_{j, (k), -}$ the corresponding policies.
 The update step is
+
 $$
 M_{j + 1} = M_j + \frac{\alpha}{b \sigma_R} \sum_{k=1}^b \left[
 \pi_{j,(k),+}(x) - \pi_{j,(k),-}(x)
 \right] \delta_{(k)}.
 $$
+
 where $\sigma_R$ is the standard deviation of the $b$ rewards used in the update step.
 
 The computations are run on an Ubuntu Linux computer, with the following `conda` environment:
@@ -353,7 +369,7 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, frames=video.shape[
 anim.save('bipedal-walker-video.gif', dpi=80, fps=24)
 ```
 
-![](./bipedal-walker-video.gif)
+<img src="/assets/images/bipedal-walker/bipedal-walker-video.gif">
 
 
 ```python
