@@ -74,7 +74,7 @@ First, we choose an initial parameter vector $\vartheta^{(0)}$ and set $t=1$. Th
 $\vartheta^{(t)}$ such that
 
 $$
-\vartheta^{(t)} = \argmax_{\vartheta} \frac{1}{N} \sum_{i=1}^N \varphi(X_i)
+\vartheta^{(t)} = \operatorname{argmax}_{\vartheta} \frac{1}{N} \sum_{i=1}^N \varphi(X_i)
 \frac{}{} \log f(X_i; \vartheta)
 $$
 
