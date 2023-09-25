@@ -7,17 +7,18 @@ header:
 excerpt: "A derivative-free optimization method for finding the global optimum of a function."
 ---
 
-The Cross-Entropy (CE) Method is a derivative-free optimization techniques, originally introduced by [Rubenstein](https://www.sciencedirect.com/science/article/abs/pii/S0377221796003852) in 1999 as an adaptive importance sampling procedure for the stimation of rate event probabilities. It can be seen as a Evolution Strategy which minimized a cost function $\varphi(x)$ by finding a suitable "individual" $x^\star$. The individuals are sampled from a distribution, and sorted based on the cost function. A small number of "elite" candidates is selected and used to determine the parameters for the population for the next iteration. To better
+The Cross-Entropy Method (CEM) is a derivative-free optimization techniques, originally introduced by Reuven Y. Rubinstein in 1999 [article](https://www.sciencedirect.com/science/article/abs/pii/S0377221796003852) presenting an adaptive importance sampling procedure for the stimation of rate event probabilities. It can be seen as a [Evolution Strategy](https://en.wikipedia.org/wiki/Evolution_strategy) which minimizes a cost function $\varphi(x)$ by finding a suitable "individual" $x^\star$. The individuals are sampled from a given distribution and sorted based on the cost function. A small number of "elite" candidates is selected and used to determine the parameters for the population for the next iteration. The optimization procedure involves two iterative phases:
 
+1. the *generation* of a set of random samples according to a specified parametrized model; and
+2. the *updating* of the model parameters, based on the best samples generated in the previous step, with cross-entropy minimization.
 
+The method can be applied to discrete, continuous or mixed optimization, and it can be shown to be a global optimization method, particularly useful when the optimization function has many local minima. As we will see, the code is relatively compact and easy to change, and the method is based on rigorous mathematical and statistical principles.
 
-stochastic optimization method designed for rare-event simulations when the probability of a target even occurring is relatively small. The idea is to iteratively fit a distribution to "elite" samples from an initial distribution, with the goal of estimating the rate-event probability by minimizing the cross-entropy between the two distributions.
-
-Let's start with the notion of cross-entropy itself. Given two probability distributions $f$ and $g$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). Here we assume that $f$ represents the "true" distribution and $g = g(x; \vartheta)$ our approximation, depending on some parameters $\vartheta$. The KL divergence reads
+Let's start with the notion of [cross-entropy](https://en.wikipedia.org/wiki/Cross-entropy) itself. Given two probability distributions $f$ and $g$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). Here we assume that $f$ represents the "true" distribution and $g = g(x; \vartheta)$ our approximation, depending on some parameters $\vartheta$. The KL divergence reads
 
 $$
 \begin{aligned}
-KL(f, g) & = \mathbb{E}_f\left[\log \frac{f(x)}{g(x; \vartheta)} \right] \\
+D_{KL}(f, g) & = \mathbb{E}_f\left[\log \frac{f(x)}{g(x; \vartheta)} \right] \\
 & = \int f(x) \log f(x) dx - \int f(x) \log g(x; \vartheta) dx.
 \end{aligned}
 $$
@@ -30,7 +31,7 @@ $$
 
 which is called the cross-entropy. Efficienctly finding the minimum of $<f, g>$ is the goal of the cross-entropy method.
 
-The first use of the CEM is to estimate rate-event probabilities, and in particular the value
+As we said, the method was originally proposed to estimate rate-event probabilities, and in particular the value
 
 $$
 \ell = \mathbb{P}[ \varphi(X) \ge \gamma ],
@@ -42,13 +43,13 @@ $$
 \ell = \mathbb{E}_\vartheta[\mathbb{1}_{\varphi(X) \ge \gamma}],
 $$
 
-where $\mathbb{1}$ is the indicator function. A straightforward way to estimate it is through MOnte Carlo (sometimes called in the CEM literature *crude* Monte Carlo), that ism we draw a random sample $X_1, X_2, \ldots, X_N$ from the distribution of $X$ and use
+where $\mathbb{1}$ is the indicator function. A straightforward way to estimate it is through Monte Carlo (sometimes called in the CEM literature *crude* Monte Carlo), that is we draw a random sample $X_1, X_2, \ldots, X_N$ from the distribution of $X$ and use
 
 $$
 \hat\ell = \frac{1}{N}\sum \mathbb{1}_{\varphi(X_i) \ge \gamma}
 $$
 
-as the unbiased estimate of $\ell$. However, for rate events $N$ needs to be very large in order to estimate $\ell$ accurately.
+as the unbiased estimate of $\ell$. However, for rare events $N$ needs to be very large in order to estimate $\ell$ accurately.
 
 A better way is to use *importance sampling*. This is a well-known variance reduction technique in which the system is simulated using a different probability distribution, so as to make the rare event more likely. That is, we evaluate $\ell$ using
 
@@ -79,12 +80,7 @@ $$
 $$
 
 
-Generally, the CEM involves two iterative phases:
 
-1. the *generation* of a set of random samples according to a specified parametrized model; and
-2. the *updating* of the model parameters, based on the best samples generated in the previous step, with cross-entropy minimization.
-
-The method can be applied to discrete, continuous or mixed optimization, and it can be shown to be a global optimization method, particularly useful when the optimization function has many local minima. As we will see, the code is relatively compact and easy to change, and the method is based on rigorous mathematical and statistical principles.
 
 Consider a continuous optimization problem with state space $\mathcal{X} \in \mathbb{R}^n$. The sampling distribution on $\mathbb{R}^n$ can be quite arbitrary and does not need to be related to the objective function $\varphi$. Usually, a random value $X$ is generated from a Gaussian distribution, characterized by a vector of means $\mu$ and a diagonal matrix $\Sigma = \operatorname{diag}(\sigma)$ of standard deviations. At each iteration of the CE method, the vector of parameters are updated as the mean and standard deviation of the elite samples. As such, a sequence of means $\{ \mu_t \}$ and standard deviations $\{ \sigma_t \}$ are generated, such that $\lim_{t\rightarrow \infty} \mu_t = x^\star$, meaning that at the end of the algorithm we should obtain a degenerated probability density. This suggests a possible stopping criterion: the algorithm stops when all the components of $\sigma_t$ are smaller in absolute value than a certain threshold $\epsilon$.
 
@@ -139,55 +135,7 @@ In the standard algorith, as detailed above, the entirety of all computed sample
 
 Although potentially useful, those two tricks can also shrink the variance of the samples and provide suboptimal solutions, so only a small fraction should be kept. Another variation is to change the population size as the algorithm progresses: potentially, once we are close to an optimum, less samples will be needed, suggesting that the sample size could be related to the variance.
 
-
-```python
-import matplotlib.pylab as plt
-from matplotlib import cm
-import numpy as np
-import pandas as pd
-```
-
-We consider MATLAB's peaks function,
-
-$$
-\varphi(x, y) =  3(1-x)^2 e^{-x^2 - (y+1)^2}
-   - 10 \left(\frac{x}{5} - x^3 - y^5\right) e^{-x^2-y^2} 
-   - \frac{1}{3} e^{-(x+1)^2 - y^2} 
-$$
-
-in $[-4, 4] \times [-4, 4]$. It has three local maxima and three local minima, with a global maximum
-at $(x^\star, y^\star) \sim (−0.0093, 1.58)$, with $\varphi(x^\star, y^\star) \sim 8.1$, and 
-the other two local maximum 
-at $\varphi(−0.46, −0.63) \sim 3.78$ and $\varphi(1.29, −0.0049) \sim 3.59$.
-
-
-```python
-def peaks(X):
-    x, y = X
-    return 3 * (1 - x)**2 * np.exp(-x**2 - (y + 1)**2) \
-        - 10 * (x / 5 - x**3 - y**5) * np.exp(-x**2 - y**2) \
-        - 1 / 3 * np.exp(-(x + 1)**2 - y**2)
-```
-
-
-```python
-X, Y = np.meshgrid(np.linspace(-4, 4, 201), np.linspace(-4, 4, 201))
-Z = peaks([X, Y])
-fig = plt.figure(figsize=(20, 20))
-ax = fig.add_subplot(1,2,1, projection='3d')
-ax.plot_surface(X, Y, Z, cmap=cm.hsv, linewidth=1, antialiased=True, edgecolors='grey')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_title("MATLAB's peaks function");
-```
-
-
-    
-![png](/assets/images/cross-entropy-method/cross-entropy-method-1.png)
-    
-
-
-We only consider multivariate normal distribution, where each sample is
+The implementation of the above method in Python is quite simple. We only consider multivariate normal distribution, where each sample is
 drawn from $n$-dimensional
 multivariate normal distribution with independent components. The parameter vector
 $\varphi$ in the CE algorithm can be taken as the $2n-$dimensional vector of means and standard deviations;
@@ -196,6 +144,14 @@ according to the sample mean and sample standard deviation of the elite samples.
 the updating of parameters (using maximum likelihood estimation) may no longer be trivial, but
 one can instead employ fast methods such as the [EM algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm) to determine the parameter
 updates.
+
+
+```python
+import matplotlib.pylab as plt
+from matplotlib import cm
+import numpy as np
+import pandas as pd
+```
 
 
 ```python
@@ -263,6 +219,48 @@ to the choice of the parameters. The rarity parameter $\rho$ is typically chosen
 0.1. The number of elite samples $N_e = \rho N$ should be large enough to obtain a reliable
 parameter update. As a rule of thumb, if the dimension of $\varphi$ is $d$, the number of elites should
 be in the order of $10 d$ or higher.
+
+As a first test, we consider MATLAB's peaks function, a simple two-dimensional function with two local maxima and a global one.
+
+$$
+\varphi(x, y) =  3(1-x)^2 e^{-x^2 - (y+1)^2}
+   - 10 \left(\frac{x}{5} - x^3 - y^5\right) e^{-x^2-y^2} 
+   - \frac{1}{3} e^{-(x+1)^2 - y^2} 
+$$
+
+in $[-4, 4] \times [-4, 4]$. It has three local maxima and three local minima, with a global maximum
+at $(x^\star, y^\star) \sim (−0.0093, 1.58)$, with $\varphi(x^\star, y^\star) \sim 8.1$, and 
+the other two local maximum 
+at $\varphi(−0.46, −0.63) \sim 3.78$ and $\varphi(1.29, −0.0049) \sim 3.59$.
+
+Depending on the starting point, gradient-based optimizer may get stuck in a local maximum, while CEM manages to easily find the global maximum. 
+
+
+```python
+def peaks(X):
+    x, y = X
+    return 3 * (1 - x)**2 * np.exp(-x**2 - (y + 1)**2) \
+        - 10 * (x / 5 - x**3 - y**5) * np.exp(-x**2 - y**2) \
+        - 1 / 3 * np.exp(-(x + 1)**2 - y**2)
+```
+
+
+```python
+X, Y = np.meshgrid(np.linspace(-4, 4, 201), np.linspace(-4, 4, 201))
+Z = peaks([X, Y])
+fig = plt.figure(figsize=(20, 20))
+ax = fig.add_subplot(1,2,1, projection='3d')
+ax.plot_surface(X, Y, Z, cmap=cm.hsv, linewidth=1, antialiased=True, edgecolors='grey')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_title("MATLAB's peaks function");
+```
+
+
+    
+![png](/assets/images/cross-entropy-method/cross-entropy-method-1.png)
+    
+
 
 To solve the problem with CEM we must specify the vector of
 initial means $µ_0$ and standard deviations $σ_0$ of the 2-dimensional Gaussian sampling distribution. While
@@ -426,10 +424,9 @@ for num_dims in range(3, 10):
     n = 9, # iterations: 23, optimal value: 277.0038, diff: 86.1758 -- failed
     
 
+So, without any parameter tuning, we managed to find the global maximum up to $n=7$ and failed for $n=8$ and $n=9$.
 
-```python
-
-```
+As a final example, we consider the inverse problem of estimating the parameters from noisy solutions of the [FitzHugh-Nagumo model](https://en.wikipedia.org/wiki/FitzHugh%E2%80%93Nagumo_model).
 
 
 ```python
@@ -522,7 +519,4 @@ axes[1].set_ylabel('R(t)');
     
 
 
-
-```python
-
-```
+To conclude, the cross-entropy method is a robust and versatile optimizer that deserves to be in every optimization toolbox. In its basic form it is easy to code and only has a few parameters to tune.
