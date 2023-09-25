@@ -54,11 +54,11 @@ $$
 
 which would produce a zero variance and will therefore yield the exact result with just one sample. Unfortunately, in order to define $g^\star$ we need to know $\ell$, which is exactly what we are looking for, so the above formula cannot be directly applied. What we can do instead is to use a function $g_\vartheta(x)$ and look for the parameters $\vartheta$ such that the distance between $g_\vartheta$ and $g^\star$ is minimized.
 
-Given two probability distributions $f^\star$ and $g_\vartheta$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). The KL divergence reads
+Given two probability distributions $g^\star$ and $g_\vartheta$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence),
 
 $$
 \begin{aligned}
-D_{KL}(g^\star, g_\vartheta) & = \mathbb{E}_{f}\left[\log \frac{f(x)}{g_\vartheta(x)} \right] \\
+D_{KL}(g^\star, g_\vartheta) & = \mathbb{E}_{g^\star}\left[\log \frac{g^\star(x)}{g_\vartheta(x)} \right] \\
 & = \int g^\star(x) \log g^\star(x) dx - \int g^\star(x) \log g_\vartheta(x) dx.
 \end{aligned}
 $$
@@ -75,14 +75,10 @@ $$
 \max_{\vartheta} \int g^\star(x) \log g_\vartheta(x) dx.
 $$
 
-Substituing the optimal definition of $g^\star$, we obtain
+Substituting the optimal definition of $g^\star$ and ignoring $\ell$, which does not depend on $\vartheta$, we obtain
 
 $$
-\max_{\vartheta} \int \frac{
-    \mathbb{1}_{\varphi(X_i) \ge \gamma} f(X)
-}{
-    \ell
-}, \log g_\vartheta(x) dx.
+\max_{\vartheta} \int \mathbb{1}_{\varphi(X_i) \ge \gamma} f(X) \log g_\vartheta(x) dx.
 $$
 
 which is equivalent to
@@ -96,13 +92,13 @@ For some families of distributions, the above problem [can be solved analyticall
 The method just presented is for estimation of $\ell$, but it can be used for optimization too. Suppose the problem is to maximize some function $\varphi(x)$. We consider the associated stochastic problem of estimating
 
 $$
-\mathbb{P}_\vartheta[\varphi (X) \ge \gamma]
+\mathbb{P}_f[\varphi (X) \ge \gamma]
 $$
 
-for a given $\gamma$ and a parametric family $f_\vartheta$. Hence, for a given $\gamma$, the goal is to find $\vartheta^\star$ such that
+for a given $\gamma$ and a parametric family $g_\vartheta$. Hence, for a given $\gamma$, the goal is to find $\vartheta$ such that
 
 $$
-D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || f_\vartheta(X))
+D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || g_\vartheta(X))
 $$
 
 is minimized.
