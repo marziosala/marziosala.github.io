@@ -7,31 +7,31 @@ header:
 excerpt: "A derivative-free optimization method for finding the global optimum of a function."
 ---
 
-The Cross-Entropy Method (CEM) is a derivative-free optimization techniques, originally introduced by Reuven Y. Rubinstein in 1999 [article](https://www.sciencedirect.com/science/article/abs/pii/S0377221796003852) presenting an adaptive importance sampling procedure for the stimation of rate event probabilities. It can be seen as a [Evolution Strategy](https://en.wikipedia.org/wiki/Evolution_strategy) which minimizes a cost function $\varphi(x)$ by finding a suitable "individual" $x^\star$. The individuals are sampled from a given distribution and sorted based on the cost function. A small number of "elite" candidates is selected and used to determine the parameters for the population for the next iteration. The optimization procedure involves two iterative phases:
+The [Cross-Entropy Method](https://en.wikipedia.org/wiki/Cross-entropy_method) (CEM) is a derivative-free optimization techniques, originally introduced by Reuven Y. Rubinstein in 1999 [article](https://www.sciencedirect.com/science/article/abs/pii/S0377221796003852) presenting an adaptive importance sampling procedure for the stimation of rate event probabilities. It can be seen as an [Evolution Strategy](https://en.wikipedia.org/wiki/Evolution_strategy) which minimizes a cost function $\varphi(x)$ by finding a suitable "individual" $x^\star$. The individuals are sampled from a given distribution and sorted based on the cost function. A small number of "elite" candidates is selected and used to determine the parameters for the population for the next iteration. The optimization procedure involves two iterative phases:
 
 1. the *generation* of a set of random samples according to a specified parametrized model; and
 2. the *updating* of the model parameters, based on the best samples generated in the previous step, with cross-entropy minimization.
 
 The method can be applied to discrete, continuous or mixed optimization, and it can be shown to be a global optimization method, particularly useful when the optimization function has many local minima. As we will see, the code is relatively compact and easy to change, and the method is based on rigorous mathematical and statistical principles.
 
-Let's start with the notion of [cross-entropy](https://en.wikipedia.org/wiki/Cross-entropy) itself. Given two probability distributions $f$ and $g$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). Here we assume that $f$ represents the "true" distribution and $g = g(x; \vartheta)$ our approximation, depending on some parameters $\vartheta$. The KL divergence reads
+Let's start with the notion of [cross-entropy](https://en.wikipedia.org/wiki/Cross-entropy) itself. Given two probability distributions $f$ and $g$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). Here we assume that $f^\star$ represents the "true" distribution and $f = f_\vartheta(x)$ our approximation, depending on some parameters $\vartheta$. The KL divergence reads
 
 $$
 \begin{aligned}
-D_{KL}(f, g) & = \mathbb{E}_f\left[\log \frac{f(x)}{g(x; \vartheta)} \right] \\
-& = \int f(x) \log f(x) dx - \int f(x) \log g(x; \vartheta) dx.
+D_{KL}(f^\star, f) & = \mathbb{E}_{f^\star}\left[\log \frac{f^\star(x)}{f_\vartheta(x)} \right] \\
+& = \int f^\star(x) \log f^\star(x) dx - \int f^\star(x) \log f_\vartheta(x) dx.
 \end{aligned}
 $$
 
 Since the first term does not contain $\vartheta$, minimizing the distance is equivalent to the minimization of the second term,
 
 $$
-<f, g> = - \int f(x) \log g(x; \vartheta) dx,
+<f^\star>, f> = - \int f^\star(x) \log f_\vartheta(x) dx,
 $$
 
-which is called the cross-entropy. Efficienctly finding the minimum of $<f, g>$ is the goal of the cross-entropy method.
+which is called the cross-entropy. Efficienctly finding the minimum of $<f^\star, f_\vartheta>$ is the goal of the cross-entropy method.
 
-As we said, the method was originally proposed to estimate rate-event probabilities, and in particular the value
+As said before, the method was originally proposed to estimate rate-event probabilities, and in particular the value
 
 $$
 \ell = \mathbb{P}[ \varphi(X) \ge \gamma ],
@@ -54,8 +54,10 @@ as the unbiased estimate of $\ell$. However, for rare events $N$ needs to be ver
 A better way is to use *importance sampling*. This is a well-known variance reduction technique in which the system is simulated using a different probability distribution, so as to make the rare event more likely. That is, we evaluate $\ell$ using
 
 $$
-\hat\ell = \frac{1}{N} \sum_{i=1}^N \mathbb{1}_{\varphi(X_i) \ge \gamma} \frac{f(X_i; \varphi)}{g(X_i)}
+\hat\ell = \frac{1}{N} \sum_{i=1}^N \mathbb{1}_{\varphi(X_i) \ge \gamma} \frac{f(X_i; \vartheta)}{g(X_i)},
 $$
+
+where $f^\star$ is the function that minimizes the variance of $\hat\ell$. The cross-entropy method aims to approximate the optimal PDF by adaptively selecting members of the parametric family that are closest (in the Kullback–Leibler sense) to the optimal PDF in the Kullback-Leibler sense.
 
 The method just presented is for estimation of $\ell$, but it can be used for optimization too. Suppose the problem is to maximize some function $\varphi(x)$. We consider the associated stochastic problem of estimating
 
@@ -63,10 +65,10 @@ $$
 \mathbb{P}_\vartheta[\varphi (X) \ge \gamma]
 $$
 
-for a given $\gamma$ and a parametric family $f_\vartheta(\cdot; \vartheta)$. Hence, for a given $\gamma$, the goal is to find $\vartheta^\star$ such that
+for a given $\gamma$ and a parametric family $f_\vartheta$. Hence, for a given $\gamma$, the goal is to find $\vartheta^\star$ such that
 
 $$
-D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || f(\cdot; \vartheta))
+D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || f_\vartheta(X))
 $$
 
 is minimized. The algorithm is the following.
@@ -76,10 +78,8 @@ $\vartheta^{(t)}$ such that
 
 $$
 \vartheta^{(t)} = \operatorname{argmax}_{\vartheta} \frac{1}{N} \sum_{i=1}^N \varphi(X_i)
-\frac{}{} \log f(X_i; \vartheta)
+\frac{}{} \log f_\vartheta(X_i)
 $$
-
-
 
 
 Consider a continuous optimization problem with state space $\mathcal{X} \in \mathbb{R}^n$. The sampling distribution on $\mathbb{R}^n$ can be quite arbitrary and does not need to be related to the objective function $\varphi$. Usually, a random value $X$ is generated from a Gaussian distribution, characterized by a vector of means $\mu$ and a diagonal matrix $\Sigma = \operatorname{diag}(\sigma)$ of standard deviations. At each iteration of the CE method, the vector of parameters are updated as the mean and standard deviation of the elite samples. As such, a sequence of means $\{ \mu_t \}$ and standard deviations $\{ \sigma_t \}$ are generated, such that $\lim_{t\rightarrow \infty} \mu_t = x^\star$, meaning that at the end of the algorithm we should obtain a degenerated probability density. This suggests a possible stopping criterion: the algorithm stops when all the components of $\sigma_t$ are smaller in absolute value than a certain threshold $\epsilon$.
