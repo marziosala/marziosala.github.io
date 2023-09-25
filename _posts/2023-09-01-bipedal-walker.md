@@ -17,7 +17,7 @@ Actions are motor speed values in the [-1, 1] range for each of the 4 joints at 
 
 Reward is given for moving forward, totaling 300+ points up to the far end. If the robot falls, it gets -100. Applying motor torque costs a small amount of points. A more optimal agent will get a better score.
 
-![](bipedal-walker.png)
+<img src="/assets/images/bipedal-walker/bipedal-walker-overview.png">
 
 The method we will use is called *Augmented Random Search*, presented in the 2018 paper [Simple random search provides a competitive approach
 to reinforcement learning](https://arxiv.org/pdf/1803.07055.pdf). The authors aim to present a simple baseline for reinforcement learning by using random search for a parametrized policy $\pi_\theta : \mathbb{R}^n \rightarrow \mathbb{R}^p$, where $\theta \in \mathbb{R}^n$ are the policy parameters. The idea is to optimize over those policy parameters directly instead of doing so in the action space. This choice makes training equivalent to derivative-free optimization with noisy function evaluations.
