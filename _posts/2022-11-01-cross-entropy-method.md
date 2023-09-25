@@ -14,50 +14,84 @@ The [Cross-Entropy Method](https://en.wikipedia.org/wiki/Cross-entropy_method) (
 
 The method can be applied to discrete, continuous or mixed optimization, and it can be shown to be a global optimization method, particularly useful when the optimization function has many local minima. As we will see, the code is relatively compact and easy to change, and the method is based on rigorous mathematical and statistical principles.
 
-Let's start with the notion of [cross-entropy](https://en.wikipedia.org/wiki/Cross-entropy) itself. Given two probability distributions $f$ and $g$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). Here we assume that $f^\star$ represents the "true" distribution and $f = f_\vartheta(x)$ our approximation, depending on some parameters $\vartheta$. The KL divergence reads
-
-$$
-\begin{aligned}
-D_{KL}(f^\star, f) & = \mathbb{E}_{f^\star}\left[\log \frac{f^\star(x)}{f_\vartheta(x)} \right] \\
-& = \int f^\star(x) \log f^\star(x) dx - \int f^\star(x) \log f_\vartheta(x) dx.
-\end{aligned}
-$$
-
-Since the first term does not contain $\vartheta$, minimizing the distance is equivalent to the minimization of the second term,
-
-$$
-<f^\star>, f> = - \int f^\star(x) \log f_\vartheta(x) dx,
-$$
-
-which is called the cross-entropy. Efficienctly finding the minimum of $<f^\star, f_\vartheta>$ is the goal of the cross-entropy method.
-
-As said before, the method was originally proposed to estimate rate-event probabilities, and in particular the value
+The method was originally proposed to estimate rate-event probabilities, and in particular the value
 
 $$
 \ell = \mathbb{P}[ \varphi(X) \ge \gamma ],
 $$
 
-where $\varphi$ can be thought of as an objective function of $X$, and the events $X$ follow a distribution defined by $g(x; \vartheta)$. We want to find events $X$ where our objective function $\varphi(X)$ is above some thershold $\gamma$. This can be expressed in expectations as
+where $\varphi$ can be thought of as an objective function of $X$, and the events $X$ follow a distribution defined by $f(x)$. We want to find events $X$ where our objective function $\varphi(X)$ is above some thershold $\gamma$. This can be expressed in expectations as
 
 $$
-\ell = \mathbb{E}_\vartheta[\mathbb{1}_{\varphi(X) \ge \gamma}],
+\ell = \mathbb{E}_f[\mathbb{1}_{\varphi(X) \ge \gamma}],
 $$
 
-where $\mathbb{1}$ is the indicator function. A straightforward way to estimate it is through Monte Carlo (sometimes called in the CEM literature *crude* Monte Carlo), that is we draw a random sample $X_1, X_2, \ldots, X_N$ from the distribution of $X$ and use
+where $\mathbb{1}$ is the indicator function. If this probability is very small, say smaller than $10^{−5}$, a case when $\varphi(X) \ge \gamma$ is called a rare event.
+
+A straightforward way to estimate $\ell$ is through Monte Carlo (sometimes called in the CEM literature *crude* Monte Carlo), that is we draw a random sample $X_1, X_2, \ldots, X_N$ from the distribution of $X$ and use
 
 $$
 \hat\ell = \frac{1}{N}\sum \mathbb{1}_{\varphi(X_i) \ge \gamma}
 $$
 
-as the unbiased estimate of $\ell$. However, for rare events $N$ needs to be very large in order to estimate $\ell$ accurately.
+as the unbiased estimate of $\ell$. However, for rare events $N$ needs to be very large in order to estimate $\ell$ accurately with a small confidence interval.
 
 A better way is to use *importance sampling*. This is a well-known variance reduction technique in which the system is simulated using a different probability distribution, so as to make the rare event more likely. That is, we evaluate $\ell$ using
 
 $$
-\hat\ell = \frac{1}{N} \sum_{i=1}^N \mathbb{1}_{\varphi(X_i) \ge \gamma} \frac{f(X_i; \vartheta)}{g(X_i)},
+\hat\ell = \frac{1}{N} \sum_{i=1}^N \mathbb{1}_{\varphi(X_i) \ge \gamma} \frac{f(X_i)}{g_\vartheta(X_i)},
 $$
 
-where $f^\star$ is the function that minimizes the variance of $\hat\ell$. The cross-entropy method aims to approximate the optimal PDF by adaptively selecting members of the parametric family that are closest (in the Kullback–Leibler sense) to the optimal PDF in the Kullback-Leibler sense.
+where $g_\vartheta$ is the function that minimizes the variance of $\hat\ell$. It is well known that the best way to estimate $\ell$ is to use the change of measure with density
+
+$$
+g^\star(x) := \frac{
+    \mathbb{1}_{\varphi(X_i) \ge \gamma} f(X)
+}{
+    \ell
+},
+$$
+
+which would produce a zero variance and will therefore yield the exact result with just one sample. Unfortunately, in order to define $g^\star$ we need to know $\ell$, which is exactly what we are looking for, so the above formula cannot be directly applied. What we can do instead is to use a function $g_\vartheta(x)$ and look for the parameters $\vartheta$ such that the distance between $g_\vartheta$ and $g^\star$ is minimized.
+
+Given two probability distributions $f^\star$ and $g_\vartheta$ with the same support, a common notion of divergence (or distance, but not strictly in the mathematical sense) is the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence). The KL divergence reads
+
+$$
+\begin{aligned}
+D_{KL}(g^\star, g_\vartheta) & = \mathbb{E}_{f}\left[\log \frac{f(x)}{g_\vartheta(x)} \right] \\
+& = \int g^\star(x) \log g^\star(x) dx - \int g^\star(x) \log g_\vartheta(x) dx.
+\end{aligned}
+$$
+
+Since the first term does not contain $\vartheta$, the minimization of the KL divergence is equivalent to the minimization of the second term,
+
+$$
+- \int g^\star(x) \log g_\vartheta(x) dx,
+$$
+
+which is called the [cross-entropy](https://en.wikipedia.org/wiki/Cross-entropy). Because of the minus sign, this is equivalent to solving the maximization problem
+
+$$
+\max_{\vartheta} \int g^\star(x) \log g_\vartheta(x) dx.
+$$
+
+Substituing the optimal definition of $g^\star$, we obtain
+
+$$
+\max_{\vartheta} \int \frac{
+    \mathbb{1}_{\varphi(X_i) \ge \gamma} f(X)
+}{
+    \ell
+}, \log g_\vartheta(x) dx.
+$$
+
+which is equivalent to
+
+$$
+\max_{\vartheta} \mathbb{E}_f[\mathbb{1}_{\varphi(X) \ge \gamma} \log g_\vartheta(X)].
+$$
+
+For some families of distributions, the above problem [can be solved analytically](https://link.springer.com/article/10.1007/s10479-005-5724-z): for normal distributions, for example, it turns out that it is equivalent to maximum likelihood estimation of the parameters. If no analytic solution is available, one can use a gradient-based method together with automatic differentiation to find a numerical solution.
 
 The method just presented is for estimation of $\ell$, but it can be used for optimization too. Suppose the problem is to maximize some function $\varphi(x)$. We consider the associated stochastic problem of estimating
 
@@ -71,16 +105,7 @@ $$
 D_{KL}(\mathbb{1}_{\varphi(X) \ge \gamma} || f_\vartheta(X))
 $$
 
-is minimized. The algorithm is the following.
-
-First, we choose an initial parameter vector $\vartheta^{(0)}$ and set $t=1$. Then, for each $t = 1, \ldots$ until convergence, we generate $N$ sample samples $X_1, \ldots, X_N$ from $f(\cdot; \vartheta^{(t-1)})$ and solve for
-$\vartheta^{(t)}$ such that
-
-$$
-\vartheta^{(t)} = \operatorname{argmax}_{\vartheta} \frac{1}{N} \sum_{i=1}^N \varphi(X_i)
-\frac{}{} \log f_\vartheta(X_i)
-$$
-
+is minimized.
 
 Consider a continuous optimization problem with state space $\mathcal{X} \in \mathbb{R}^n$. The sampling distribution on $\mathbb{R}^n$ can be quite arbitrary and does not need to be related to the objective function $\varphi$. Usually, a random value $X$ is generated from a Gaussian distribution, characterized by a vector of means $\mu$ and a diagonal matrix $\Sigma = \operatorname{diag}(\sigma)$ of standard deviations. At each iteration of the CE method, the vector of parameters are updated as the mean and standard deviation of the elite samples. As such, a sequence of means $\{ \mu_t \}$ and standard deviations $\{ \sigma_t \}$ are generated, such that $\lim_{t\rightarrow \infty} \mu_t = x^\star$, meaning that at the end of the algorithm we should obtain a degenerated probability density. This suggests a possible stopping criterion: the algorithm stops when all the components of $\sigma_t$ are smaller in absolute value than a certain threshold $\epsilon$.
 
