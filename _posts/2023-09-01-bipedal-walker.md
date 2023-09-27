@@ -19,16 +19,16 @@ Reward is given for moving forward, totaling 300+ points up to the far end. If t
 
 <img src="/assets/images/bipedal-walker/bipedal-walker-overview.png">
 
-The method we will use is called *Augmented Random Search*, presented in the 2018 paper [Simple random search provides a competitive approach
-to reinforcement learning](https://arxiv.org/pdf/1803.07055.pdf). The authors aim to present a simple baseline for reinforcement learning by using random search for a parametrized policy $\pi_\theta : \mathbb{R}^n \rightarrow \mathbb{R}^p$, where $\theta \in \mathbb{R}^n$ are the policy parameters. The idea is to optimize over those policy parameters directly instead of doing so in the action space. This choice makes training equivalent to derivative-free optimization with noisy function evaluations.
+The method we will use is called *Augmented Random Search*, presented in the paper [Simple random search provides a competitive approach
+to reinforcement learning](https://arxiv.org/pdf/1803.07055.pdf), published in 2018. The authors aim to present a simple baseline for reinforcement learning by using random search for a parametrized policy $\pi_\theta : \mathbb{R}^n \rightarrow \mathbb{R}^p \rightarrow \mathbb{R}^m$, where $\theta \in \mathbb{R}^p$ are the policy parameters. The basic idea is to optimize over those policy parameters directly instead of doing so in the action space and is an extension of the classical [random search](https://en.wikipedia.org/wiki/Random_search) method.
 
-One of the simplest and oldest optimization methods for derivative-free optimization is *random search*, which chooses a direction uniformly at random on the sphere in the parameter space, and then optimizes the function along this direction. This basic random search requires a few hyperparameters:
+Random Search is one of the simplest and oldest optimization methods for derivative-free optimization. Given
 
-- the step size $\alpha$;
-- the number of directions samples per iteration $N$;
-- the standard deviation of the exploration noise $\nu$.
+- a step size $\alpha$,
+- the number of directions samples per iteration $N$, and
+- the standard deviation of the exploration noise $\nu$,
 
-At each step $j$, it samples $\delta_1, \delta_2, \ldots, \delta_N$, each of them of same size as $\theta_j$, using a standard normal distribution, and collects the corresponding rewards using the policies
+at each step $j$ it chooses a direction uniformly at random on the sphere in the parameter space, and then optimizes the function along this direction. That is, it samples $\delta_1, \delta_2, \ldots, \delta_N$, each of them of same size as $\theta_j$, using a standard normal distribution, and collects the corresponding rewards using the policies
 
 $$
 \begin{aligned}
@@ -315,9 +315,9 @@ plt.ylabel('Total Reward')
     
 
 
-![](total-reward-history.jpg)
+<img src="/assets/images/bipedal-walker/total-reward-history.jpg">
 
-![](total-original-reward-history.jpg)
+<img src="/assets/images/bipedal-walker/total-original-reward-history.jpg">
 
 
 ```python
