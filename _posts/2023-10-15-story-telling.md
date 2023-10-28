@@ -298,4 +298,4 @@ time.sleep(2)
 pygame.quit()
 ```
 
-Not quite a masterpiece, yet a surprising result for just a few lines for code!
+If you run the code you'll see a window popping up with the images and hear the text. Sure, the story itself is not a masterpiece and the images aren't great, yet this is a surprising result for just a few lines for code!
