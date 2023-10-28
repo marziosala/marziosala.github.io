@@ -7,10 +7,10 @@ header:
 excerpt: "A small Python application to generate a short story and read it aloud, with generated images on the background."
 ---
 
-Released a little more than a year ago, ChatGPT has seen a phenomenal success, and with it the entire field of generative AI has exploded: given a small text, the *prompt*, one can easily generate text as well as images, audio and, soon, also video.
+Released a little more than a year ago, [ChatGPT](https://openai.com/chatgpt) has been a phenomenal success, and with it the entire field of generative AI has exploded: given a small text, the *prompt*, one can easily generate text as well as images, audio and, soon, also video.
 
 In this article we look at both text and image generation by putting together an AI-powered story teller: given a brief descriptions of our main characters and an overview of what the story should be, we want to automatically generate a short story and some images to make the story more compelling, then ask the computer to read it aloud. All of this is done in just a few lines of code! This notebook is inspired by an article by [Sean McManus](https://sean.co.uk) on the 'MagPi Raspberry' and is composed by two parts: in the first part we prepare the prompts for [OpenAI](https://openai.com) and [DeepAI](https://deepai.org/) and collect
-the text and the images of our story; in the second part we develop a super-simple application that reads the text and displays the images.
+the text and the images of our story; in the second part we develop a super-simple yet charming application that reads the text and displays the images.
 
 Let's start with the Python environment:
 
@@ -204,8 +204,6 @@ To generate the images, we take each of the image prompts just generated and cal
 
 ```python
 for number, image_prompt in enumerate(image_prompts):
-    #image_prompt += f". {character1_name} is {character1_type} and "
-    #image_prompt += f"{character2_name} is {character2_type}. They are {venue}."
     r = requests.post(
         'https://api.deepai.org/api/text2img',
         data=dict(
