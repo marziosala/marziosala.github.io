@@ -37,7 +37,7 @@ import requests
 import time
 ```
 
-Both OpenAI and DeepAI requires a paid subscription. The easiest is to save the keys in a file and read them as shown here.
+Both OpenAI and DeepAI requires a paid subscription to access their APIs. The easiest is to purchase a limited credit and generate the keys, here saved to files and read them as shown here.
 
 
 ```python
@@ -45,7 +45,7 @@ openai.api_key = open('./openai-key.txt', 'r').read()
 deepai_key = open('./deepai-key.txt', 'r').read()
 ```
 
-We will keep the stories in the `stories` folder; each story is identified by the timestamp of its generation. We do this because we often need to experiment by changing the prompt and looking at the results, so it is convenient to keep the history of what was obtained.
+We will keep the stories in the `stories` folder; each story is identified by the timestamp of its generation. We do this because we often need to experiment by changing the prompt and looking at the results, so it is convenient to keep the one that were generated and compare them.
 
 
 ```python
@@ -63,7 +63,7 @@ if not story_dir.exists():
     story_dir.mkdir()
 ```
 
-What we want is a short story, composed by about 15 paragraphs, with two characters, a tiger and a lion. The type of the characters is important to steer the story; in the same way, the venue must be chosen appropriately to obtain more color in the pictures.
+What we want is a short story, composed by about 10 paragraphs, with two characters, a tiger and a lion. The type of the characters is important to steer the story; in the same way, the venue must be chosen appropriately to obtain more color in the pictures.
 
 
 ```python
@@ -89,10 +89,10 @@ The prompt is the most important component: we need the story, but also the imag
 story_prompt = f"""
 Please write me a short {genre} story. In this story, {character1_name} is a
 {character1_type} and {character2_name} is a {character2_type}. The story
-takes place {venue}. The story should have a title. Start each paragraph with 'Paragraph #'.
+takes place {venue}. The story should have a title.
 For each paragraph, write me an input prompt for an AI
-image generator. Each image prompt must start in a new paragraph and have the words
-'Image Prompt:' at the start. Choose only one book illustrator and put something in the
+image generator. Each image prompt must start in a new paragraph and have the words.
+Choose only one book illustrator and put something in the
 image prompts to say the images should be made in the style of that artist.
 There should be around 10 paragraphs.
 Format the output as a json file, with a 'title' field, an 'illustrator' field for the
@@ -163,7 +163,7 @@ print('\n\n'.join(story_paragraphs))
     In the heart of the forest, life went back to its peaceful rhythm. The stories of Bob and John's heroic quest became a testament to their undying spirit, their tale becoming a beacon of hope, courage, and friendship.
     
 
-As a little twist, we ask ChatGPT to translate the text into a different language. Here we use italian but anything will work as well. In general the translation keeps the number of paragraphs; an explicit instruction is added to the prompt.
+As a little twist, we ask ChatGPT to translate the text into a different language. Here we use italian but anything will work as well. In general the translation keeps the number of paragraphs; an explicit instruction is added to the prompt for that.
 
 
 ```python
@@ -179,7 +179,7 @@ Each paragraph should be separated by an empty line. Do not change the number of
 """ 
 
 output = openai.ChatCompletion.create(
-    model='gpt-3.5-turbo',
+    model='gpt-4',
     messages=[
         {'role': 'system', 'content': "you are the translator of children's stories"},
         {'role': 'user', 'content': prompt},
@@ -199,7 +199,7 @@ for i, paragraph in enumerate(translated_paragraphs):
         f.write(paragraph) 
 ```
 
-To generate the images, we take each of the image prompts just generated and call DeepAI. The output is a link, whose content is downloaded and saved to a file. 
+To generate the images, we take each of the image prompts just generated and call the DeepAI API. The output sent back is a link, whose content is downloaded and saved to a file. We use a resolution of $1080 \times 720$ pixels. Note the negative prompt, which is used to avoid bad artifacts.
 
 
 ```python
@@ -246,7 +246,7 @@ for i in range(max(num_paragraphs, num_prompts)):
         images.append(image)
 ```
 
-We have generated all that we need; the images are reported here. Results aren't always exceptional, with too many tigers and only few monkeys. The style for paragraph #3 is wrong and out of sync with the others; #7 and #8 are too similar.
+We have generated all that we need; the images are reported here. Results aren't always exceptional, with too many tigers and only few monkeys. The style for the image of paragraph #3 is wrong (no people are needed) and out of sync with the others; #7 and #8 are too similar. Perhaps other characters, or another image style, would have been better.
 
 
 ```python
@@ -265,7 +265,7 @@ for i, ax in enumerate(axes):
     
 
 
-The final step is a small application that displays the images and reads the text aloud. On Windows, the corresponding language pack must be installed or results will be wierd. The `pygame` application itself is basic and only used to show the images.
+The final step is a small application that displays the images and reads the text aloud. On Windows, the corresponding language pack must be installed or results will be a wierd pronounciation of Italian words in whatever language has been installed. The `pygame` application itself is really basic and only used to show the images and sync them with the audio.
 
 
 ```python
