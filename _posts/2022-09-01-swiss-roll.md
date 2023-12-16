@@ -26,9 +26,9 @@ p_\vartheta(x) & = \int p_\vartheta(x, z) dz \\
 \end{aligned}
 $$
 
-The distribution over the latent variables $p_\vartheta(z)$ is generally "simple", normal or uniform; the complexity of the transformation is contained in $p_\vartheta(z | z)$, which is generally based on some deep neural networks functions depending on $z$ for the definition of its coefficients.
+The distribution over the latent variables $p_\vartheta(z)$ is generally "simple", normal or uniform; the complexity of the transformation is contained in $p_\vartheta(z \vert z)$, which is generally based on some deep neural networks functions depending on $z$ for the definition of its coefficients.
 
-With this approach it is easy to sample from $p_\vartheta$: first we sample $z \sim p_\vartheta(z)$, we compute the coefficients as a function of $z$ and finally sample $x \sim p_\vartheta(x | z)$. As such, we have defined a generative model.
+With this approach it is easy to sample from $p_\vartheta$: first we sample $z \sim p_\vartheta(z)$, we compute the coefficients as a function of $z$ and finally sample $x \sim p_\vartheta(x \vert z)$. As such, we have defined a generative model.
 
 We still need to define a procedure for computing the optimal parameters $\vartheta^\star$. The approach we follow is to maximize the log-likelihood of our data,
 
