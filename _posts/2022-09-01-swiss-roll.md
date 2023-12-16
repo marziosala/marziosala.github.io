@@ -4,7 +4,7 @@ permalink: /swiss-roll/
 title: "An Introduction to Diffusion Models"
 header:
   overlay_image: /assets/images/swiss-roll/swiss-roll-splash.jpeg
-excerpt: "Understanding how diffusion models work, on a simple two-dimensional dataset"
+excerpt: "Understanding how diffusion models work using a simple two-dimensional dataset"
 ---
 
 In this post we look at [diffusion models](https://en.wikipedia.org/wiki/Diffusion_model), a quite successful class of [generative models](https://en.wikipedia.org/wiki/Generative_model). A generative model is a model that, given samples from an unknown distribution $p^\star$, is capable of learning a good approximation of it. Once learned, the approximated distribution can be used to generate new samples, or to evaluate the likelihood of observed or sampled data.
@@ -75,10 +75,10 @@ $$
 
 The values of $T$ and $\beta_t$ ust be defined such that the distribution of $x_T$ is close to normal.
 
-If we could sample from $q(x_{t - 1} | x_t)$, we could reverse the process and generate samples from Gaussian noise. Unfortunately we cannot easily estimate it but we can set up a model that learns such transformation. We define such reverse process as
+If we could sample from $q(x_{t - 1} \vert x_t)$, we could reverse the process and generate samples from Gaussian noise. Unfortunately we cannot easily estimate it but we can set up a model that learns such transformation. We define such reverse process as
 
 $$
-p_\vartheta(x_0, \cdots, x_T) = p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} | x_t)
+p_\vartheta(x_0, \cdots, x_T) = p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} \vert x_t)
 $$
 
 with
