@@ -9,7 +9,13 @@ excerpt: "Understanding how diffusion models work, on a simple two-dimensional d
 
 In this post we look at [diffusion models](https://en.wikipedia.org/wiki/Diffusion_model), a quite successful class of [generative models](https://en.wikipedia.org/wiki/Generative_model). A generative model is a model that, given samples from an unknown distribution $p^\star$, is capable of learning a good approximation of it. Once learned, the approximated distribution can be used to generate new samples, or to evaluate the likelihood of observed or sampled data.
 
-In general $p^\star$ is too hard to find directly, so we seek a good approximation of it by defining a sufficiently large parametric family $\{ p_\vartheta \}_{\vartheta \in \Theta}$, then solve for $\vartheta^\star = \argmin_{\vartheta \in \Theta} \mathcal{L}(p_\vartheta, p^\star)$ for some loss function $\mathcal{L}$.
+In general $p^\star$ is too hard to find directly, so we seek a good approximation of it by defining a sufficiently large parametric family $\{ p_\vartheta \}_{\vartheta \in \Theta}$, then solve for
+
+$$
+\vartheta^\star = \argmin_{\vartheta \in \Theta} \mathcal{L}(p_\vartheta, p^\star)
+$$
+
+for some loss function $\mathcal{L}$.
 
 We define $p_\vartheta$ not by using an explicit parametrized distribution family, as they are all too simple for our task, but we rather consider implicitly parametrized probability distributions. That is, we assume some latent variables $z$ and write
 
