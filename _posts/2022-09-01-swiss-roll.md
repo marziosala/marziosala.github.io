@@ -279,7 +279,7 @@ for model in [μ_model, σ_model]:
     model.apply(init_weights)
 ```
 
-The `compute_loss()` function contains all the logic of the method. This implementation is not very efficient but it reflects the formulae we have seen above and it is a nice starting point to understand those methods. The inputs are all the steps of the forward process as well as all the corresponding distributions, plus the models for $\mu_\vartheta$ and $\Sigma_\vartheta$. Using those inputs we can easily compute the various terms we need: $\log p(x_T)$, $\log p_\vartheta(x_{t-1} | x_t)$ and $\log q(x_{t} | x_{t-1})$. The integrals are approximated by the average over all the samples.
+The `compute_loss()` function contains all the logic of the method. This implementation is not very efficient but it reflects the formulae we have seen above and it is a nice starting point to understand those methods. The inputs are all the steps of the forward process as well as all the corresponding distributions, plus the models for $\mu_\vartheta$ and $\Sigma_\vartheta$. Using those inputs we can easily compute the various terms we need: $\log p(x_T)$, $\log p_\vartheta(x_{t-1} \vert x_t)$ and $\log q(x_{t} \vert x_{t-1})$. The integrals are approximated by the average over all the samples.
 
 
 ```python
