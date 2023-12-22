@@ -22,7 +22,7 @@ We define $p_\vartheta$ not by using an explicit parametrized distribution famil
 $$
 \begin{aligned}
 p_\vartheta(x) & = \int p_\vartheta(x, z) dz \\
-& = \int p_\vartheta(x | z) p_\vartheta(z) dz.
+& = \int p_\vartheta(x \vert z) p_\vartheta(z) dz.
 \end{aligned}
 $$
 
@@ -30,8 +30,8 @@ The distribution over the latent variables $p_\vartheta(z)$ is generally "simple
 
 With this approach it is easy to sample from $p_\vartheta$: 
 
-- first we sample $z \sim p_\vartheta(z)$ (which we can do using classical methods for normal or uniform distributions);
-- then we compute the coefficients of $p(x | z)$ as a function of $z$ and finally we sample $x \sim p_\vartheta(x \vert z)$.
+- first we sample $z \sim p_\vartheta(z)$, which we can do using classical methods for normal or uniform distributions;
+- then we compute the coefficients of $p(x \vert z)$ as a function of $z$ and finally we sample $x \sim p_\vartheta(x \vert z)$.
 
 As such, we have defined a generative model.
 
@@ -564,8 +564,7 @@ $$
 q(x_{t-1} | x_t, x_0) = \frac{q(x_t | x_{t - 1}, x_0) q(x_{t - 1} | x_0)}{q(x_t | x_0)}.
 $$
 
-We already know the expression for $q(x_t | x_{t-1}, x_0) = q(x_t | x_{t-1})$.
-
+We already know the expression for $q(x_t \vert x_{t-1}, x_0) = q(x_t \vert x_{t-1})$. 
 Thanks to the property of the previous paragraph we have
 
 $$
