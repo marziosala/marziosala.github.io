@@ -26,9 +26,9 @@ p_\vartheta(x) & = \int p_\vartheta(x, z) dz \\
 \end{aligned}
 $$
 
-The distribution over the latent variables $p_\vartheta(z)$ is generally "simple", normal or uniform; the complexity of the transformation is contained in $p_\vartheta(z \vert z)$, which is generally based on some deep neural networks functions depending on $z$ for the definition of its coefficients.
+The distribution over the latent variables $p_\vartheta(z)$ is generally "simple", normal or uniform; the complexity of the transformation is contained in $p_\vartheta(x \vert z)$, which is generally based on some deep neural networks functions depending on $z$ for the definition of its coefficients.
 
-With this approach it is easy to sample from $p_\vartheta$: first we sample $z \sim p_\vartheta(z)$, we compute the coefficients as a function of $z$ and finally sample $x \sim p_\vartheta(x \vert z)$. As such, we have defined a generative model.
+With this approach it is easy to sample from $p_\vartheta$: first we sample $z \sim p_\vartheta(z)$ (which we can do using classical methods for normal or uniform distributions), then we compute the coefficients of $p(x | z)$ as a function of $z$ and finally we sample $x \sim p_\vartheta(x \vert z)$. As such, we have defined a generative model.
 
 We still need to define a procedure for computing the optimal parameters $\vartheta^\star$. The approach we follow is to maximize the log-likelihood of our data,
 
@@ -36,7 +36,7 @@ $$
 \vartheta^\star = \argmax_{\vartheta \in \Theta} \log p_\vartheta(x),
 $$
 
-where $\log p_\vartheta(x)$ is called the *evidence*. Intuitively, if we have chosen the right $p_\vartheta$ and $\vartheta^\star$, we would expect a high probability of "seeing" our data, and therefore the likelihood will be a "large" number. Given another distribution $q(z)$, we have
+where $\log p_\vartheta(x)$ is called the *evidence*. Intuitively, if we have chosen the right $p_\vartheta$ and $\vartheta^\star$, we would expect a high probability of "seeing" our data, and therefore the likelihood will be a "large" number. The classical trick is to define another distribution $q(z)$, and proceed as follows:
 
 $$
 \begin{aligned}
@@ -45,7 +45,7 @@ $$
 & = \log \int p_\vartheta(x | z) p_\vartheta(z) \frac{q(z)}{q(z)} dz \\
 %
 & \ge \int \log \left[
-\frac{p_\vartheta(z)}{q(z)} p_\vartheta(x | z)
+p_\vartheta(x | z) \frac{p_\vartheta(z)}{q(z)}
 \right] q(z) dz \\
 %
 & = \mathbb{E}_q\left[ \log p_\vartheta(x | z) \right]
@@ -55,16 +55,18 @@ $$
 \end{aligned}
 $$
 
-This is called the *evidence lower bound*, or ELBO. The first term describes the probability of the dat $x$ given the latent variables $z$, a quantity we want to maximize by picking those models $q(z)$ that better predict the data. The second term is the negative [Kullback-Leibler](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) divergence between $q(z)$ and $p_\vartheta(z)$, and we want to minimize this quantity by choosing $q(z)$ and $p_\vartheta(z)$ to be similar.
+This is called the *evidence lower bound*, or ELBO. The first term describes the probability of the data $x$ given the latent variables $z$, a quantity we want to maximize by picking those models $q(z)$ that better predict the data. The second term is the negative [Kullback-Leibler](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) divergence between $q(z)$ and $p_\vartheta(z)$, and we want to minimize this quantity by choosing $q(z)$ and $p_\vartheta(z)$ to be similar.
+
+The ELBO is quite general and well-known; what changes for diffusion models is the choice of the distributions and the several tricks that make them performant and efficient.
 
 Diffusion models were first presented in [Sohl-Dickstein et al., 2015](https://arxiv.org/abs/1503.03585). The key idea of the paper is to use a Markov chain to gradually convert one distribution into another, with each step in the chain analytically tractable -- as such, the full chain can also be evaluated. That is, instead of looking for a single transformation that can be difficult to learn and evaluate, we use a composition of several small perturbations. The approach is extended in [Ho et al, 2020](https://arxiv.org/pdf/2006.11239.pdf), which we follow closely for the notation, and further extended in [Song et al., 2021](https://arxiv.org/pdf/2011.13456.pdf).
 
-The basic idea is to start from a given sample, $x_0$, and using a *forward process* we define $x_1, x_2, \ldots, x_T$ for some $T > 0$. With a small abuse of notation, $x_0$ is our actual data while $x_1, \ldots, x_T$ are latent variables into which the data in transformed. At each step $t$ a bit or noise is added, until when, at $t=T$, the data becomes indistinguishable from pure Gaussian noise. A second process, the *reverse process*, will then generate data starting from pure Gaussian noise.
+The basic idea is to start from a given sample, $x_0 \sim p^\star(x_0)$, and using a *forward process* we define $x_1, x_2, \ldots, x_T$ for some $T > 0$. With a small abuse of notation, $x_0$ is our actual data while $x_1, \ldots, x_T$ are latent variables into which the data in transformed. (That is, we use $x$ for both the data and the latent variables.) At each step $t$ a bit or noise is added, until when, at $t=T$, the data becomes indistinguishable from pure Gaussian noise. A second process, the *reverse process*, will then generate data starting from pure Gaussian noise, thus going from $t=T$ to $t=0$.
 
-Given a data point from our distribution, $x_0 = x \sim p^\star(x)$, we define a forward diffusion process in which we add a small amount of Gaussian noise to the sample in $T$ steps, producing a sequence of noisy samples $x_1, \ldots, x_T$. Given a variance schedule $\{ \beta_t \in (0, 1) \}_{t=1}^T$, we have
+More formally and using $x \sim \mathcal{N}(x; \mu, \sigma^2 I)$ to indicate a multivariate sample $x$ of a normal distribution with mean $\mu$ and diagional variance matrix $\sigma^2$, we define the forward diffusion process that adds a small amount of Gaussian noise to the sample in $T$ steps producing a sequence of noisy samples $x_1, \ldots, x_T$ as follows. Given a variance schedule $\{ \beta_t \in (0, 1) \}_{t=1}^T$, we have
 
 $$
-q(x_t | x_{t-1}) = \mathcal{N}(x_t; \sqrt(1 - \beta_t) x_{t-1}, \beta_t I)
+q(x_t | x_{t-1}) = \mathcal{N} \left(x_t; \sqrt{1 - \beta_t} x_{t-1}, \beta_t I \right)
 $$
 
 and
@@ -73,18 +75,18 @@ $$
 q(x_1, \cdots, x_T | x_0) = \Pi_{t=1}^T q(x_t | x_{t-1}).
 $$
 
-The values of $T$ and $\beta_t$ ust be defined such that the distribution of $x_T$ is close to normal.
+The values of $T$ and $\beta_t$ must be defined such that the distribution of $x_T$ is close to normal. In general the variance schedule $\beta_t$ is not learnt and given.
 
-If we could sample from $q(x_{t - 1} \vert x_t)$, we could reverse the process and generate samples from Gaussian noise. Unfortunately we cannot easily estimate it but we can set up a model that learns such transformation. We define such reverse process as
+If we could sample from $q(x_{t - 1} \vert x_t)$, we could reverse the process and generate samples from Gaussian noise. Unfortunately we cannot easily estimate it directly but we can set up a model that learns such transformation. We define such reverse process as
 
 $$
-p_\vartheta(x_0, \cdots, x_T) = p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} \vert x_t)
+p_\vartheta(x_0, \ldots, x_T) = p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} \vert x_t)
 $$
 
 with
 
 $$
-p_\vartheta(x_{t-1} | x_t) = \mathcal{N}(x_{t-1} | \mu_\vartheta(x_t, t), \Sigma_\vartheta(x_t, t))
+p_\vartheta(x_{t-1} | x_t) = \mathcal{N}\left(x_{t-1} | \mu_\vartheta(x_t, t), \Sigma_\vartheta(x_t, t)\right)
 $$
 
 and
@@ -93,31 +95,46 @@ $$
 p_x(_T) = \mathcal{N}(x_T; 0, I).
 $$
 
-To define the loss function for a given point $x_0$, we use the ELBO, which can be derived as follows:
+To define the loss function for a given point $x_0$ we use the ELBO to define the loss function for the minimization problem:
 
 $$
 \begin{aligned}
--\log p_\vartheta(x_0) & = - \log \int p_\vartheta(x_0, x_1, x_2, \cdots, x_T) dx_1 dx_2 \cdots dx_T \\
+-\log p_\vartheta(x_0) & = - \log \int p_\vartheta(x_0, x_1, x_2, \ldots, x_T) dx_1 dx_2 \cdots dx_T \\
 %
-& = - \log \int \frac{p_\vartheta(x_0, x_1, \cdots, x_T) q(x_1, \cdots, x_T | x_0)}{q(x_1, \cdots, x_T | x_0)} dx_{1:T} \\
+& = - \log \int \frac{p_\vartheta(x_0, x_1, \ldots, x_T) q(x_1, \ldots, x_T | x_0)}{q(x_1, \cdots, x_T | x_0)} dx_{1:T} \\
 %
-& = -\log \mathbb{E}_{q(x_1, \cdots, x_T)} \left[
-    \frac{p_\vartheta(x_0, x_1, \cdots, x_T)}{q(x_1, \cdots, x_T) | x_0)}
+& = -\log \mathbb{E}_{q(x_1, \ldots, x_T)} \left[
+    \frac{p_\vartheta(x_0, x_1, \ldots, x_T)}{q(x_1, \ldots, x_T) | x_0)}
 \right] \\
 %
-& = -\mathbb{E}_{q(x_1, \cdots, x_T)}\left[
-- \log \frac{p_\vartheta(x_0, x_1, \cdots, x_T)}{q(x_1, \cdots, x_T | x_0)}
+& \le -\mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+\log \frac{p_\vartheta(x_0, x_1, \ldots, x_T)}{q(x_1, \ldots, x_T | x_0)}
 \right] \\
 %
-& = -\mathbb{E}_{q(x_1, \cdots, x_T)}\left[
+& = -\mathbb{E}_{q(x_1, \ldots, x_T)}\left[
 \log \frac{
 p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} | x_t)
 }{
     \Pi_{t=1}^T q(x_t | x_{t-1})
 }
-\right].
+\right] \\
+%
+& = - \mathbb{E}_{q(x_T)}[p(x_T)] + \sum_{t=1}^T
+D_{KL} \left(q(x_t | x_{t-1} \,||\, p_\vartheta(x_{t-1} | x_t)) \right).
 \end{aligned}
 $$
+
+Since there are no learnable parameters in $p(x_T)$, our loss function will be
+
+$$
+\mathcal{L} = \sum_{t=1}^T
+D_{KL} \left(q(x_t | x_{t-1}) \,||\, p_\vartheta(x_{t-1} | x_t)\right).
+$$
+
+Once the forward process is known, the KL-divergence above is easy to compute because
+both $q(x_t | x_{t-1})$ and $p_\vartheta(x_{t-1} | x_t)$ are normal. That is, since $x_{t-1}$ is known,
+we can compute the mean and variance of the normal distribution that defines $q$; the same holds for $p_\vartheta$
+given that $x_t$ is known as well.
 
 This is the most basic formulation of the method, which we will use in the code below.
 
@@ -293,13 +310,13 @@ def compute_loss(q_all, x_all, μ_model, σ_model):
 
     for t in range(1, T):
         x_t = x_all[t]
-        x_t1 = x_all[t - 1]
+        x_t_minus_1 = x_all[t - 1]
         q_t = q_all[t]
 
         x_input = torch.cat((x_t, (t / T) * torch.ones(x_t.shape[0], 1)), dim=1)
-        p_t = torch.distributions.Normal(μ_model(x_input), σ_model(x_input))
+        p_t_minus_1 = torch.distributions.Normal(μ_model(x_input), σ_model(x_input))
 
-        loss -= torch.mean(p_t.log_prob(x_t1))
+        loss -= torch.mean(p_t_minus_1.log_prob(x_t_minus_1))
         loss += torch.mean(q_t.log_prob(x_t))
 
     return loss / T
@@ -500,4 +517,213 @@ ax1.set_title('Generated dataset');
     
 
 
-We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models.
+To improve the results we can leverage on the properties of the forward process. First note that, being the composition of normal transformations, the forward process admits sampling $x_t$ at an arbitrary time $t$ in closed form. In fact, using the notation $\alpha_t = 1- \beta_t$ and $\varepsilon_i \sim \mathcal{N}(0, 1)$, we have
+
+$$
+\begin{aligned}
+x_1 & = \sqrt{\alpha_0} \, x_0 + \sqrt{1 - \alpha_0} \, \varepsilon_1 \\
+%
+x_2 & = \sqrt{\alpha_1} \, x_1 + \sqrt{1 - \alpha_0} \, \varepsilon_2 \\
+%
+& = \sqrt{\alpha_0} \sqrt{\alpha_1} \, x_0 + \sqrt{\alpha_2} \sqrt{1 - \alpha_1} \varepsilon_1 + \sqrt{1 - \alpha_2} \, \varepsilon_2 \\
+%
+& = \sqrt{\alpha_0 \alpha_1} \, x_0 + \sqrt{\alpha_2(1 - \alpha_1) + 1 - \alpha_2} \, \varepsilon_{1,2} \\
+%
+& = \sqrt{\alpha_0 \alpha_1} \, x_0 + \sqrt{1 - \alpha_1 \alpha_2} \, \varepsilon_{1,2} \\
+%
+x_3 & = \sqrt{\alpha_3} \, x_2 + \sqrt{1 - \alpha_3} \, \varepsilon_3 \\
+%
+& = \sqrt{\alpha_1 \alpha_2 \alpha_3} \, x_0 + \sqrt{1 - \alpha_1 \alpha_2 \alpha_3} \, \varepsilon_3 \\
+%
+x_t & = \sqrt{\bar{\alpha}_t} \, x_0 + \sqrt{1 - \bar \alpha_t} \, \varepsilon_t,
+\end{aligned}
+$$
+
+that is,
+
+$$
+x_t \sim \mathcal{N} \left( x_t; \sqrt{\bar{\alpha}_t} \, x_0, (1 - \bar\alpha_t) I \right),
+$$
+
+where $\bar\alpha_t = \Pi_{s=1}^t \alpha_s = \Pi_{s=1}^T (1 - \beta_s)$.
+
+The second important observation is that, due to the Markov property,
+
+$$
+q(x_t | x_{t-1}) = q(x_t | x_{t-1}, x_0)
+$$
+
+because $0 \le t - 1$. Using Bayes' rule, we have
+
+$$
+q(x_{t-1} | x_t, x_0) = \frac{q(x_t | x_{t - 1}, x_0) q(x_{t - 1} | x_0)}{q(x_t | x_0)}.
+$$
+
+We already know the expression for $q(x_t | x_{t-1}, x_0) = q(x_t | x_{t-1})$. Thanks to the property of the previous paragraph we have
+
+$$
+q(x_t | x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t)I).
+$$
+
+All the three expressions on the right-hand side of Bayes' rule are normal distributions, 
+
+$$
+\begin{aligned}
+q(x_{t-1} | x_t, x_0) & = 
+\frac{
+    \mathcal{N}\left( x_t; \sqrt{\alpha_t} x_{t-1}, (1 - \alpha_t) I \right)
+    \mathcal{N}\left( x_{t-1}; \sqrt{\bar\alpha_{t-1}} x_0, (1 - \bar\alpha_{t-1} ) I\right)
+}{
+    \mathcal{N}\left( x_t; \sqrt{\bar\alpha_t} x_0, (1 - \bar\alpha_t ) I\right)
+} \\
+% --
+& \propto \exp\left\{
+-\left[
+\frac{(x_t - \sqrt{\alpha_t} \, x_{t-1})^2}{2(1 - \alpha_t)}
++
+\frac{(x_{t-1} - \sqrt{\bar\alpha_{t-1}}\, x_0)^2}{2(1 - \bar\alpha_{t-1})}
+-
+\frac{(x_t - \sqrt{\bar\alpha_t} \, x_0)^2}{2(1 - \bar\alpha_t)}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+-\frac{1}{2} \left[
+\frac{(x_t - \sqrt{\alpha_t} \, x_{t-1})^2}{1 - \alpha_t}
++
+\frac{(x_{t-1} - \sqrt{\bar\alpha_{t-1}}\, x_0)^2}{1 - \bar\alpha_{t-1}}
+-
+\frac{(x_t - \sqrt{\bar\alpha_t} \, x_0)^2}{1 - \bar\alpha_t}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+-\frac{1}{2} \left[
+\frac{-2x_t \sqrt{\alpha_t} \, x_{t-1} + \alpha_t x_{t-1}^2 }{1 - \alpha_t}
++
+\frac{x_{t-1}^2 - 2 x_{t-1}\sqrt{\bar\alpha_{t-1}} x_0}{1 - \bar\alpha_{t-1}}
++ C(x_t, x_0) \right]
+\right\} \\
+% --
+& \propto \exp\left\{
+-\frac{1}{2} \left[
+- \frac{-2 \sqrt{\alpha_t} \, x_t x_{t-1}}{1 - \alpha_t}
++ \frac{\alpha_t x_{t-1}^2 }{1 - \alpha_t}
++
+\frac{x_{t-1}^2}{1 - \bar\alpha_{t-1}}
+%
+- \frac{2 \sqrt{\bar\alpha_{t-1}} \, x_{t-1} x_0}{1 - \bar\alpha_{t-1}}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+-\frac{1}{2} \left[
+\frac{\alpha_t(1-\bar\alpha_{t-1}) + 1 - \alpha_t}{(1 - \alpha_t) (1 - \bar\alpha_{t-1})} x_{t-1}^2
+- 2 \left( 
+    \frac{\sqrt{\alpha_t} x_t}{1 - \alpha_t} + \frac{\sqrt{\bar\alpha_{t-1}} \, x_0}{1 - \bar\alpha_{t-1}}
+\right) x_{t-1}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+-\frac{1}{2} \left[
+\frac{1 - \bar\alpha_t}{(1 - \alpha_t) (1 - \bar\alpha_{t-1})} x_{t-1}^2
+- 2 \left( 
+    \frac{\sqrt{\alpha_t} x_t}{1 - \alpha_t} + \frac{\sqrt{\bar\alpha_{t-1}} \, x_0}{1 - \bar\alpha_{t-1}}
+\right) x_{t-1}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+-\frac{1}{2} 
+\frac{1 - \bar\alpha_t}{(1 - \alpha_t) (1 - \bar\alpha_{t-1})}
+\left[
+    x_{t-1}^2
+- 2 \frac{
+    \frac{\sqrt{\alpha_t}}{1 - \alpha_t} x_t + \frac{\sqrt{\bar\alpha_{t-1}}}{1-\bar\alpha_{t-1}} x_0
+}{
+    \frac{1 - \bar\alpha_t}{(1 - \alpha_t) (1 - \bar\alpha_{t-1})}
+} x_{t-1}
+\right]
+\right\} \\
+% --
+& = \exp\left\{
+- \frac{1}{2 \Sigma^2_q(t)}
+\left[
+x_{t-1}^2 - 2 \frac{
+    \sqrt{\alpha_t} (1 - \bar\alpha_{t-1} \, x_t + \sqrt{\bar\alpha_{t-1}} (1 - \alpha_t) x_0)
+}{
+    1 - \bar\alpha_t
+} x_{t-1}
+\right]
+\right\} \\
+% --
+& \propto \mathcal{N} \left(
+x_{t-1}; \mu_q(x_t, x_0), \Sigma_q^2 (x_t, x_0)
+\right),
+\end{aligned}
+$$
+
+meaning that we can express $q(x_{t-1} | x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma^2_q(t)$.
+
+In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} | x_t)$ to the ground-truth denoising transition step $q(x_{t-1} | x_t, x_0)$ as close as possile, it makes sense to model it as a Gaussian distribution, which is what we have done. As suggested in [Ho et al., 2020], we simplify the reverse process by choosing $\Sigma_q(t) = \sigma_t I$. Our loss function will then minimize the Kullback-Leibler distance between the two distributions,
+
+$$
+\begin{aligned}
+\mathcal{L}_t & = D_{KL}(q(x_{t-1} | x_t, x_0) || p_\vartheta(x_{t-1}, x_t)) \\
+% ---
+& \propto D_{KL}(\mathcal{N}(x_{t-1}; \mu_q(x_t, t), \Sigma^2_q(t) || \mathcal{N}(x_{t-1}; \mu_\vartheta(x_t, t), \Sigma_\vartheta(x_t, t))) \\
+% ---
+& = \frac{1}{2}\left[
+\log \frac{|\Sigma^2_q(t)|}{|\Sigma^2_q(t)|} - d + \operatorname{tr} \left(\Sigma^2_q(t)^{-1} \Sigma^2_q(t) \right)
++ \left(
+    \mu_\vartheta(x_t, t) -\mu_q(x_t, t) \right)^T \Sigma^2_q(t)^{-1} (\mu_\vartheta(x_t, t) -\mu_q(x_t, t))
+\right] \\
+% ---
+& = \frac{1}{2} \left[
+    \log 1 - d + d + \Sigma_q^2(t)^{-1} \left(
+    \mu_\vartheta(x_t, t) -\mu_q(x_t, t) \right)^T
+    \left(
+    \mu_\vartheta(x_t, t) -\mu_q(x_t, t) \right)
+\right] \\
+% ---
+& = \frac{1}{2 \Sigma_q^2(t)} \|
+\mu_\vartheta(x_t, t) - \mu_q(x_t, t)
+\|^2,
+\end{aligned}
+$$
+
+that is, we want to find a $\mu_\vartheta(x_t, t)$ that matches $\mu_q(x_t, t)$. Noting that
+
+$$
+x_t = \sqrt{\bar\alpha_t} \, x_0 + \sqrt{1 - \bar\alpha_t} \, \varepsilon_t
+$$
+
+we can express $x_0$ as
+
+$$
+x_0 = \frac{1}{\sqrt{\bar\alpha_t}}\left(
+x_t - \sqrt{1 - \bar\alpha_t} \, \varepsilon_t
+\right)
+$$
+
+Plugging the above expressions for $x_0$ in the definitions of $\mu_q$, we obtain
+
+$$
+\begin{aligned}
+\mu_q(x_t, x_0, t) & = 
+%
+\frac{\sqrt{\alpha_t}(1 - \bar\alpha_{t-1}) x_t}{1 - \bar\alpha_t}
++ \frac{\sqrt{\bar\alpha_{t-1}}(1 - \alpha_t)}{1 - \bar\alpha_t}
+\frac{1}{\sqrt{\alpha_t}}
+\left(
+x_t - \sqrt{1 - \bar\alpha_t \, \varepsilon_t}
+\right) \\
+%
+& = \frac{1}{\sqrt{\alpha_t}} \left(
+x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}} \varepsilon_t
+\right).
+\end{aligned}
+$$
+
+We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
