@@ -670,7 +670,7 @@ x_{t-1}; \mu_q(x_t, x_0), \Sigma_q^2 (x_t, x_0)
 \end{aligned}
 $$
 
-This means that we can express $q(x_{t-1} | x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma_q^2(t)$.
+This means that we can express $q(x_{t-1} \vert x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma_q^2(t)$.
 
 In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} \vert x_t)$ to the ground-truth denoising transition step $q(x_{t-1} \vert x_t, x_0)$ as close as possile, it makes sense to model it as a Gaussian distribution, which is what we have done. As suggested in [Ho et al., 2020], we simplify the reverse process by choosing $\Sigma_q(t) = \sigma_t I$. Our loss function will then minimize the Kullback-Leibler distance between the two distributions,
 
