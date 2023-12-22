@@ -28,7 +28,12 @@ $$
 
 The distribution over the latent variables $p_\vartheta(z)$ is generally "simple", normal or uniform; the complexity of the transformation is contained in $p_\vartheta(x \vert z)$, which is generally based on some deep neural networks functions depending on $z$ for the definition of its coefficients.
 
-With this approach it is easy to sample from $p_\vartheta$: first we sample $z \sim p_\vartheta(z)$ (which we can do using classical methods for normal or uniform distributions), then we compute the coefficients of $p(x | z)$ as a function of $z$ and finally we sample $x \sim p_\vartheta(x \vert z)$. As such, we have defined a generative model.
+With this approach it is easy to sample from $p_\vartheta$: 
+
+- first we sample $z \sim p_\vartheta(z)$ (which we can do using classical methods for normal or uniform distributions);
+- then we compute the coefficients of $p(x | z)$ as a function of $z$ and finally we sample $x \sim p_\vartheta(x \vert z)$.
+
+As such, we have defined a generative model.
 
 We still need to define a procedure for computing the optimal parameters $\vartheta^\star$. The approach we follow is to maximize the log-likelihood of our data,
 
@@ -559,7 +564,9 @@ $$
 q(x_{t-1} | x_t, x_0) = \frac{q(x_t | x_{t - 1}, x_0) q(x_{t - 1} | x_0)}{q(x_t | x_0)}.
 $$
 
-We already know the expression for $q(x_t | x_{t-1}, x_0) = q(x_t | x_{t-1})$. Thanks to the property of the previous paragraph we have
+We already know the expression for $q(x_t | x_{t-1}, x_0) = q(x_t | x_{t-1})$.
+
+Thanks to the property of the previous paragraph we have
 
 $$
 q(x_t | x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t)I).
@@ -660,13 +667,13 @@ x_{t-1}^2 - 2 \frac{
 % --
 & \propto \mathcal{N} \left(
 x_{t-1}; \mu_q(x_t, x_0), \Sigma_q^2 (x_t, x_0)
-\right),
+\right).
 \end{aligned}
 $$
 
-meaning that we can express $q(x_{t-1} | x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma^2_q(t)$.
+This means that we can express $q(x_{t-1} | x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma_q^2(t)$.
 
-In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} | x_t)$ to the ground-truth denoising transition step $q(x_{t-1} | x_t, x_0)$ as close as possile, it makes sense to model it as a Gaussian distribution, which is what we have done. As suggested in [Ho et al., 2020], we simplify the reverse process by choosing $\Sigma_q(t) = \sigma_t I$. Our loss function will then minimize the Kullback-Leibler distance between the two distributions,
+In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} \vert x_t)$ to the ground-truth denoising transition step $q(x_{t-1} \vert x_t, x_0)$ as close as possile, it makes sense to model it as a Gaussian distribution, which is what we have done. As suggested in [Ho et al., 2020], we simplify the reverse process by choosing $\Sigma_q(t) = \sigma_t I$. Our loss function will then minimize the Kullback-Leibler distance between the two distributions,
 
 $$
 \begin{aligned}
