@@ -732,4 +732,86 @@ x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}} \varepsilon_t
 \end{aligned}
 $$
 
+We can go back to our loss function,
+
+$$
+\begin{aligned}
+\mathcal{L} & = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+\log \frac{
+    \Pi_{t=1}^T q(x_t | x_{t-1})
+}{
+p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} | x_t)
+}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=1}^T \log \frac{
+    q(x_t | x_{t-1})
+}{
+    p_\vartheta(x_{t-1} | x_t)
+}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=2}^T \log \frac{
+    q(x_t | x_{t-1})
+}{
+    p_\vartheta(x_{t-1} | x_t)
+} + \log \frac{q(x_1 | x_0)}{p_\vartheta(x_0 | x_1)}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=2}^T \log \frac{
+    q(x_t | x_{t-1}, x_0)
+}{
+    p_\vartheta(x_{t-1} | x_t)
+} + \log \frac{q(x_1 | x_0)}{p_\vartheta(x_0 | x_1)}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=2}^T \log \frac{
+    q(x_{t-1} | x_t, x_0)
+}{
+    p_\vartheta(x_{t-1} | x_t)
+} 
+\frac{q(x_t | x_0)}{q(x_{t-1} | x_0)}
++ \log \frac{q(x_1 | x_0)}{p_\vartheta(x_0 | x_1)}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=2}^T \log \frac{
+    q(x_{t-1} | x_t, x_0)
+}{
+    p_\vartheta(x_{t-1} | x_t)
+} 
++ \sum_{t=2}^T
+\log \frac{q(x_t | x_0)}{q(x_{t-1} | x_0)}
++ \log \frac{q(x_1 | x_0)}{p_\vartheta(x_0 | x_1)}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+-\log p(x_T) + \sum_{t=2}^T \log \frac{
+    q(x_{t-1} | x_t, x_0)
+}{
+    p_\vartheta(x_{t-1} | x_t)
+} 
++
+\log \frac{q(x_T | x_0)}{q(x_{1} | x_0)}
++ \log \frac{q(x_1 | x_0)}{p_\vartheta(x_0 | x_1)}
+\right] \\
+% ---
+& = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
+\underbrace{\log \frac{q(x_T | x_0)}{p(x_T)}}_{L_T}
++
+\sum_{t=2}^T \underbrace{\log \frac{q(x_{t-1} | x_t, x_0)}{p_\vartheta(x_{t-1} | x_t)}}_{L_{t-1}} 
+-
+\underbrace{\log p_\vartheta(x_0 | x_1)}_{L_0}
+\right] \\
+
+
+\end{aligned}
+$$
+
+The terms $L_T$ and $L_{t-1}$ compare two normal distributions and can therefore be computed in closed form. $L_T$ does not depend on the parameters $\vartheta$ and can be ignored in the optimization.
+
 We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
