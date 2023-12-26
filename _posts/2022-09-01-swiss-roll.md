@@ -582,16 +582,16 @@ This means that we have two ways of expressing the reverse process, one using $p
 
 $$
 x_0 \xrightleftarrows[
-    {\displaystyle p_\vartheta(x_0 | x_1)} \atop {\displaystyle q(x_0 | x_1, x_0)}
-]{\displaystyle q(x_1 | x_0)} x_1
+    {\displaystyle p_\vartheta(x_0 \vert x_1)} \atop {\displaystyle q(x_0 \vert x_1, x_0)}
+]{\displaystyle q(x_1 \vert x_0)} x_1
 \quad \cdots \quad
 x_{t-1} \xrightleftarrows[
-    {\displaystyle p_\vartheta(x_{t-1} | x_t)} \atop {\displaystyle q(x_{t-1} | x_t, x_0)}
-]{\displaystyle q(x_t | x_{t-1})} x_t
+    {\displaystyle p_\vartheta(x_{t-1} \vert x_t)} \atop {\displaystyle q(x_{t-1} \vert x_t, x_0)}
+]{\displaystyle q(x_t \vert x_{t-1})} x_t
 \quad \cdots \quad
 x_{T-1} \xrightleftarrows[
-    {\displaystyle p_\vartheta(x_{T-1} | x_T)} \atop {\displaystyle q(x_{T-1} | x_T, x_0)}
-]{\displaystyle q(x_T | x_{T-1})} x_T.
+    {\displaystyle p_\vartheta(x_{T-1} \vert x_T)} \atop {\displaystyle q(x_{T-1} \vert x_T, x_0)}
+]{\displaystyle q(x_T \vert x_{T-1})} x_T.
 $$
 
 We already know the expression for $q(x_t \vert x_{t-1}, x_0) = q(x_t \vert x_{t-1})$. 
@@ -706,12 +706,12 @@ In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} \ve
 
 $$
 \begin{aligned}
-\mathcal{L}_t & = D_{KL}(q(x_{t-1} | x_t, x_0) || p_\vartheta(x_{t-1}, x_t)) \\
+\mathcal{L}_t & = D_{KL}(q(x_{t-1} \vert x_t, x_0) || p_\vartheta(x_{t-1}, x_t)) \\
 % ---
 & \propto D_{KL}(\mathcal{N}(x_{t-1}; \mu_q(x_t, t), \Sigma^2_q(t) || \mathcal{N}(x_{t-1}; \mu_\vartheta(x_t, t), \Sigma_\vartheta(x_t, t))) \\
 % ---
 & = \frac{1}{2}\left[
-\log \frac{|\Sigma^2_q(t)|}{|\Sigma^2_q(t)|} - d + \operatorname{tr} \left(\Sigma^2_q(t)^{-1} \Sigma^2_q(t) \right)
+\log \frac{\vert\Sigma^2_q(t)\vert}{\vert\Sigma^2_q(t)\vert} - d + \operatorname{tr} \left(\Sigma^2_q(t)^{-1} \Sigma^2_q(t) \right)
 + \left(
     \mu_\vartheta(x_t, t) -\mu_q(x_t, t) \right)^T \Sigma^2_q(t)^{-1} (\mu_\vartheta(x_t, t) -\mu_q(x_t, t))
 \right] \\
@@ -723,9 +723,9 @@ $$
     \mu_\vartheta(x_t, t) -\mu_q(x_t, t) \right)
 \right] \\
 % ---
-& = \frac{1}{2 \Sigma_q^2(t)} \|
+& = \frac{1}{2 \Sigma_q^2(t)} \vert
 \mu_\vartheta(x_t, t) - \mu_q(x_t, t)
-\|^2,
+\vert^2,
 \end{aligned}
 $$
 
