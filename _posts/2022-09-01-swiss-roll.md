@@ -100,6 +100,16 @@ $$
 p_x(_T) = \mathcal{N}(x_T; 0, I).
 $$
 
+Graphically, the behavior is as below, with the $q$ distributions moving forward from $x_0$ to $x_T$ and the $p_\vartheta$ distributions moving backward from $x_T$ to $x_0$:
+
+$$
+x_0 \xrightleftarrows[\displaystyle p_\vartheta(x_0 | x_1)]{\displaystyle q(x_1 | x_0)} x_1
+\quad \cdots \quad
+x_{t-1} \xrightleftarrows[\displaystyle p_\vartheta(x_{t-1} | x_t)]{\displaystyle q(x_t | x_{t-1})} x_t
+\quad \cdots \quad
+x_{T-1} \xrightleftarrows[\displaystyle p_\vartheta(x_{T-1} | x_T)]{\displaystyle q(x_T | x_{T-1})} x_T.
+$$
+
 To define the loss function for a given point $x_0$ we use the ELBO to define the loss function for the minimization problem:
 
 $$
@@ -564,6 +574,22 @@ $$
 q(x_{t-1} | x_t, x_0) = \frac{q(x_t | x_{t - 1}, x_0) q(x_{t - 1} | x_0)}{q(x_t | x_0)}.
 $$
 
+This means that we have two ways of expressing the reverse process, one using $p_\vartheta$ and the other using $q$. The latter only works when conditioned on $x_0$, henceforth it is not useful to generate a new $x_0$ -- we would need to know $x_0$ to generate it. However this suggests a new approach: if we can find an expression for $q(x_{t-1} | x_t, x_0)$, we could train $p_\vartheta$ to learn it for several $x_0$, then use it to generate new $x_0$.
+
+$$
+x_0 \xrightleftarrows[
+    {\displaystyle p_\vartheta(x_0 | x_1)} \atop {\displaystyle q(x_0 | x_1, x_0)}
+]{\displaystyle q(x_1 | x_0)} x_1
+\quad \cdots \quad
+x_{t-1} \xrightleftarrows[
+    {\displaystyle p_\vartheta(x_{t-1} | x_t)} \atop {\displaystyle q(x_{t-1} | x_t, x_0)}
+]{\displaystyle q(x_t | x_{t-1})} x_t
+\quad \cdots \quad
+x_{T-1} \xrightleftarrows[
+    {\displaystyle p_\vartheta(x_{T-1} | x_T)} \atop {\displaystyle q(x_{T-1} | x_T, x_0)}
+]{\displaystyle q(x_T | x_{T-1})} x_T.
+$$
+
 We already know the expression for $q(x_t \vert x_{t-1}, x_0) = q(x_t \vert x_{t-1})$. 
 Thanks to the property of the previous paragraph we have
 
@@ -801,17 +827,23 @@ p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} | x_t)
 \right] \\
 % ---
 & = \mathbb{E}_{q(x_1, \ldots, x_T)}\left[
-\underbrace{\log \frac{q(x_T | x_0)}{p(x_T)}}_{L_T}
+\underbrace{\log \frac{q(x_T | x_0)}{p(x_T)}}_{\mathcal{L}_T}
 +
-\sum_{t=2}^T \underbrace{\log \frac{q(x_{t-1} | x_t, x_0)}{p_\vartheta(x_{t-1} | x_t)}}_{L_{t-1}} 
+\sum_{t=2}^T \underbrace{\log \frac{q(x_{t-1} | x_t, x_0)}{p_\vartheta(x_{t-1} | x_t)}}_{\mathcal{L}_{t-1}} 
 -
-\underbrace{\log p_\vartheta(x_0 | x_1)}_{L_0}
+\underbrace{\log p_\vartheta(x_0 | x_1)}_{\mathcal{L}_0}
 \right] \\
 
 
 \end{aligned}
 $$
 
-The terms $L_T$ and $L_{t-1}$ compare two normal distributions and can therefore be computed in closed form. $L_T$ does not depend on the parameters $\vartheta$ and can be ignored in the optimization.
+The terms $\mathcal{L}_T$ and $\mathcal{L}_{t-1}$ compare two normal distributions and can therefore be computed in closed form. $\mathcal{L}_T$ does not depend on the parameters $\vartheta$ and can be ignored in the optimization. For the $\mathcal{L}_{t-1}$ terms we will use the expression computed above,
+
+$$
+\mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \|
+\mu_\vartheta(x_t, t) - \mu_q(x_t, t)
+\|^2.
+$$
 
 We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
