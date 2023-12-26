@@ -7,6 +7,10 @@ header:
 excerpt: "Understanding how diffusion models work using a simple two-dimensional dataset"
 ---
 
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({ TeX: { extensions: ["AMSmath.js"] }});
+</script>
+
 In this post we look at [diffusion models](https://en.wikipedia.org/wiki/Diffusion_model), a quite successful class of [generative models](https://en.wikipedia.org/wiki/Generative_model). A generative model is a model that, given samples from an unknown distribution $p^\star$, is capable of learning a good approximation of it. Once learned, the approximated distribution can be used to generate new samples, or to evaluate the likelihood of observed or sampled data.
 
 In general $p^\star$ is too hard to find directly, so we seek a good approximation of it by defining a sufficiently large parametric family $\{ p_\vartheta \}_{\vartheta \in \Theta}$, then solve for
