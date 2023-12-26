@@ -845,9 +845,9 @@ $$
 The terms $\mathcal{L}_T$ and $\mathcal{L}_{t-1}$ compare two normal distributions and can therefore be computed in closed form. $\mathcal{L}_T$ does not depend on the parameters $\vartheta$ and can be ignored in the optimization. For the $\mathcal{L}_{t-1}$ terms we will use the expression computed above,
 
 $$
-\mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \|
+\mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \vert
 \mu_\vartheta(x_t, t) - \mu_q(x_t, t)
-\|^2.
+\vert^2.
 $$
 
 We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
