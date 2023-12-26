@@ -842,7 +842,7 @@ p(x_T) \Pi_{t=1}^T p_\vartheta(x_{t-1} | x_t)
 \end{aligned}
 $$
 
-The terms $\mathcal{L}_T$ and $\mathcal{L}_{t-1}$ compare two normal distributions and can therefore be computed in closed form. $\mathcal{L}_T$ does not depend on the parameters $\vartheta$ and can be ignored in the optimization. For the $\mathcal{L}_{t-1}$ terms we will use the expression computed above,
+The first terms does not depend on the parameters $\vartheta$ and can be ignored in the optimization. The second term, with a summation from $i=2$ to $T$, compare two normal distributions and can therefore be computed in closed form,
 
 $$
 \mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \vert
