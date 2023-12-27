@@ -910,10 +910,7 @@ The training algorithm (top of page 4 of [Ho et al, 2020](https://arxiv.org/pdf/
 2. $\quad\quad x_0 \sim p^\star (x_0)$
 3. $\quad\quad t \sim \mathcal{U} (\{1, \ldots, T\})$
 3. $\quad\quad \varepsilon \sim \mathcal{N}(0, I)$
-3. $\quad\quad \mathcal{L}_\vartheta() = \left\lVert \varepsilon - \varepsilon_\vartheta
-\left(
-    \sqrt{\bar\alpha_t} \, x_0 + \sqrt{1 - \bar\alpha_t}\,\varepsilon, t
-\right) \right\rVert$
+3. $\quad\quad \mathcal{L}_\vartheta() = \left\lVert \varepsilon - \varepsilon_\vartheta \left( \sqrt{\bar\alpha_t} \, x_0 + \sqrt{1 - \bar\alpha_t}\,\varepsilon, t \right) \right\rVert$
 3. Compute $\nabla_\vartheta \mathcal{L}_\vartheta$ and perform one optimization step
 7. If converged then stop
 
