@@ -564,7 +564,7 @@ $$
 x_t \sim \mathcal{N} \left( x_t; \sqrt{\bar{\alpha}_t} \, x_0, (1 - \bar\alpha_t) I \right),
 $$
 
-where $\bar\alpha_t = \Pi_{s=1}^t \alpha_s = \Pi_{s=1}^T (1 - \beta_s)$.
+where $\bar\alpha_t = \Pi_{s=1}^t \alpha_s = \Pi_{s=1}^t (1 - \beta_s)$.
 
 The second important observation is that, due to the Markov property,
 
@@ -687,7 +687,7 @@ q(x_{t-1} | x_t, x_0) & =
 - \frac{1}{2 \Sigma^2_q(t)}
 \left[
 x_{t-1}^2 - 2 \frac{
-    \sqrt{\alpha_t} (1 - \bar\alpha_{t-1} \, x_t + \sqrt{\bar\alpha_{t-1}} (1 - \alpha_t) x_0)
+    \sqrt{\alpha_t} (1 - \bar\alpha_{t-1}) \, x_t + \sqrt{\bar\alpha_{t-1}} (1 - \alpha_t) x_0
 }{
     1 - \bar\alpha_t
 } x_{t-1}
@@ -700,7 +700,22 @@ x_{t-1}; \mu_q(x_t, x_0), \Sigma_q^2 (x_t, x_0)
 \end{aligned}
 $$
 
-This means that we can express $q(x_{t-1} \vert x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma_q^2(t)$.
+This means that we can express $q(x_{t-1} \vert x_t, x_0)$ with a normal distribution with mean $\mu_q(x_t, x_0)$ and variance $\Sigma_q^2(t)$ given by the expressions
+
+$$
+\begin{aligned}
+\mu_q(x_t, x_0) & = 
+\frac{
+    \sqrt{\alpha_t} (1 - \bar\alpha_{t-1}) \, x_t + \sqrt{\bar\alpha_{t-1}} (1 - \alpha_t) x_0
+}{
+    1 - \bar\alpha_t
+}
+\\
+%
+\Sigma_q^2(t) & = 
+\frac{(1 - \alpha_t) (1 - \bar\alpha_{t-1})}{1 - \bar\alpha_t}.
+\end{aligned}
+$$
 
 In order to match the approximate denoising transitions $p_\vartheta(x_{t-1} \vert x_t)$ to the ground-truth denoising transition step $q(x_{t-1} \vert x_t, x_0)$ as close as possile, it makes sense to model it as a Gaussian distribution, which is what we have done. As suggested in [Ho et al., 2020], we simplify the reverse process by choosing $\Sigma_q(t) = \sigma_t I$. Our loss function will then minimize the Kullback-Leibler distance between the two distributions,
 
@@ -740,7 +755,7 @@ we can express $x_0$ as
 $$
 x_0 = \frac{1}{\sqrt{\bar\alpha_t}}\left(
 x_t - \sqrt{1 - \bar\alpha_t} \, \varepsilon_t
-\right)
+\right).
 $$
 
 Plugging the above expressions for $x_0$ in the definitions of $\mu_q$, we obtain
@@ -845,9 +860,72 @@ $$
 The first terms does not depend on the parameters $\vartheta$ and can be ignored in the optimization. The second term, with a summation from $i=2$ to $T$, compare two normal distributions and can therefore be computed in closed form,
 
 $$
-\mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \vert
-\mu_\vartheta(x_t, t) - \mu_q(x_t, t)
-\vert^2.
+\mathcal{L}_t = \frac{1}{2 \Sigma_q^2(t)} \|
+\mu_q(x_t, t) - \mu_\vartheta(x_t, t)
+\|^2.
 $$
+
+As explained in Section 3.2 of [Ho et al, 2020](https://arxiv.org/pdf/2006.11239.pdf), we can simplify this expression further. First, we write
+
+$$
+x_t(x_0, \varepsilon) = \sqrt{\bar\alpha_t} \, x_0 + \sqrt{1 - \bar\alpha_t} \varepsilon,
+$$
+
+meaning that the difference term in our loss function can be rewritten as
+
+$$
+\mu_q \left(x_t(x_0, \varepsilon, t), \frac{1}{\sqrt{\bar\alpha_t}} x_0 + \sqrt{1 - \bar\alpha_t} \, \varepsilon \right) - \mu_\vartheta(x_t(x_0, t), t).
+$$
+
+That is, $\mu_\vartheta$ must predict
+
+$$
+\mu_q \left(x_t(x_0, \varepsilon, t), \frac{1}{\sqrt{\bar\alpha_t}} x_0 + \sqrt{1 - \bar\alpha_t} \, \varepsilon \right)
+$$
+
+given $x_t$. Since $x_t$ is available as input to the model, we choose the parametrizatin
+
+$$
+\mu_\vartheta(x_t(x_0, t), t) = \frac{1}{\sqrt{\alpha_t}} \left(
+    x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}} \varepsilon_\vartheta(x_t, t)
+\right)
+$$
+
+where $\varepsilon_\vartheta(x_t, t)$ aims to predict $\epsilon$ from $x_t$ and $t$. The loss function simplifies to
+
+$$
+\mathcal{E}_{x_0, \varepsilon} \left[
+\frac{\beta_t^2}{2 \sigma_t^2 \alpha_t (1 - \bar\alpha_t)}
+\left\|
+\varepsilon - \varepsilon_\vartheta\left(
+\sqrt{\bar\alpha_t} x_0 + \sqrt{1 - \bar\alpha_t} \, \varepsilon, t
+\right)
+\right\|^2
+\right]
+$$
+
+The training algorithm (top of page 4 of [Ho et al, 2020](https://arxiv.org/pdf/2006.11239.pdf)) becomes the following:
+
+1. Do:
+2. $\quad\quad x_0 \sim p^\star (x_0)$
+3. $\quad\quad t \sim \mathcal{U} (\{1, \ldots, T\})$
+3. $\quad\quad \varepsilon \sim \mathcal{N}(0, I)$
+3. $\quad\quad \mathcal{L}_\vartheta() = \left\lVert \varepsilon - \varepsilon_\vartheta
+\left(
+    \sqrt{\bar\alpha_t} \, x_0 + \sqrt{1 - \bar\alpha_t}\,\varepsilon, t
+\right) \right\rVert$
+3. Compute $\nabla_\vartheta \mathcal{L}_\vartheta$ and perform one optimization step
+7. If converged then stop
+
+To generate a new sample we compute the reverse process:
+
+1. $x_T \sim \mathcal{N}(0, I)$
+2. For $t=T, \ldots, 1$ do:
+2. $\quad\quad z \sim \mathcal{N}(0, I) \text{ if } t > 0 \text{ else } z = 0$
+2. $\quad\quad x_{t-1} = \frac{1}{\sqrt{\alpha_t}}\left(
+x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}} \varepsilon_\vartheta(x_t, t)
+\right) + \sigma \sqrt{1 - \alpha_t} z$
+2. End For
+2. Return $x_0$
 
 We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
