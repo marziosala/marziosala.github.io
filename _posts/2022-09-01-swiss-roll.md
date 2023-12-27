@@ -578,7 +578,7 @@ $$
 q(x_{t-1} | x_t, x_0) = \frac{q(x_t | x_{t - 1}, x_0) q(x_{t - 1} | x_0)}{q(x_t | x_0)}.
 $$
 
-This means that we have two ways of expressing the reverse process, one using $p_\vartheta$ and the other using $q$. The latter only works when conditioned on $x_0$, henceforth it is not useful to generate a new $x_0$ -- we would need to know $x_0$ to generate it. However this suggests a new approach: if we can find an expression for $q(x_{t-1} | x_t, x_0)$, we could train $p_\vartheta$ to learn it for several $x_0$, then use it to generate new $x_0$.
+This means that we have two ways of expressing the reverse process, one using $p_\vartheta$ and the other using $q$. The latter only works when conditioned on $x_0$, henceforth it is not useful to generate a new $x_0$ -- we would need to know $x_0$ to generate it. However this suggests a new approach: if we can find an expression for $q(x_{t-1} \vert x_t, x_0)$, we could train $p_\vartheta$ to learn it for several $x_0$, then use it to generate new $x_0$.
 
 $$
 x_0 \xrightleftarrows[
