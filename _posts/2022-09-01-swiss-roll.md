@@ -1151,4 +1151,4 @@ ax1.set_title('Generated dataset');
     
 
 
-We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
+We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code for the first part of this post. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
