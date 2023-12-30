@@ -925,4 +925,230 @@ x_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar\alpha_t}} \varepsilon_\vartheta(x_t, t)
 2. End For
 2. Return $x_0$
 
+We will now code this improved approach. The code is similar yet the convergence much faster, due to the reduced variance. We will use $T=250$ and $\beta_t = 0.025^2$. Some of the utility functions defined above are redefined here.
+
+
+```python
+import torch.nn.functional as F
+```
+
+
+```python
+T = 250
+β_all = 0.025**2 * torch.ones(T + 1)
+α_all=1 - β_all
+ᾱ_all = torch.cumsum(α_all.log(), dim=0).exp()
+ᾱ_all[0] = 1
+```
+
+
+```python
+def compute_forward_process(x_0, t):
+    ε = torch.randn_like(x_0)
+    ᾱ_t = ᾱ_all[t].unsqueeze(-1)
+    return ᾱ_t.sqrt() * x_0 + (1 - ᾱ_t).sqrt() * ε, ε
+```
+
+
+```python
+def plot_evolution(x_all, is_reverse=False):
+    fig, axes = plt.subplots(1, 11, figsize=(33, 3), sharex=True, sharey=True)
+    for i in range(11):
+        t = i * 25
+        x_t = x_all[t]
+        axes[i].scatter(x_t[:, 0], x_t[:, 1], color='grey', edgecolor='blue', s=5);
+        axes[i].set_xticks([-1, 1])
+        axes[i].set_yticks([-1, 1])
+        label = T - t if is_reverse else t
+        if label == T: label = 'T'
+        axes[i].set_title(f't={label}')
+        axes[i].axis('square')
+    fig.tight_layout()
+```
+
+
+```python
+tmp = [compute_forward_process(dataset[:1_000], t)[0] if t != -1 else dataset for t in range(-1, T)]
+plot_evolution(tmp)
+```
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-19.png)
+    
+
+
+
+```python
+def backward(x, t, pred_noise, z):
+    if z is None:
+        z = torch.randn_like(x)
+    noise = β_all.sqrt()[t] * z
+    mean = (x - pred_noise * ((1 - α_all[t]) / (1 - ᾱ_all[t]).sqrt())) / α_all[t].sqrt()
+    return mean + noise
+```
+
+
+```python
+@torch.no_grad()
+def compute_reverse_process(model, num_samples):
+    retval = []
+    # x_T ~ N(0, 1), sample initial noise
+    samples = torch.randn(num_samples, 2)
+    retval.append(samples)
+    for t in range(T, 0, -1):
+        # sample some random noise to inject back in. For i = 1, don't add back in noise
+        z = torch.randn_like(samples) if t > 1 else 0
+        x = torch.cat((samples, (t / T) * torch.ones((num_samples, 1))), dim=1)
+        eps = model(x)    # predict noise e_(x_t,t)
+        samples = backward(samples, t, eps, z)
+        retval.append(samples)
+    return retval
+```
+
+
+```python
+def init_weights(m):
+    if isinstance(m, torch.nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight)
+        m.bias.data.fill_(0.01)
+```
+
+The model is simpler, with only 32 inner nodes. Using 256 didn't bring substantial differences so better to use a smaller (and faster to train) network.
+
+
+```python
+model = torch.nn.Sequential(
+    torch.nn.Linear(2 + 1, 32),
+    torch.nn.ReLU(),
+    torch.nn.Linear(32, 32),
+    torch.nn.ReLU(),
+    torch.nn.Linear(32, 32),
+    torch.nn.ReLU(),
+    torch.nn.Linear(32, 2)
+)
+```
+
+
+```python
+def compute_loss(model, x_0, t):
+    x_t, noise = compute_forward_process(x_0, t)
+    xin = torch.cat((x_t, t.unsqueeze(-1) / T), dim=1)
+    noise_pred = model(xin)
+    return F.huber_loss(noise, noise_pred)
+```
+
+
+```python
+batch_size = 512
+data_loader = trainloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+```
+
+
+```python
+from torch.optim import Adam
+
+model.apply(init_weights);
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+optimizer = Adam(model.parameters(), lr=0.002)
+epochs = 10_000
+
+for epoch in range(epochs):
+    for step, batch in enumerate(data_loader):
+      optimizer.zero_grad()
+      t = torch.randint(0, T, (batch.shape[0],), device=device).long()
+      loss = compute_loss(model, batch, t)
+      loss.backward()
+      optimizer.step()
+
+      if epoch % 1_000 == 0 and step == 0:
+        print(f"Epoch {epoch}: loss={loss.item()} ")
+        x_all = compute_reverse_process(model, 100)
+        plot_evolution(x_all, True)
+        plt.show()
+```
+
+    Epoch 0 | step 000 Loss: 0.43880200386047363 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-20.png)
+    
+
+
+    Epoch 1000 | step 000 Loss: 0.2919534146785736 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-21.png)
+    
+
+
+    Epoch 2000 | step 000 Loss: 0.2935349643230438 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-22.png)
+    
+
+
+    Epoch 3000 | step 000 Loss: 0.2997346818447113 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-23.png)
+    
+
+
+    Epoch 4000 | step 000 Loss: 0.3011600971221924 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-24.png)
+    
+
+
+    Epoch 5000 | step 000 Loss: 0.29122021794319153 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-25.png)
+    
+
+
+    Epoch 6000 | step 000 Loss: 0.2728560268878937 
+    
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-26.png)
+    
+
+
+The results are not very different from what we plotted before, yet we obtained them in a fraction of the time. A better structure for the network (typically, a U-net) would have helped.
+
+
+```python
+fig, (ax0, ax1) = plt.subplots(figsize=(12, 6), ncols=2)
+n = 1_000
+ax0.scatter(dataset[:n, 0], dataset[:n, 1], alpha=0.5, color='blue', edgecolor='grey', s=5)
+ax0.set_title('Original dataset')
+x_all = torch.stack(compute_reverse_process(model, n))
+ax1.scatter(x_all[-1][:, 0], x_all[-1][:, 1], alpha=0.5, color='crimson', edgecolor='grey', s=5)
+ax1.set_title('Generated dataset');
+```
+
+
+    
+![png](/assets/images/swiss-roll/swiss-roll-27.png)
+    
+
+
 We conclude this post with a note for two good blogs in the subject: [Lil'Lol](https://lilianweng.github.io/posts/2021-07-11-diffusion-models/) post on the topic is one of the best introductions that can be found on the web, while [Emilio Dorigatti](https://e-dorigatti.github.io/math/deep%20learning/2023/06/25/diffusion.html) post inspired the code. Very noteworthy is also [Calvin Luo](https://arxiv.org/pdf/2208.11970.pdf) paper on diffusion models; it contains most of the formulae presented in this post.
