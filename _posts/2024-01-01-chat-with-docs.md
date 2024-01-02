@@ -19,7 +19,7 @@ pip install ipykernel ipywidgets nbconvert matplotlib openai \
 ```
 
 For the documents to chat with, we will use the [1958 French constitution](https://en.wikipedia.org/wiki/Constitution_of_France) in the official
-[english](https://www.elysee.fr/en/french-presidency/constitution-of-4-october-1958) translation, as provided by the Élysée website. The content of the constitution was saved to a text file in Markdown format. The file contains the 89 articles, some of which have more than one part, and around 11,000 words.
+[english](https://www.elysee.fr/en/french-presidency/constitution-of-4-october-1958) translation, as provided by the Élysée website. The content of the constitution was saved to a text file in Markdown format. The file contains the 89 articles, some of which have more than one part, and around 11,000 words, or roughly 15,000 tokens.
 
 
 ```python
@@ -27,11 +27,13 @@ from IPython.display import display, Markdown
 from pathlib import Path
 ```
 
+`my_display()` is a small helper function to print out the LLM output using a different font color and style. 
+
 
 ```python
 from IPython.display import display, Markdown
 def my_display(text):
-    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</div>"))
+    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</div><br>"))
 ```
 
 
@@ -41,7 +43,7 @@ with open(doc_path, 'r') as f:
     doc = f.read()
 ```
 
-As discussed above, the first step is to split the document into chunks.
+As discussed above, the first step is to split the document into chunks. There are many strategies for doing so; here we use a class that is tuned for Markdown input and splits on titles and articles. This strategy works well for our case, where each article is of modest length and focused on a specific topic.
 
 
 ```python
@@ -108,6 +110,8 @@ metadata_field_info = [
 from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(model_name='gpt-4', temperature=0)
 ```
+
+The first prompt we develop is stateless, that is each question (and answer) is independent of what was asked before.
 
 
 ```python
@@ -187,7 +191,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The Government's role, as outlined in Article 20, is to determine and conduct the policy of the Nation. It has at its disposal the civil service and the armed forces and is accountable to Parliament. The Government can also consult the Economic, Social and Environmental Council on any economic, social or environmental issue, as stated in Article 70. Members of the Government can be held criminally liable for serious crimes or major offences committed while in office, according to Article 68-1. The President of the Republic appoints the Prime Minister and other members of the Government, as per Article 8.</div>
+<div style="font-family: monospace; color:#880E4F">The Government's role, as outlined in Article 20, is to determine and conduct the policy of the Nation. It has at its disposal the civil service and the armed forces. The Government is accountable to Parliament according to the terms and procedures set out in articles 49 and 50. The Government can also consult the Economic, Social and Environmental Council on any economic, social or environmental issue as per Article 70. Members of the Government are criminally liable for serious crimes or major offences committed in office, and they are tried by the Court of Justice of the Republic as per Article 68-1.</div><br>
 
 
 
@@ -198,7 +202,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The Parliament's role, as outlined in Title IV, is to pass statutes, monitor the actions of the Government, and assess public policies. It is composed of the National Assembly and the Senate, both of which represent French Nationals, including those living abroad. The Parliament also has the power to authorize war and oppose modifications to the rules governing the passing of Acts of the European Union. It is accountable for determining the rights of the parliamentary groups within it. The Parliament also has the power to ratify measures taken by the Government that are normally the preserve of statute law.</div>
+<div style="font-family: monospace; color:#880E4F">The Parliament in this context has several roles. According to Article 24, it is responsible for passing statutes, monitoring the actions of the Government, and assessing public policies. It is composed of the National Assembly and the Senate, both of which represent French Nationals living abroad. The Parliament also has the power to authorize a declaration of war as per Article 35. It can oppose modifications of the rules governing the passing of Acts of the European Union according to Article 88-7. Furthermore, the Parliament is assisted by the Cour des Comptes in monitoring Government action and assessing public policies as stated in Article 47-2.</div><br>
 
 
 
