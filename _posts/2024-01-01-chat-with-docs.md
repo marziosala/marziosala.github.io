@@ -243,13 +243,15 @@ prompt2 = PromptTemplate(
     template=template)
 ```
 
+The `history` input variable is provided by the `ConversationBufferMemory` class, which we add to our chatbot.
+
 
 ```python
 from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import RetrievalQA
 
 class ChatBot:
+    
     def __init__(self, llm, vectordb):
         self.memory = ConversationBufferMemory(
             memory_key="chat_history",
