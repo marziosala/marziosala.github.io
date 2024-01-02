@@ -33,7 +33,7 @@ from pathlib import Path
 ```python
 from IPython.display import display, Markdown
 def my_display(text):
-    display(Markdown('<div style="font-family: monospace; color:#880E4F; pad: 10px">' + text + "</div>"))
+    display(Markdown('<div style="font-family: monospace; color:#880E4F; padding: 10px">' + text + "</div>"))
 ```
 
 
@@ -61,6 +61,8 @@ print(f"Found {len(splits)} splits.")
 
     Found 109 splits.
     
+
+We will use OpenAI embeddings: for each chunk, we compute the embedding and store it into a vector database. The database stores the emebeddings together with the chunks on disk, as specified by the `persist_directory` variable, so embeddings are not recomputed when the notebook kernel is restarted.
 
 
 ```python
@@ -111,23 +113,21 @@ from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(model_name='gpt-4', temperature=0)
 ```
 
-The first prompt we develop is stateless, that is each question (and answer) is independent of what was asked before.
+The first prompt we develop is stateless, that is each question (and answer) is independent of what was asked before. The last of history prevents us from asking follow-up questions; we will add history in a moment.
 
 
 ```python
 from langchain.prompts import PromptTemplate
 
-document_prompt = """
+document_prompt = PromptTemplate(
+    input_variables=["title", "article", "page_content"],
+    template="""
 {title}
 {article}: {page_content}
-"""
-document_prompt = PromptTemplate(
-    input_variables=["Title", "Article", "page_content"],
-    template=document_prompt)
+""")
 
 template = """
-Use the following pieces of context (delimited by <ctx></ctx>) and history
-and the chat history (delimited by <hs></hs>) to answer the question at the end.
+Use the following pieces of context (delimited by <ctx></ctx>) to answer the question at the end.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
 Use up to ten sentences maximum; refer to the articles that are used in the answer.
 
@@ -139,7 +139,7 @@ Question: {question}
 
 Helpful Answer:"""
 prompt = PromptTemplate(
-    input_variables=["context", "question", "Title"],
+    input_variables=["context", "question", "title"],
     template=template)
 ```
 
@@ -169,7 +169,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F; pad: 10px">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">No, the President of the Republic cannot be required to testify in a trial during their term of office. According to Article 67 of Title IX, throughout their term, the President is not required to testify before any French Court of law or Administrative authority. They also cannot be the object of any civil proceedings, nor of any preferring of charges, prosecution or investigatory measures.</div>
 
 
 
@@ -207,8 +207,6 @@ my_display(answer['result'])
 
 
 ```python
-from langchain.prompts import PromptTemplate
-
 document_prompt = """
 {title}
 {article}: {page_content}
