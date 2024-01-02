@@ -31,7 +31,7 @@ from pathlib import Path
 ```python
 from IPython.display import display, Markdown
 def my_display(text):
-    display(Markdown('<div style="background-color: #F3E5F5; padding: 10px; width: 90%">' + text + "</div>"))
+    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</font>"))
 ```
 
 
@@ -105,19 +105,6 @@ metadata_field_info = [
 
 
 ```python
-# document_content_description = "Constitution"
-# llm = OpenAI(temperature=0)
-# retriever = SelfQueryRetriever.from_llm(
-#     llm,
-#     vectordb,
-#     document_content_description,
-#     metadata_field_info,
-#     verbose=True
-# )
-```
-
-
-```python
 from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(model_name='gpt-4', temperature=0)
 ```
@@ -144,15 +131,11 @@ Use up to ten sentences maximum; refer to the articles that are used in the answ
 {context}
 </ctx>
 
-<hs>
-{history}
-</hs>
-
 Question: {question}
 
 Helpful Answer:"""
 prompt = PromptTemplate(
-    input_variables=["context", "history", "question", "Title"],
+    input_variables=["context", "question", "Title"],
     template=template)
 ```
 
@@ -182,7 +165,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">No, the President cannot testify in a trial during his mandate. According to Article 67 of Title IX, throughout his term of office, the President is not required to testify before any French Court of law or Administrative authority. He also cannot be the object of any civil proceedings, charges, prosecution or investigatory measures.</div>
+<div style="font-family: monospace; color:#880E4F">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</font>
 
 
 
@@ -193,7 +176,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and communicates with the two Houses of Parliament (Article 18). The Prime Minister directs the actions of the Government, is responsible for national defense, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also deputize for the President in certain cases (Article 21). Both the President and the Prime Minister have the ability to address either House of Parliament (Article 31).</div>
+<div style="font-family: monospace; color:#880E4F">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and has the right to initiate amendments to the Constitution, on the recommendation of the Prime Minister (Article 89). The Prime Minister, on the other hand, directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also delegate certain powers to Ministers and may deputize for the President in certain cases (Article 21). The Government, led by the Prime Minister, is accountable to Parliament (Article 20).</font>
 
 
 
