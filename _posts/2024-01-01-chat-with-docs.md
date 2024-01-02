@@ -217,16 +217,10 @@ my_display(answer['result'])
 <div style="font-family: monospace; color:#880E4F">The Parliament in this context has several roles. According to Article 24, it is responsible for passing statutes, monitoring the actions of the Government, and assessing public policies. It is composed of the National Assembly and the Senate, both of which represent French Nationals living abroad. The Parliament also has the power to authorize a declaration of war as per Article 35. It can oppose modifications of the rules governing the passing of Acts of the European Union according to Article 88-7. Furthermore, the Parliament is assisted by the Cour des Comptes in monitoring Government action and assessing public policies as stated in Article 47-2.</div><br>
 
 
+Let's add memory to our conversation. The underlying LLM per se has no memory, each query is stand-alone and independent of the previous ones. Memory is added by reporting the previous queries and answers, to allow the model to "see" what was discussed before and build the new answer on top of the old ones. It is easy, yet quite annoying, to write such memory system on our own; using LangChain one is a much preferred way. We need a new prompt, `prompt2`, which adds the previos history to the query.
+
 
 ```python
-document_prompt = """
-{title}
-{article}: {page_content}
-"""
-document_prompt = PromptTemplate(
-    input_variables=["title", "article", "page_content"],
-    template=document_prompt)
-
 template = """
 Use the following pieces of context (delimited by <ctx></ctx>) and history
 and the chat history (delimited by <hs></hs>) to answer the question at the end.
@@ -244,7 +238,7 @@ Use up to ten sentences maximum; refer to the articles that are used in the answ
 Question: {question}
 
 Helpful Answer:"""
-prompt = PromptTemplate(
+prompt2 = PromptTemplate(
     input_variables=["context", "history", "question", "title", "article"],
     template=template)
 ```
@@ -276,7 +270,7 @@ class ChatBot:
             return_source_documents=True,
             chain_type_kwargs=dict(
                 document_prompt=document_prompt,
-                prompt=prompt,
+                prompt=prompt2,
                 verbose=False,
                 memory=ConversationBufferMemory(
                     memory_key="history",
@@ -300,7 +294,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The President of the Republic has several powers as outlined in the articles. According to Article 15, the President is the Commander-in-Chief of the Armed Forces and presides over the higher national defence councils and committees. Article 17 gives the President the power to grant pardons in an individual capacity. In Article 16, the President has the power to take measures required in case of serious and immediate threats to the institutions of the Republic, the independence of the Nation, the integrity of its territory or the fulfilment of its international commitments. Article 14 states that the President accredits ambassadors and envoys to foreign powers. Article 5 outlines that the President ensures due respect for the Constitution, the proper functioning of the public authorities and the continuity of the State. He is also the guarantor of national independence, territorial integrity and due respect for Treaties. Article 18 allows the President to communicate with the two Houses of Parliament by messages. Article 52 states that the President negotiates and ratifies treaties. Finally, Article 67 provides immunity to the President from liability for acts carried out in his official capacity.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The President of the Republic has several powers as outlined in the articles. According to Article 5, the President ensures due respect for the Constitution, the proper functioning of public authorities, and the continuity of the State. He is also the guarantor of national independence, territorial integrity, and due respect for Treaties. Article 14 states that the President accredits ambassadors and envoys to foreign powers. Article 15 designates the President as the Commander-in-Chief of the Armed Forces. In Article 16, the President has the power to take measures required in case of serious and immediate threats to the institutions of the Republic, the independence of the Nation, the integrity of its territory, or the fulfilment of its international commitments. Article 17 vests the President with the power to grant pardons. Article 18 allows the President to communicate with the two Houses of Parliament. Article 19 requires that instruments of the President be countersigned by the Prime Minister and, where required, by the ministers concerned. Article 52 states that the President negotiates and ratifies treaties. Finally, Article 67 protects the President from liability for acts carried out in his official capacity.</div>
 
 
 
@@ -310,7 +304,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The Prime Minister has several powers as outlined in the articles. According to Article 21, the Prime Minister directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, has power to make regulations, and makes appointments to civil and military posts. The Prime Minister may delegate certain powers to Ministers and may deputize for the President of the Republic in certain cases. Article 49 allows the Prime Minister to make the Government's programme or a general policy statement an issue of a vote of confidence before the National Assembly. The Prime Minister may also ask the Senate to approve a statement of general policy. According to Article 20, the Prime Minister, along with the Government, determines and conducts the policy of the Nation and is accountable to Parliament. Article 22 states that instruments of the Prime Minister shall be countersigned, where required, by the ministers responsible for their implementation.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The Prime Minister has several powers as outlined in the articles. According to Article 21, the Prime Minister directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, has power to make regulations, and makes appointments to civil and military posts. The Prime Minister may delegate certain powers to Ministers and may deputize for the President of the Republic in certain cases. Article 49 allows the Prime Minister to make the Government's programme or a general policy statement an issue of a vote of confidence before the National Assembly. The Prime Minister may also ask the Senate to approve a statement of general policy. Article 20 states that the Government, under the Prime Minister, determines and conducts the policy of the Nation. Finally, Article 22 requires that instruments of the Prime Minister be countersigned by the ministers responsible for their implementation.</div>
 
 
 
@@ -320,7 +314,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The President and the Prime Minister of the Republic both have significant roles, but their powers differ. The President has powers such as being the Commander-in-Chief of the Armed Forces, granting pardons, accrediting ambassadors, and negotiating and ratifying treaties. The President also ensures due respect for the Constitution, the proper functioning of public authorities, and the continuity of the State. On the other hand, the Prime Minister directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and makes appointments to civil and military posts. The Prime Minister can also make the Government's programme or a general policy statement an issue of a vote of confidence before the National Assembly. The Prime Minister, along with the Government, determines and conducts the policy of the Nation and is accountable to Parliament.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The President and the Prime Minister of the Republic both have significant roles, but their powers differ in several ways. The President is the head of state and has powers related to national independence, territorial integrity, respect for Treaties, and is the Commander-in-Chief of the Armed Forces. The President also has the power to grant pardons and negotiate and ratify treaties. On the other hand, the Prime Minister is the head of government and is responsible for directing the actions of the Government, including national defence and the implementation of legislation. The Prime Minister also has the power to make regulations and appointments to civil and military posts. While the President has more ceremonial and strategic roles, the Prime Minister is more involved in the day-to-day running of the government.</div>
 
 
 
@@ -334,15 +328,15 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The National Assembly, as part of the Parliament, has the role of passing statutes, monitoring the action of the Government, and assessing public policies. Members of the National Assembly, not exceeding five hundred and seventy-seven, are elected by direct suffrage. The National Assembly also has the right to initiate legislation, along with the Prime Minister. Finance Bills and Social Security Financing Bills are tabled first before the National Assembly. Furthermore, the National Assembly can issue a reasoned opinion on the conformity of a draft proposal for a European Act with the principle of subsidiarity. If the National Assembly passes a resolution of no-confidence, or fails to endorse the Government programme or general policy statement, the Prime Minister shall tender the resignation of the Government.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The National Assembly, as outlined in Article 24, is part of the Parliament and is responsible for passing statutes, monitoring the action of the Government, and assessing public policies. Its members, not exceeding five hundred and seventy-seven, are elected by direct suffrage. The National Assembly also has a role in legislation initiation as per Article 39. Furthermore, according to Article 50, when the National Assembly passes a resolution of no-confidence, or fails to endorse the Government programme or general policy statement, the Prime Minister must tender the resignation of the Government.</div>
 
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The Senate, as part of the Parliament, has the role of passing statutes, monitoring the action of the Government, and assessing public policies. Senators, not exceeding three hundred and forty-eight, are elected by indirect suffrage. The Senate ensures the representation of the territorial communities of the Republic. It also has the right to initiate legislation. The Senate can issue a reasoned opinion on the conformity of a draft proposal for a European Act with the principle of subsidiarity. Furthermore, the President of the Senate is elected each time elections are held for partial renewal of the Senate.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The Senate, as outlined in Article 24, is part of the Parliament and shares responsibilities with the National Assembly for passing statutes, monitoring the action of the Government, and assessing public policies. Its members, not exceeding three hundred and forty-eight, are elected by indirect suffrage. The Senate also ensures the representation of the territorial communities of the Republic. Furthermore, according to Article 32, the President of the Senate is elected each time elections are held for partial renewal of the Senate.</div>
 
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The National Assembly and the Senate both have roles in passing statutes, monitoring the government, and assessing public policies. However, there are several differences between the two. Members of the National Assembly are elected by direct suffrage, while Senators are elected by indirect suffrage. The National Assembly has the first say on Finance Bills and Social Security Financing Bills, while the Senate ensures the representation of the territorial communities of the Republic. Furthermore, the President of the National Assembly is elected for the life of a Parliament, while the President of the Senate is elected each time elections are held for partial renewal of the Senate.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The National Assembly and the Senate are both part of the French Parliament, but they have some differences. Members of the National Assembly are elected by direct suffrage, while Senators are elected by indirect suffrage. The National Assembly has the power to pass a resolution of no-confidence, which, if passed, requires the Prime Minister to tender the resignation of the Government, a power not explicitly given to the Senate. Furthermore, the Senate has a specific role in ensuring the representation of the territorial communities of the Republic. The President of the National Assembly is elected for the life of a Parliament, while the President of the Senate is elected each time elections are held for partial renewal of the Senate.</div>
 
 
 
@@ -352,7 +346,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">No, the two chambers are not equal in power. While both the National Assembly and the Senate have roles in passing statutes, monitoring the government, and assessing public policies, the National Assembly has the final say in the event of a disagreement between the two houses. If a joint committee fails to agree on a common text, or if the text is not passed, the Government may ask the National Assembly to reach a final decision. Furthermore, Finance Bills and Social Security Financing Bills are tabled first before the National Assembly.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">While both the National Assembly and the Senate are part of the French Parliament and share responsibilities for passing statutes, monitoring the action of the Government, and assessing public policies, they are not entirely equal in power. The National Assembly has the power to pass a resolution of no-confidence, which, if passed, requires the Prime Minister to tender the resignation of the Government, a power not explicitly given to the Senate. Furthermore, in the event of a disagreement between the two houses over a bill, the National Assembly has the final say, as outlined in Article 45. Therefore, the National Assembly holds slightly more power than the Senate.</div>
 
 
 
@@ -364,34 +358,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">The Senate has several specific roles compared to the National Assembly. The Senate is responsible for representing the territorial communities of the Republic, which is not a role of the National Assembly. Senators are elected by indirect suffrage, unlike members of the National Assembly who are elected by direct suffrage. Furthermore, the President of the Senate is elected each time elections are held for partial renewal of the Senate, unlike the President of the National Assembly who is elected for the life of a Parliament. Also, bills primarily dealing with the organisation of territorial communities are tabled first in the Senate.</div>
+<div style="font-family: monospace; color:#880E4F; padding: 10px">The Senate and the National Assembly both share responsibilities for passing statutes, monitoring the action of the Government, and assessing public policies as part of the French Parliament. However, they have specific roles that differentiate them. The Senate, whose members are elected by indirect suffrage, has a specific role in ensuring the representation of the territorial communities of the Republic. On the other hand, the National Assembly, whose members are elected by direct suffrage, has the power to pass a resolution of no-confidence, which, if passed, requires the Prime Minister to tender the resignation of the Government, a power not explicitly given to the Senate. Furthermore, in the event of a disagreement between the two houses over a bill, the National Assembly has the final say.</div>
 
 
-
-```python
-chat_bot = ChatBot(llm, vectordb)
-```
-
-
-```python
-answer = chat_bot.get_answer("""
-What are the penal responsabilities of the member of the government?
-""")
-my_display(answer['result'])
-```
-
-
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">Members of the Government can be held criminally liable for acts performed in the holding of their office that are classified as serious crimes or other major offences at the time they were committed, as stated in Article 68-1. They are tried by the Court of Justice of the Republic, which is bound by the definition of serious crimes and other major offences and the determination of penalties as laid down by statute.</div>
-
-
-
-```python
-answer = chat_bot.get_answer("""
-What are the penal status of the member of the Parliament?
-""")
-my_display(answer['result'])
-```
-
-
-<div style="background-color: #F3E5F5; padding: 10px; width: 90%">Members of Parliament cannot be prosecuted, investigated, arrested, detained, or tried for opinions expressed or votes cast in the performance of their official duties, according to Article 26. They cannot be arrested for a serious crime or other major offence without the authorization of the Bureau of the House of which they are a member, unless the crime was committed flagrante delicto or a conviction has become final. If a Member of Parliament is detained, subjected to custodial or semi-custodial measures, or prosecuted, these actions can be suspended for the duration of the session if the House of which they are a member requires it.</div>
-
+To conclude, LangChain provides a nice way to chatting with documents. It gives simple and clear interfaces to vector databases and provides the tools of chatting with memory.
