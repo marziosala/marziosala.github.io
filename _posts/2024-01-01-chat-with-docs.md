@@ -33,7 +33,7 @@ from pathlib import Path
 ```python
 from IPython.display import display, Markdown
 def my_display(text):
-    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</div><br>"))
+    display(Markdown('<div style="font-family: monospace; color:#880E4F; pad: 10px">' + text + "</div>"))
 ```
 
 
@@ -169,7 +169,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</div>
+<div style="font-family: monospace; color:#880E4F; pad: 10px">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</div>
 
 
 
@@ -180,7 +180,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and can communicate with the two Houses of Parliament (Article 18). The Prime Minister, on the other hand, directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also delegate certain powers to Ministers and deputize for the President in certain cases (Article 21). The Government, led by the Prime Minister, determines and conducts the policy of the Nation and is accountable to Parliament (Article 20).</div>
+<div style="font-family: monospace; color:#880E4F; pad: 10px">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and can communicate with the two Houses of Parliament (Article 18). The Prime Minister, on the other hand, directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also delegate certain powers to Ministers and deputize for the President in certain cases (Article 21). The Government, led by the Prime Minister, determines and conducts the policy of the Nation and is accountable to Parliament (Article 20).</div>
 
 
 
@@ -191,7 +191,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F">The Government's role, as outlined in Article 20, is to determine and conduct the policy of the Nation. It has at its disposal the civil service and the armed forces. The Government is accountable to Parliament according to the terms and procedures set out in articles 49 and 50. The Government can also consult the Economic, Social and Environmental Council on any economic, social or environmental issue as per Article 70. Members of the Government are criminally liable for serious crimes or major offences committed in office, and they are tried by the Court of Justice of the Republic as per Article 68-1.</div><br>
+<div style="font-family: monospace; color:#880E4F; pad: 10px">The Government determines and conducts the policy of the Nation, as stated in Article 20. It has at its disposal the civil service and the armed forces. The Government is accountable to Parliament according to the terms and procedures set out in articles 49 and 50. Members of the Government can be criminally liable for serious crimes or major offences committed while in office, as per Article 68-1. The Government can also consult the Economic, Social and Environmental Council on any economic, social or environmental issue, as mentioned in Article 70.</div>
 
 
 
