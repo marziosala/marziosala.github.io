@@ -31,7 +31,7 @@ from pathlib import Path
 ```python
 from IPython.display import display, Markdown
 def my_display(text):
-    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</font>"))
+    display(Markdown('<div style="font-family: monospace; color:#880E4F">' + text + "</div>"))
 ```
 
 
@@ -165,7 +165,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</font>
+<div style="font-family: monospace; color:#880E4F">No, the President cannot testify in a trial during his term of office. According to Article 67 of Title IX, throughout his term of office, the President shall not be required to testify before any French Court of law or Administrative authority.</div>
 
 
 
@@ -176,7 +176,7 @@ my_display(answer['result'])
 ```
 
 
-<div style="font-family: monospace; color:#880E4F">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and has the right to initiate amendments to the Constitution, on the recommendation of the Prime Minister (Article 89). The Prime Minister, on the other hand, directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also delegate certain powers to Ministers and may deputize for the President in certain cases (Article 21). The Government, led by the Prime Minister, is accountable to Parliament (Article 20).</font>
+<div style="font-family: monospace; color:#880E4F">The President and the Prime Minister share power in a number of ways. The President appoints the Prime Minister and can terminate his appointment if the Prime Minister tenders the resignation of the Government (Article 8). The President also presides over the Council of Ministers (Article 9) and can communicate with the two Houses of Parliament (Article 18). The Prime Minister, on the other hand, directs the actions of the Government, is responsible for national defence, ensures the implementation of legislation, and has the power to make regulations and appointments to civil and military posts (Article 21). The Prime Minister can also delegate certain powers to Ministers and deputize for the President in certain cases (Article 21). The Government, led by the Prime Minister, determines and conducts the policy of the Nation and is accountable to Parliament (Article 20).</div>
 
 
 
