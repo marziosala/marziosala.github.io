@@ -62,6 +62,21 @@ print(f"Found {len(splits)} splits.")
     Found 109 splits.
     
 
+The splitter enriches each chunk with the title of the section and the article number in the `title` and `article` fields of the metadata. This allows us to connect each chunk back to the parts of the original document where it is taken. For example, the chunk #10 will have the following metdata:
+
+
+```python
+s = splits[10]
+s.metadata
+```
+
+
+
+
+    {'title': 'Title II - The President of the Republic', 'article': 'Article 10'}
+
+
+
 We will use OpenAI embeddings: for each chunk, we compute the embedding and store it into a vector database. The database stores the emebeddings together with the chunks on disk, as specified by the `persist_directory` variable, so embeddings are not recomputed when the notebook kernel is restarted.
 
 
@@ -89,15 +104,14 @@ else:
 assert vectordb._collection.count() == len(splits)
 ```
 
+The metadata can be used in the query itself; this is done with `SelfQueryRetriever` class.
+
 
 ```python
 from langchain.llms import OpenAI
 from langchain.retrievers.self_query.base import SelfQueryRetriever
-```
-
-
-```python
 from langchain.chains.query_constructor.base import AttributeInfo
+
 metadata_field_info = [
     AttributeInfo(
         name="article",
@@ -107,16 +121,14 @@ metadata_field_info = [
 ]
 ```
 
+The first prompt we develop is stateless, that is each question (and answer) is independent of what was asked before. The last of history prevents us from asking follow-up questions; we will add history in a moment.
+
+Because we have added metadata, it is customary to use two prompts: `document_prompt` is the prompt template that is used to organize content in retrieved documents (where each document is one of the chunks defined above) while `prompt` is the actual prompt with our query. We use the document prompt to organize each document with a specific structure, reporting the title of the section, the article number and its content; the prompt itself describes what we want to obtain.
+
 
 ```python
 from langchain.chat_models import ChatOpenAI
 llm = ChatOpenAI(model_name='gpt-4', temperature=0)
-```
-
-The first prompt we develop is stateless, that is each question (and answer) is independent of what was asked before. The last of history prevents us from asking follow-up questions; we will add history in a moment.
-
-
-```python
 from langchain.prompts import PromptTemplate
 
 document_prompt = PromptTemplate(
