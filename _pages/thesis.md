@@ -32,6 +32,6 @@ This figure, instead, shows iso-surfaces of Mach number over a M6 ONERA wing. Th
 
 ![Onera M6](/assets/images/m6.jpg)
 
-This last figure shows the streamlines around a X29 aircraft. The starting mesh is made up of 726713 cells and 136787 nodes, and the solution refers to the first order N-scheme.
+This last figure shows the streamlines around a X29 aircraft. The starting mesh is made up of 726,713 cells and 136,787 nodes.
 
 ![X29](/assets/images/x29.gif)
