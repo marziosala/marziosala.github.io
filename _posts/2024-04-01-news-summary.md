@@ -7,37 +7,13 @@ header:
 excerpt: "Using Large Language Models to generate a summary of most relevant subjects in the news today"
 ---
 
+The abundance of news offered by the internet is not a new development; the amount of information we should be aware of only increases. Certainly, much if is repeated content, but how can we separate the wheat from the chaff? What we are doing in this article is to take advantage of large language models (LLMs) and [RSS](https://en.wikipedia.org/wiki/RSS) news feed to generate a short summary of what is going on in the world. For simplicity we restrict our vision of the world to a few web sites, focusing mostly North America, Europe, Middle East and Australia, but it in principle we could cover the entire world. We use the RSS feed of the New York Times, the BBC, the CNN, the Wall Street Journal, the Washington Post, Al-Jazeera, and the Australian Broadcasting Corporation. The `feedparser` package is used to parse the RSS feed.
+
+
 ```python
 from datetime import datetime
 import feedparser
-from newspaper import Article
 ```
-
-
-```python
-
-```
-
-
-
-
-    True
-
-
-
-
-```python
-
-from datetime import timedelta
-timedelta(days=-1, seconds=68400).days
-```
-
-
-
-
-    -1
-
-
 
 
 ```python
@@ -71,6 +47,8 @@ def parse_feed(label, url, links):
         links[label][i] = entry.link
     return parsed_entries
 ```
+
+Since we don't have a subscription to those sources, we limit ourselves to the provided title and summary. If the article has tags, we take them as well.
 
 
 ```python
@@ -158,10 +136,12 @@ links = dict(links)
     Total # entries: 137.
     
 
+For the LLM, we use [https://www.openai.com](OpenAI). The entries are shuffled to mix the different sources. The prompt suggests the LLM to take the point of view of a journalist experienced in international journalism, with the aim of providing the good (and succint) summary of what has happened during the day. Input is provided in XML format; output is requested in JSON format. 
+
 
 ```python
-import openai
-openai.api_key = open('./openai-key.txt', 'r').read()
+import os, openai
+openai.api_key = os.getenv('OPENAI_API_KEY')
 ```
 
 
@@ -296,6 +276,8 @@ for item in items:
             l.append(f'[{number}]({links[label][int(i)]})')
     text += f"\n**{title}**\n\n{summary} {' '.join(l)}\n\n"
 ```
+
+Finally, this is the result for the news of April 2nd, 2024. Results are quite good considering how little code we have to write.
 
 
 ```python
