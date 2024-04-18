@@ -7,6 +7,13 @@ header:
 excerpt: "Write a short essay on a masterpiece of modern literature, Frank Kafka's book 'The Process'"
 ---
 
+In my experience, it is very easy to obtain a short summary of a possibly very long text using a large language model (LLM), where 'short' means half a page or a bit more. If the text is a complete book, the short summary is not longer than the back cover page summary, or the wikipedia summary of the book itself. While very helpful in many cases, it is often not enough to have an 'executive summary' of the text -- what we want is a shorter version of 5 to 10 pages, that maintains the subtelties and details of the original text.
+
+In this article we try to achieve exactly that. The text is the English version of a masterpiece of 20th-century literature, [Franz Kafka](https://en.wikipedia.org/wiki/Franz_Kafka)'s [The Trial](https://en.wikipedia.org/wiki/The_Trial), which can be easily found on the web, for example at [Project Gutenberg](https://www.gutenberg.org/cache/epub/7849/pg7849.txt). The file has been slightly modified to become a valid XML, with each chapter in a different node. The idea is to use an LLM to summarize each chapter; this avoids very short summaries and gives more depth to the resulting condensed version.
+
+We start the analysis by loading the text and storing the chapter title, subtitle and content in three lists, `chapters`, `titles` and `subtitles`. 
+
+
 ```python
 import lxml.etree as ET
 ```
@@ -39,6 +46,8 @@ print(f"Found {len(chapters)} chapters.")
     Found 10 chapters.
     
 
+The chapters have different lengths, as computed using `sklearn`.
+
 
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
@@ -69,6 +78,8 @@ print(f"{'TOTAL':15s}⭢ {total:,d} words")
 import pandas as pd
 import textstat
 ```
+
+The chapter are not very difficult in terms of pure language: several complexity indices suggest the complexity of a 7-th or 8-th grader, with chapters two and seven being the most difficult. The complexity (and the charm) of the book comes from something else, and hopefully the LLM will be able to get it.
 
 
 ```python
@@ -213,6 +224,8 @@ metrics
 
 
 
+We use [Mistral AI](https://www.mistral.ai) as LLM, using the model `mistral-large-latest`. We attempt to use a double pass, or two iterations: we first ask the model to summarize a chapter, then try a second time with the chapter as well as the first solution and asking the model to improve on it. In our tests results are slighly better (and also more complete).
+
 
 ```python
 import os
@@ -239,6 +252,8 @@ added later. Don't use any prior knowledge of this text; you analysis should be 
 The output should be plain text.
 """.strip()
 ```
+
+The disadvantage of this approach is that the LLM can repeat the same observations in each chapter. This is normal, after all each summarization is independent and the model cannot know that a certain concept or observation has already been mentioned. The workaround, which works quite well, is to provide the summary of the previous chapter and ask the model not to repeat itself.
 
 
 ```python
@@ -293,10 +308,7 @@ This is the summary of the previous chapter, you should not repeat what was alre
     return iter_0, iter_1
 ```
 
-
-```python
-old_summary = iter_1
-```
+Let's check the two iterations for the first chapter only.
 
 
 ```python
@@ -322,7 +334,7 @@ display(Markdown(iter_1))
 The chapter is set in Josef K.'s room and the adjacent living room of his landlady, Mrs. Grubach. The atmosphere is one of confusion, disbelief, and invasion of personal space, as K. is arrested without explanation by two strange men. The tone is also somewhat surreal, with the men acting in a manner that is both authoritative and subservient to some unseen power. The characters include Josef K., the protagonist, who is a bank employee arrested for an unknown reason; Mrs. Grubach, his landlady; and the two unnamed men who arrest him. The author's intention seems to be to convey a sense of the absurdity and incomprehensibility of the legal system and the powerlessness of the individual when confronted with such a system. The chapter raises questions about the nature of guilt and the arbitrariness of authority, as K. is arrested without any explanation, and the men who arrest him seem to have no clear understanding of the charges against him. The text also explores the theme of the individual's struggle to assert their own agency and autonomy in the face of an oppressive and inscrutable system.
 
 
-We iterate over the remaining chapters; the summary of the previous chapter is given in input, prompting the model not to repeat what was said before. We don't pass all the previous chapters to reduce the number of used tokens.
+And now for all the remaining chapters.
 
 
 ```python
@@ -345,6 +357,8 @@ else:
         essay = pickle.load(f)
 ```
 
+We conclude with a more general text for the entire book; this will become the final chapter of our essay.
+
 
 ```python
 content = """
@@ -363,7 +377,7 @@ for title, subtitle, summary in zip(titles, subtitles, essay):
 content += ">>>"
 ```
 
-Let's check the number of tokens for our final query.
+Let's check the number of tokens for our final query -- it is still small.
 
 
 ```python
@@ -414,3 +428,5 @@ pdf.meta["title"] = "The Process, LLM Version"
 pdf.meta["author"] = "Frank Kafka"
 pdf.save("essay.pdf")
 ```
+
+The result is [here](assets/images/book-summary/essay.pdf). At six pages, it is still a medium-sized summary that provides many details lost in shorter versions.
