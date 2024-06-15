@@ -30,14 +30,14 @@ which integrated between 0 and $t$ gives
 $$
 \begin{aligned}
 e^{\kappa t} X(t) & = X_0 + \int_0^t e^{\kappa s} \kappa \theta ds + \int_0^t e^{\kappa s} \sigma \sqrt{X(s)} ds \\
-& = X_0 + \theta \left( e^{\kappa t} - 1 \right)+ \int_0^t e^{\kappa s} \sigma \sqrt{X(s)} ds,
+& = X_0 + \theta \left( e^{\kappa t} - 1 \right)+ \int_0^t e^{\kappa s} \sigma \sqrt{X(s)} dW(s),
 \end{aligned}
 $$
 
 giving
 
 $$
-X(t) = e^{-\kappa t}X_0 + \theta(1 - e^{-\kappa t}) + e^{-\kappa t}\int_0^t e^{\kappa s} \sigma \sqrt{X(s)} ds.
+X(t) = e^{-\kappa t}X_0 + \theta(1 - e^{-\kappa t}) + e^{-\kappa t}\int_0^t e^{\kappa s} \sigma \sqrt{X(s)} dW(s).
 $$
 
 Taking expectations, we obtain
