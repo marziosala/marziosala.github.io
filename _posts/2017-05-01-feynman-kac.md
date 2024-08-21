@@ -37,7 +37,7 @@ $$
 \mathbb{E}[\Phi(X(T))]
 $$
 
-is to use partial differential equations (PDEs). Let
+is to use partial differential equations. Let
 
 $$
 u(x, t) = \mathbb{E}_{X(t)=x}[\Phi(X(T))].
@@ -57,4 +57,110 @@ $$
 \end{cases}
 $$
 
-This is known as the **Feynman-Kac equation**.
+This is known as the [Feynman-Kac formula](https://en.wikipedia.org/wiki/Feynman%E2%80%93Kac_formula), which we will explore here.
+
+To see this, we apply Itô's lemma to $u(X(t), t)$:
+
+$$
+d[u(X(t), t)] = \left(
+\frac{\partial u}{\partial t}
+    + \mu(x, t) \frac{\partial{u}}{\partial{x}}
+    + \frac{1}{2} \sigma(x, t)^2 \frac{\partial^2{u}}{\partial{x^2}} 
+\right) + \sigma(x, t) \frac{\partial u}{\partial x}dW(t),
+$$
+
+and integrate over time,
+
+$$
+\begin{align}
+\displaystyle
+u(X(T), T) - u(X(t), t) = & \int_t^T
+\left(
+\frac{\partial u}{\partial t}
+    + \mu(x, t') \frac{\partial{u}}{\partial{x}}
+    + \frac{1}{2} \sigma(x, t')^2 \frac{\partial^2{u}}{\partial{x^2}} 
+\right) dt'\\
+&     + \int_t^T
+\sigma(x, t') \frac{\partial u}{\partial x}dW(t').
+\end{align}
+$$
+
+Taking expectations and using the final conditions yields $\mathbb{E}_{X(t)=x}[\Phi(X(T))] - u(x, t) = 0$, which is what we want to compute.
+
+In general we are interested in some discounted payoff,
+
+$$
+u(x, t) = \mathbb{E}_{X(t)=x}
+\left
+    [e^{-\int_t^T r(X(s), s) ds }\Phi(X(T))
+\right]
+$$
+
+for some known function $r(x, t)$, or if $r$ is not stochastic (and constant),
+
+$$
+u(x, t) = e^{-r(T - t)} \mathbb{E}_{X(t)=x}
+\left
+    [\Phi(X(T))
+\right].
+$$
+
+Then $u(x, t)$ solves
+
+$$
+\begin{cases}
+\displaystyle
+\frac{\partial{u(x, t)}}{\partial{t}}
+    + \mu(x, t) \frac{\partial{u(x, t)}}{\partial{x}}
+    + \frac{1}{2} \sigma(x, t)^2 \frac{\partial^2{u(x, t)}}{\partial{x^2}} -r(x, t) u = 0 
+    & \text{ in } \mathbb{R} \times (0, T) \\
+%
+    u(x, T) = \Phi(x) & \text{ on } \mathbb{R}.
+\end{cases}
+$$
+
+An easy extension is for
+
+$$
+u(x, t) = \mathbb{E}_{X(t) = x}\left[
+    \int_t^T \Psi(X(s), s) ds
+\right]
+$$
+
+for a specified function $\Psi$. Then $u(x, t)$ solves
+
+$$
+\begin{cases}
+\displaystyle
+\frac{\partial{u(x, t)}}{\partial{t}}
+    + \mu(x, t) \frac{\partial{u(x, t)}}{\partial{x}}
+    + \frac{1}{2} \sigma(x, t)^2 \frac{\partial^2{u(x, t)}}{\partial{x^2}} + \Psi(x, t)= 0 
+    & \text{ in } \mathbb{R} \times (0, T) \\
+%
+    u(x, T) = 0 & \text{ on } \mathbb{R}.
+\end{cases}
+$$
+
+This can be shown using as before Ito's lemma:
+
+$$
+\begin{align}
+d[u(x, t)] & = 
+\underbrace{
+    \left(
+        \frac{\partial{u}}{\partial{t}}
+    + \mu(x, t) \frac{\partial{u}}{\partial{x}}
+    + \frac{1}{2} \sigma(x, t)^2 \frac{\partial^2{u}}{\partial{x^2}}
+    \right)
+}_{=-\Psi(X(t), t)} + \sigma(X(t), t) \frac{\partial u}{\partial x} dW(t) \\
+& = -\Psi(X(t), t) dt + \sigma(X(t), t) \frac{\partial u}{\partial x} dW(t).
+\end{align}
+$$
+
+Integrating and taking expectations gives
+
+$$
+\underbrace{u(X(T), T)}_{=0} - u(x, t) + \mathbb{E}_{X(t) = t}\left[
+    \int_t^T \Psi(X(s), s) ds
+\right] = 0.
+$$
