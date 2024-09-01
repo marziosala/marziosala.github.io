@@ -254,7 +254,7 @@ class SDE(ABC):
     def compute_σ(self, x, t):
         pass
 
-    def compute_Φ(self, x, t):
+    def compute_Φ(self, x):
         pass
 ```
 
@@ -578,12 +578,11 @@ We have tested our initial value problem solver: now we go back to the final val
 ```python
 class FinalValueProblem(InitialValueProblem):
 
-    def __init__(self, sde: SDE, u_0, x_min, u_min, x_max, u_max, f):
+    def __init__(self, sde: SDE, x_min, u_min, x_max, u_max, f):
         self.sde = sde
         self.t_0 = sde.t_0
         self.T = sde.T
         self.domain = Domain(self.t_0, self.T, x_min, x_max)
-        self.u_0 = u_0
         self.u_min = u_min
         self.u_max = u_max
         self.f = f
@@ -598,9 +597,9 @@ class FinalValueProblem(InitialValueProblem):
         τ = self.to_τ(t)
         return 0.5 * self.sde.compute_σ(x, τ)**2
     
-    def copmute_b(self, x, t):
+    def compute_b(self, x, t):
         τ = self.to_τ(t)
-        return (self.sde.compute_μ(x, τ) - 0.5 * self.sde.compute_σ(x, τ)**2)
+        return self.sde.compute_μ(x, τ)
     
     def compute_c(self, x, t):
         return np.zeros_like(x)
@@ -617,8 +616,448 @@ class FinalValueProblem(InitialValueProblem):
             raise Exception("9oundany condition not recognized")
 
     def compute_u_0(self, x):
-        return self.u_0(x)
+        return self.sde.compute_Φ(x)
 
     def compute_u_exact(self, x, t):
         raise Exception("not implemented yet")
+```
+
+We will test a simple Wiener process, that is $\mu(x, t) = 0$ and $\sigma(x, t) = 1$, with $T=1$ and $\Phi(x) = \max(x, 0)$.
+
+
+```python
+class WienerProcess(SDE):
+
+    t_0 = 0.0
+
+    T = 1.0
+    
+    X_0 = 0.0
+
+    def compute_μ(self, x, t) -> float:
+        return np.zeros_like(x)
+
+    def compute_σ(self, x, t) -> float:
+        return np.ones_like(x)
+    
+    def compute_Φ(self, x):
+        return np.where(x > 0, 1.0, 0.0)
+```
+
+A basic Monte Carlo solver using the [Euler-Maruyama](https://en.wikipedia.org/wiki/Euler%E2%80%93Maruyama_method) method is easy to write; we will use it to check the PDE solution.
+
+
+```python
+class MonteCarloMethod:
+    
+    def __init__(self, sde, num_paths, num_steps):
+        self.t_all = np.linspace(0, sde.T, num_steps)
+        X = sde.X_0 * np.ones(num_paths)
+        X_all = [X]
+        for i in range(num_steps - 1):
+            t = self.t_all[i]
+            Δt = self.t_all[i + 1] - t
+            μ = sde.compute_μ(X, t)
+            σ = sde.compute_σ(X, t)
+            W = np.random.randn(num_paths)
+            X = X + μ * Δt + σ * W * np.sqrt(Δt)
+            X_all.append(X)
+        self.X_all = np.array(X_all)
+        self.Φ = sde.compute_Φ(X)
+    
+    def __call__(self):
+        return self.Φ.mean()
+```
+
+
+```python
+f = lambda x, t: np.zeros_like(x)
+wiener = WienerProcess()
+problem = FinalValueProblem(wiener, -6.0, 0.0, 6.0, 1.0, f)
+params = dict(num_points=64, num_steps=64, time_integrator='Crank-Nicolson')
+space_disc = SecondOrderFiniteDifferenceMethod(problem, params)
+theta_method = ThetaMethod(space_disc, params)
+theta_method.solve()
+```
+
+
+```python
+mc_method = MonteCarloMethod(wiener, 1_000, 64)
+mc_solution = mc_method()
+pde_solution = np.interp(0.0, theta_method.space_disc.x_all, theta_method.solutions[-1])
+```
+
+
+```python
+plt.plot(theta_method.space_disc.x_all, theta_method.solutions[-1], label='PDE solution')
+plt.scatter(0.0, mc_solution, s=40, color='red', label='MC solution')
+plt.xlabel('x')
+plt.ylabel('u(x, 0)')
+plt.title(f'diff = {pde_solution - mc_solution:.4f}')
+plt.legend();
+```
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-2.png)
+    
+
+
+
+```python
+execfile("../exporter.py")
+
+exporter = Exporter(
+    title="The Feynman-Kac Equation",
+    excerpt="Solving the Feynman-Kac equation using finite differences",
+    splash_image='feynman-kac.png')
+exporter.export()
+```
+
+    Using '2017-05-01' as date and 'feynman-kac' as label
+    
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+u_0 = lambda x: np.zeros_like(x)
+problem = FinalValueProblem(WienerProcess(), u_0, -1.0, 1.0, 1.0, 1.0, f)
+x_all = np.linspace(problem.domain().x_min(), problem.domain().x_max(), 32)
+t_all = np.linspace(problem.domain().t_0(), problem.domain().T(), 32)
+solutions_touch = solve(problem, x_all, t_all, 1.0)
+```
+
+
+```python
+XX, YY = plt.meshgrid(x_all, t_all)
+fig, (ax0, ax1) = plt.subplots(figsize=(10, 5), ncols=2, subplot_kw=dict(projection='3d'),
+                               sharex=True, sharey=True)
+ax0.plot_surface(XX, YY, solutions_no_touch[::-1], cmap=cm.coolwarm, alpha=0.9)
+ax0.scatter([0.0], [0.0], [np.interp(0.0, x_all, solutions_no_touch[-1])], color='red', s=50)
+ax0.set_title('No touch probability')
+ax0.scatter(np.zeros(31), np.zeros(31), np.linspace(0., 1, 31), s=10, color='grey') 
+ax1.plot_surface(XX, YY, solutions_touch[::-1], cmap=cm.coolwarm, alpha=0.9)
+ax1.scatter([0.0], [0.0], [np.interp(0.0, x_all, solutions_touch[-1])], color='red', s=50)
+ax1.scatter(np.zeros(31), np.zeros(31), np.linspace(0., 1, 31), s=10, color='grey') 
+ax1.set_title('Touch probability')
+for ax in (ax0, ax1):
+    ax.set_xlabel('x')
+    ax.set_ylabel('t')
+```
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-3.png)
+    
+
+
+
+```python
+u_0 = lambda x: np.zeros_like(x)
+f = lambda x, t: np.where(np.logical_and(x >= -1, x <= 1), 1.0, 0.0)
+sde = WienerProcess()
+problem = FinalValueProblem(sde, u_0, -5.0, 0.0, 5.0, 0.0, f)
+x_all = np.linspace(problem.domain().x_min(), problem.domain().x_max(), 512)
+t_all = np.linspace(problem.domain().t_0(), problem.domain().T(), 128)
+solutions_band = solve(problem, x_all, t_all, 1.0)
+```
+
+
+```python
+xxx = []
+for i, t in enumerate(t_all):
+    xxx.append(np.interp(t, x_all, solutions_band[i]))
+```
+
+
+```python
+XX, YY = plt.meshgrid(x_all, t_all)
+fig, (ax0, ax1) = plt.subplots(figsize=(10, 5), ncols=2)
+c = ax0.contourf(YY, XX, solutions_band[::-1], cmap=cm.coolwarm, alpha=0.9)
+fig.colorbar(c, ax=ax0, location='left')
+ax1.plot(t_all, list(reversed(xxx)))
+ax0.set_xlabel('t')
+ax0.set_ylabel('x')
+ax1.set_xlabel('t')
+ax0.set_title('Feynman-Kac Solution')
+ax1.set_title('Expected Time in [-1 1] for a point (0, t)');
+```
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-4.png)
+    
+
+
+
+```python
+class MonteCarlo:
+    
+    def __init__(self, sde, problem, num_paths, num_steps):
+        self.t_all = np.linspace(0, problem.T, num_steps)
+        X = sde.X_0() * np.ones(num_paths)
+        X_all = [X]
+        for i in range(num_steps - 1):
+            t = self.t_all[i]
+            Δt = self.t_all[i + 1] - t
+            μ = sde.μ(X, t)
+            σ = sde.σ(X, t)
+            W = np.random.randn(num_paths)
+            X = X + μ * Δt + σ * W * np.sqrt(Δt)
+            X_all.append(X)
+        self.X_all = np.array(X_all)
+```
+
+
+```python
+mc = MonteCarlo(sde, problem, 1_000, 50)
+```
+
+
+```python
+num_inside = 0
+for i in range(1_000):
+    path = mc.X_all[:, i]
+    num_inside += sum(np.logical_and(path >= -1, path <= 1)) / 50
+num_inside / 1_000
+```
+
+
+
+
+    0.8439
+
+
+
+
+```python
+
+```
+
+
+```python
+u_0 = lambda x: np.where(x <= 0, 1.0, 0.0)
+f = lambda x, t: np.zeros_like(x)
+sde = WienerProcess()
+problem = FinalValueProblem(sde, u_0, -5.0, 1.0, 5.0, 0.0, f)
+x_all = np.linspace(problem.domain().x_min(), problem.domain().x_max(), 512)
+t_all = np.linspace(problem.domain().t_0(), problem.domain().T(), 128)
+solutions = solve(problem, x_all, t_all, 1.0)
+```
+
+
+```python
+mc = MonteCarlo(sde, problem, 100, 128)
+```
+
+
+```python
+XX, YY = plt.meshgrid(x_all, t_all)
+fig, ax0 = plt.subplots(figsize=(10, 6), ncols=1, subplot_kw=dict(projection='3d'))
+ax0.plot_surface(XX, YY, solutions[::-1], cmap=cm.coolwarm, alpha=0.5)
+
+idx = 43
+X = mc.X_all[:, idx]
+Y = mc.t_all
+Z = []
+path = mc.X_all[:, idx]
+for i, solution in zip(path, solutions[::-1]):
+    Z.append(np.interp(i, x_all, solution))
+
+ax0.plot(X, Y, Z, 'black', linewidth=4, antialiased=True)
+ax0.set_xlabel('X')
+ax0.set_ylabel('t')
+ax0.set_zlabel('conditional expectation')
+```
+
+
+
+
+    Text(0.5, 0, 'conditional expectation')
+
+
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-5.png)
+    
+
+
+
+```python
+min([min(mc.X_all[:, i]) for i in range(100)])
+```
+
+
+
+
+    -2.811876227832887
+
+
+
+
+```python
+plt.plot(solutions[0])
+```
+
+
+
+
+    [<matplotlib.lines.Line2D at 0x2036029c520>]
+
+
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-6.png)
+    
+
+
+
+```python
+mc.X_all[:, 43].shape
+```
+
+
+
+
+    (128,)
+
+
+
+
+```python
+plt.plot(x_all, solutions[-1, :])
+```
+
+
+
+
+    [<matplotlib.lines.Line2D at 0x2035c7052b0>]
+
+
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-7.png)
+    
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+u_0 = lambda x: np.where(x <= 0, 1.0, 0.0)
+f = lambda x, t: np.zeros_like(x)
+sde = WienerProcess()
+problem = FinalValueProblem(sde, u_0, -1.0, 1.0, 1.0, 0.0, f)
+x_all = np.linspace(problem.domain().x_min(), problem.domain().x_max(), 512)
+t_all = np.linspace(problem.domain().t_0(), problem.domain().T(), 16)
+solutions_euler = solve(problem, x_all, t_all, 1)
+solutions_cn = solve(problem, x_all, t_all, 0.5)
+```
+
+
+```python
+import seaborn as sns
+```
+
+
+```python
+t_all[-11]
+```
+
+
+
+
+    0.3333333333333333
+
+
+
+
+```python
+plt.plot(solutions_euler[-11,:], linewidth=4, label='Implicit Euler')
+plt.plot(solutions_cn[-11,:], linewidth=4, label='Crank-Nicolson')
+plt.legend()
+plt.xlabel('x')
+plt.ylabel('solution')
+plt.title('Solution at t=1/3')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Solution at t=1/3')
+
+
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-8.png)
+    
+
+
+
+```python
+XX, YY = plt.meshgrid(x_all, t_all)
+fig, ax0 = plt.subplots(figsize=(10, 6), ncols=1, subplot_kw=dict(projection='3d'))
+ax0.plot_surface(XX, YY, solutions_cn[::-1], cmap=cm.coolwarm)
+# ax0.view_init(elev=30, azim=-45,)
+```
+
+
+
+
+    <mpl_toolkits.mplot3d.art3d.Poly3DCollection at 0x2036c1c3a00>
+
+
+
+
+    
+![png](/assets/images/feynman-kac/feynman-kac-9.png)
+    
+
+
+
+```python
+
 ```
