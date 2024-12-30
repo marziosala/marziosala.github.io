@@ -158,7 +158,72 @@ of its memory, thereby producing effective time series for forecasting.
 
 Here, we follow Lopez de Prado's methodology and demonstrate that one can determine an optimal 
 fractional order of differentiation such that the resulting new series is highly correlated 
-with the original data. For our test case, we utilize a financial time series.
+with the original data. For our test case, we utilize a financial time series. Before doing that, however, we need to reformulate the fractional differentiation operator such that it can be applied to discrete data.
+
+We consider a time series
+
+$$
+X = \{ X_t, X_{t-1}, X_{t-2}, ldots \}
+$$
+
+and define the backshift operator $B$ such that
+
+$$
+B^k X_t = X_{t - k}, \quad \quad k \ge 0.
+$$
+
+First-order differentiation then reads
+
+$$
+\nabla X_t = X_t - X_{t-1} = X_t - B X_t = (1 - B) X_t,
+$$
+
+while second-iorder differentiation becomes
+
+$$
+\begin{align}
+\nabla^2 X_t & = (X_t - X_{t - 1}) - (X_{t -1} - X_{t-2} \\
+%
+& = X_t - 2 X_{t-1} + X_{t-2} \\
+%
+& = (1 - 2B + B^2) X_t \\
+%
+& = (1 - B)^2 X_t.
+\end{align}
+$$
+
+More generally, for order of differentiation $d$ we have
+
+$$
+\nabla^d X_t = (1 - B)^d X_t.
+$$
+
+The trick is now to apply the binomial formula to $(1 - B)^d$,
+
+$$
+\begin{align}
+(1 - B)^d & = \sum_{k=0}^\infty {d \choose k}(-B)^k \\
+%
+& = 1 - d B + \frac{d(d-1)}{2!} B^2 - \frac{d(d-1)(d-2)}{3!}B^3 + \ldots \\
+& = \sum_{k=0}^\infty \omega_k X_{t-k}.
+\end{align}
+$$
+
+For a non-integer value of $d$, the current value of $\nabla^d X_t$ is a function of all the past values occurred before this time point, each with a given weight $\omega_k$,
+
+$$
+\omega = \left\{
+1, -d, \frac{d(d-1)}{2!}, \frac{d(d-1)(d-2)}{3!}, \ldots, (-1)^k \prod_{i=0}^{k-1}\frac{d - i}{k!}, \ldots
+\right\}.
+$$
+
+It is easy to check that, for an integer $d$, all the weights beyond a certain $k$ are zero, that is, the operator has compact support. We also have the recursive relationship
+
+$$
+\omega_k = -\omega_{k-1} \frac{d-k+1}{k}.
+$$
+
+As an application of what we have just seen, we look at the end-of-day values for the [Brent Crude Oil Last Day](https://finance.yahoo.com/quote/BZ=F/). 
 
 
 ```python
@@ -173,7 +238,7 @@ import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
 ```
 
-We look at the end-of-day values for the [Brent Crude Oil Last Day](https://finance.yahoo.com/quote/BZ=F/). As customary, we apply a log transformation to reduce the effect of outliers and extreme movements.
+As customary, we apply a log transformation to reduce the effect of outliers and extreme movements.
 
 
 ```python
