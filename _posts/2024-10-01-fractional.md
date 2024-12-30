@@ -51,13 +51,15 @@ $$
 D^{1/2}(x) = 2\sqrt{\frac{x}{\pi}}.
 $$
 
-Over the years (and the centuries), many mathematicians have created formal frameworks to extend the above intuituion to any functions. Many definitions exists; here we will follow the one that stems from the [Riemann-Liouville](https://en.wikipedia.org/wiki/Riemann%E2%80%93Liouville_integral) integral. Let $\nu \in \mathbb{R}^+$, $f$ a piecewise continuous function on $(0, \infty)$ that is integrable on anhy finite subinterval of $[0, \infty]$. Then we call
+Although limited to polynomials and not based on a rigorous framework, this result gives us hope that a general definition exists.
+
+Over the years (and the centuries), many mathematicians have created formal frameworks to extend the above intuituion to any functions. Many definitions exists; here we will follow the one that stems from the [Riemann-Liouville](https://en.wikipedia.org/wiki/Riemann%E2%80%93Liouville_integral) integral. Let $\nu \in \mathbb{R}^+$, $f(x)$ a piecewise continuous function on $(0, \infty)$ that is integrable on any finite subinterval of $[0, \infty]$. Then we call
 
 $$
 _c D^{-\nu} f(x) = \frac{1}{\Gamma(\nu)}\int_c^x (x - t)^{\nu - 1} f(t) dt
 $$
 
-the Riemann-Liouville fractional integral of $f$ of order $\nu$ around $c$. A possible way to obtain the above definition is to consider the $n$-th order ordinary differential equation
+the Riemann-Liouville fractional integral of $f(x)$ of order $\nu$ around $c$. A possible way to obtain the above definition is to consider the $n$-th order ordinary differential equation
 
 $$
 y^{n} (x) = f(x)
@@ -83,12 +85,12 @@ $$
 The above formula says that $f(x)$ is the $n$-th derivative of $y(x)$, and so it makes sense to interpret $y(x)$ as the $n$-th integral of $f(x)$. Thus,
 
 $$
-_c D^{-\nu} f(x) = (n - 1)! \int_c^x (x - t)^{n - 1} f(t) dt.
+_c D^{-n} f(x) = \frac{1}{(n - 1)!} \int_c^x (x - t)^{n - 1} f(t) dt.
 $$
 
 Replacing $n$ with any positive real $\nu$ and the factorial with the Gamma function gives us the Riemann-Liouville integral.
 
-We can easily evalute the Riemann-Liouville integral for polynomials $f(x) = x^\mu, \mu > -1$, and any $\nu > 0$. Taking as often done $c=0$ and using $D^{-\nu} = \ _0 D^{-\nu}$, 
+We can easily evalute the Riemann-Liouville integral for polynomials $f(x) = x^\mu, \mu > -1$, and any $\nu > 0$. Taking as often done $c=0$ and using by notation $D^{-\nu} = \ _0 D^{-\nu}$, 
 
 $$
 \begin{align}
@@ -102,27 +104,29 @@ D^{-\nu} x^\mu & = \frac{1}{\Gamma(\nu)} \int_0^x (x - t)^{\nu - 1} t^\mu dt \\
 %
 & = \frac{1}{\Gamma(\nu)} x^{\mu + \nu} B(\mu + 1, \nu) \\
 %
-& = \frac{\Gamma(\mu + 1)}{\Gamma(\mu + \nu + 1)} x^{\mu + \nu}.
+& = \frac{\Gamma(\mu + 1)}{\Gamma(\mu + \nu + 1)} x^{\mu + \nu},
 \end{align}
 $$
 
-For example, if $\nu = \frac{1}{2}$,
+where $B$ is the [beta function](https://en.wikipedia.org/wiki/Beta_function). For example, if $\nu = \frac{1}{2}$,
 
 $$
 \begin{align}
 D^{-1/2} x^0 & = \frac{\Gamma(1)}{\Gamma(3/2)} x^{1/2} = 2 \sqrt{\frac{x}{\pi}} \\
 %
-D^{-1/2} x^1 & = \frac{\Gamma(2)}{\Gamma(5/2)} x^{1/2} = \frac{4}{3} \sqrt{\frac{x^2}{\pi}}.
+D^{-1/2} x^1 & = \frac{\Gamma(2)}{\Gamma(5/2)} x^{1/2} = \frac{4}{3} \sqrt{\frac{x^3}{\pi}},
 \end{align}
 $$
+
+that is, half-integration of a constant brings $\sqrt{x}$, and half-integration of $x$ yields $x \sqrt{x}$.
 
 It can be shown that
 
 $$
-D^{-\mu}\left[ D^{-\nu} f(x) \right] = D^{-(\mu + \nu)} f(x) = D^{-\nu}\left[ D^{-\mu} f(x) \right].
+D^{-\mu}\left[ D^{-\nu} f(x) \right] = D^{-(\mu + \nu)} f(x) = D^{-\nu}\left[ D^{-\mu} f(x) \right],
 $$
 
-The standard derivation operator $D$ and the fractional integration $D^{-\nu}$ don't commute:
+however the standard derivation operator $D$ and the fractional integration $D^{-\nu}$ don't commute,
 
 $$
 D \left[ D^{-\nu} f(x) \right] \neq D^{-\nu} \left[ D f(x) \right].
@@ -134,7 +138,7 @@ $$
 D^\nu f(x) = D^n\left[ D^{-u} f(x) \right],
 $$
 
-that is, for any noninteger $\nu$ we derive a bit more, up to $n$, and then we "roll back" by a factor $u$. For a polynomial, it can be shown that
+that is, for any noninteger $\nu$ we derive a bit more, up to $n$, using the standard definition of a derivative, and then we "roll back" by a factor $u$ with the fractional integration framework reported above. As an example, for a polynomial it can be shown that
 
 $$
 D^\nu x^\mu = \frac{\mu + 1}{\mu - \nu + 1} x^{\mu - \nu}.
