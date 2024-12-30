@@ -7,13 +7,13 @@ header:
 excerpt: "An introduction to the concepct of fractional integration and differentiation and their applications to data analysis"
 ---
 
-In this article we explore [fractional calculus](https://en.wikipedia.org/wiki/Fractional_calculus), a branch of mathematics that extends the concepts of integration and differentiation, as defined for integers, to non-integer numbers. By notation, we use
+In this article we explore [fractional calculus](https://en.wikipedia.org/wiki/Fractional_calculus), a branch of mathematics that extends the classical concept differentiation, which is defined for integers only, to a non-integer number $\alpha$. By notation, we use
 
 $$
 D^\alpha f(x) = \frac{d^\alpha}{dx^\alpha} f(x).
 $$
 
-Using this notation, $D^0 f(x) = f(x)$ is the identity operator, $D^1 f(x)$ the first derivative, $D^2 f(x)$ the second derivative, and so on. We will also use $D^{-1} f(x)$ to define the integration of $f$. We expect
+Using this notation, $D^0 f(x) = f(x)$ is the identity operator, $D^1 f(x)$ the first derivative, $D^2 f(x)$ the second derivative, and so on. We will also use $D^{-1} f(x)$ to define the integration of $f(x)$ over an unspecified interval. We expect
 
 $$
 D^\alpha(\lambda f(x)) = \lambda D^\alpha f(x), \quad \lambda \in \mathbb{R}
@@ -25,19 +25,13 @@ $$
 D^\alpha(f(x) + g(x)) = D^\alpha f(x) + D^\alpha g(x),
 $$
 
-from which it easily follows $D^\alpha 0$ = 0 and $D^\alpha 1 = 0$. The definition of $Dˆ\alpha$ for $\alpha \in \mathbb{N}$ follows from standard calculus.However, what does $D^{1/2}$ mean? Using the above definitions, we would expect an operator such that
+from which it easily follows $D^\alpha 0$ = 0 and $D^\alpha 1 = 0$. Another property is
 
 $$
-D^{1/2} D^{1/2} = D,
+D^\alpha \left[ D^\beta f(x) \right] = D^{\alpha + \beta} f(x).
 $$
 
-or more in general
-
-$$
-D^\alpha D^\beta = D^{\alpha + \beta}.
-$$
-
-The goal is a definition of such an operator.
+Finally, we also expect any definition of $D^\alpha$ to recover the classical definition when $\alpha \in \mathbb{N}$. Our goal is to define such an operator.
 
 We will start with an intuitive argument that works well with polynomials. When $f(x) = x^m$, we have
 
