@@ -118,7 +118,7 @@ D^{-1/2} x^1 & = \frac{\Gamma(2)}{\Gamma(5/2)} x^{1/2} = \frac{4}{3} \sqrt{\frac
 \end{align}
 $$
 
-that is, half-integration of a constant brings $\sqrt{x}$, and half-integration of $x$ yields $x \sqrt{x}$.
+that is, half-integration of a constant brings $\sqrt{x}$, and half-integration of $x$ yields $x \sqrt{x}$ (module constants).
 
 It can be shown that
 
@@ -144,7 +144,21 @@ $$
 D^\nu x^\mu = \frac{\mu + 1}{\mu - \nu + 1} x^{\mu - \nu}.
 $$
 
-One of the applications of fractional derivatives is in the definition of features for time series, starting with 1981 [paper](https://academic.oup.com/biomet/article-abstract/68/1/165/237536?redirectedFrom=fulltext&login=false) by Hosking and then more recently in de Prado's [book](https://www.oreilly.com/library/view/advances-in-financial/9781119482086/). It is well-known that time series forecasting requires stationary series. The widespread trick of (non-fractional) differencing up to a certain order works well but often erases too much (if not all) the memory of the data, making it more difficult to use the time series for forecast. Fractional differencing can help to make a time series stationary while retaining good memory of past event, thus producing time series that are effective for forecasting. Here we follow de Prodo's approach and show that one can find an optimal fractional order of differentiation such that the new series is highly correlated with the original data. For our test, we take a financial time series.
+One of the applications of fractional derivatives is in defining features for time series 
+analysis, dating back to 1981 Hosking's
+[paper](https://academic.oup.com/biomet/article-abstract/68/1/165/237536?redirectedFrom=fulltext&login=false). More recently, Lopez de Prado has utilized fractional derivatives in his [book](https://www.oreilly.com/library/view/advances-in-financial/9781119482086/) 
+on time series analysis for financial application.
+
+It is well established that time series forecasting requires stationary series. The common 
+practice of (non-fractional) differencing to a certain order can be effective, but often 
+results in losing valuable information, if not all, about the data's past events. This makes it more 
+challenging to use the differentiated time series for forecasting purposes. Fractional differencing offers an 
+alternative approach by making a time series stationary while retaining a significant amount 
+of its memory, thereby producing effective time series for forecasting.
+
+Here, we follow Lopez de Prado's methodology and demonstrate that one can determine an optimal 
+fractional order of differentiation such that the resulting new series is highly correlated 
+with the original data. For our test case, we utilize a financial time series.
 
 
 ```python
@@ -284,4 +298,4 @@ ax.set_xlabel('Fractional Order $d$');
     
 
 
-This reproduces the graph on de Prado's book. Once an optimal value of $d$ is found, it can be used to produce effective features for forecasts.
+This reproduces the graph on Lopez de Prado's book. Once an optimal value of $d$ is found, it can be used to produce effective features for forecasts.
