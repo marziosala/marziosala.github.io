@@ -163,7 +163,7 @@ with the original data. For our test case, we utilize a financial time series. B
 We consider a time series
 
 $$
-X = \{ X_t, X_{t-1}, X_{t-2}, ldots \}
+X = \{ X_t, X_{t-1}, X_{t-2}, \ldots X_{t-k}, \ldots \}
 $$
 
 and define the backshift operator $B$ such that
@@ -178,11 +178,11 @@ $$
 \nabla X_t = X_t - X_{t-1} = X_t - B X_t = (1 - B) X_t,
 $$
 
-while second-iorder differentiation becomes
+while second-order differentiation becomes
 
 $$
 \begin{align}
-\nabla^2 X_t & = (X_t - X_{t - 1}) - (X_{t -1} - X_{t-2} \\
+\nabla^2 X_t & = (X_t - X_{t - 1}) - (X_{t -1} - X_{t-2}) \\
 %
 & = X_t - 2 X_{t-1} + X_{t-2} \\
 %
@@ -198,7 +198,7 @@ $$
 \nabla^d X_t = (1 - B)^d X_t.
 $$
 
-The trick is now to apply the binomial formula to $(1 - B)^d$,
+The trick is to apply the binomial formula to $(1 - B)^d$,
 
 $$
 \begin{align}
@@ -209,7 +209,7 @@ $$
 \end{align}
 $$
 
-For a non-integer value of $d$, the current value of $\nabla^d X_t$ is a function of all the past values occurred before this time point, each with a given weight $\omega_k$,
+This means that, for a non-integer value of $d$, the current value of $\nabla^d X_t$ is a function of all the past values occurred before this time point, each with a given weight $\omega_k$,
 
 $$
 \omega = \left\{
