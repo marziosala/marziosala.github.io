@@ -173,11 +173,11 @@ import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
 ```
 
-We look at the end-of-day values for the S&P 500 index. To reduce outliers and extreme movements, it is convenient to apply a log transformation.
+We look at the end-of-day values for the [Brent Crude Oil Last Day](https://finance.yahoo.com/quote/BZ=F/). As customary, we apply a log transformation to reduce the effect of outliers and extreme movements.
 
 
 ```python
-ticker = yf.Ticker("BZ=F")  # VIX, ^GSPC, ES=F, BZ=F
+ticker = yf.Ticker("BZ=F")
 values = np.log(ticker.history(period='10y').Close)
 values.name = 'values'
 ```
@@ -197,6 +197,8 @@ for i, ax in enumerate(axes.flatten()[:4]):
     
 
 
+Whilw the original data is non-stationary, the partial autocorrelation function indicates that one order of differentiation is needed to make the series stationary. What we will try to do is to find a value in between 0 and 1 that makes the series stationary but such that the differentiated series is highly correlated with the original data.
+
 
 ```python
 fig, axes = plt.subplots(1,2,figsize=(16,3), dpi= 100, sharey=True)
@@ -211,7 +213,7 @@ axes[0].set_ylim(-1.05, 1.05);
     
 
 
-Function `get_weights()` returns the fractional weights.
+The first step is to get the weights for the fractional derivation. This is done by function `get_weights()` for any given order, up to `max_size` coefficients and discarding all values that are, in absolute value, below the specified `threshold`.
 
 
 ```python
@@ -248,7 +250,7 @@ for ax in [ax0, ax1]:
     
 
 
-The goal now is to fine the lowest value of $d$ that gives a stationary series. 
+The goal now is to fine the lowest value of $d$ that gives a stationary series. First we run through several values between 0 and 1 for illustration purposed, then we use an nonlinear solver.
 
 
 ```python
