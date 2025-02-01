@@ -36,7 +36,6 @@ from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import norm
-%matplotlib inline
 ```
 
 
@@ -47,15 +46,6 @@ from scipy.stats import norm
 
 ```python
 Model = namedtuple('Model', 'model_date, S_0, r, q, V_0, κ, θ, ζ, ρ')
-```
-
-
-```python
-def get_date():
-    day = np.random.randint(1, 28)
-    month = np.random.randint(1, 13)
-    year = np.random.randint(2000, 2030)
-    return ql.Date(day, month, year)
 ```
 
 
@@ -73,6 +63,8 @@ def generate_ql_surface(model):
     return ql.HestonBlackVolSurface(heston_handle)
 ```
 
+The `compute_smile` function takes a built surface and looks at the at-the-money volatility for the specified expiry. Using this volatility it builds a vector of strikes that are close enough in probability to the forward, and computes the Black-Scholes implied volatility at those strikes. By default we do it with 101 points.
+
 
 ```python
 def compute_smile(model, ql_surface, period, factor=6, num_points=101):
@@ -88,6 +80,19 @@ def compute_smile(model, ql_surface, period, factor=6, num_points=101):
     return T, F, K_all, σ_all
 ```
 
+The small utility function `get_date` generates a random date in the QuantLib format. For what we do here the date is not important but it is still required by QuantLib.
+
+
+```python
+def get_date():
+    day = np.random.randint(1, 28)
+    month = np.random.randint(1, 13)
+    year = np.random.randint(2000, 2030)
+    return ql.Date(day, month, year)
+```
+
+As an example, we visualize one such surface in strike and maturity space.
+
 
 ```python
 model = Model(get_date(), S_0=100.0, r=0.05, q=0.03, V_0=0.1**2, κ=0.25, θ=0.1**2, ζ=0.5, ρ=0.5)
@@ -101,8 +106,6 @@ for color, period in zip(colors, ['1M', '3M', '6M', '1Y', '2Y', '3Y', '4Y', '5Y'
     Z.append(σ_all)
     C.append([color] * len(K_all))
 ```
-
-As an example, we visualize one such surface in strike and maturity space.
 
 
 ```python
@@ -120,7 +123,14 @@ ax.set_zlabel('$σ_{impl}$');
     
 
 
-The problem with strikes is that they change for each maturity; they also depend on the volatility itself, while we would prefer a fixed grid as input to the autoencoder. To do that, we use deltas instead of strikes. This is done by the `compute_simple_delta_surface()` function.
+The problem with strikes is that they change for each maturity; they also depend on the volatility itself, while we would prefer a fixed grid as input to the autoencoder. To do that, we use *deltas* instead of strikes. The delta can be roughly interpreted as the probability of the option of ending up in-the-money. The delta can be defined in several ways; here we will use the so-called *simple delta*,
+
+$$
+\delta = \Phi\left( \frac{\log\frac{F}{K}}{\sigma \sqrt{T} } \right),
+$$
+
+where $T$ is the option expiry, F$ is the forward at $T$, and $\sigma$ the implied volatility defined by the surface itself.
+This is done by the `compute_simple_delta_surface` function below.
 
 
 ```python
@@ -197,7 +207,9 @@ bounds = np.array([
 ```
 
 We use [Sobol sequences](https://en.wikipedia.org/wiki/Sobol_sequence) to span through this sever-dimensional space. For each combination of the parameters, we need to sample the surface over some deltas and maturities. For the detlas, we use
-$\mathfrak{D} = \{ \delta_1, \ldots, \delta_d \}$,with $\delta_1 = 0.1$, $\delta_d$ = 0.9, and the other points equally spaced, with $d=20$. For the maturities, we take $\mathfrak{M} = \{ \texttt{1M}, \texttt{2M}, \texttt{3M}, \texttt{4M}, \texttt{5M}, \texttt{6M}, \texttt{7M}, \texttt{8M}, \texttt{9M}, \texttt{1Y}, \texttt{18M}, \texttt{2Y}, \texttt{3Y}, \texttt{4Y}, \texttt{5Y} \}$. The resulting surface is defined on a space $\mathfrak{Z} = \mathfrak{D} \times \mathfrak{M}$ and has dimension $20 \times 15 = 300$.
+$\mathfrak{D} = \{ \delta_1, \ldots, \delta_d \}$,with $\delta_1 = 0.1$, $\delta_d$ = 0.9, and the other points equally spaced, with $d=12$. This number is a bit small; much larger samples are needed for better results but we limit ourselves to small sample sizes.
+
+For the maturities, we take $\mathfrak{M} = \{ \texttt{1M}, \texttt{2M}, \texttt{3M}, \texttt{4M}, \texttt{5M}, \texttt{6M}, \texttt{7M}, \texttt{8M}, \texttt{9M}, \texttt{1Y}, \texttt{18M}, \texttt{2Y}, \texttt{3Y}, \texttt{4Y}, \texttt{5Y} \}$. The resulting surface is defined on a space $\mathfrak{Z} = \mathfrak{D} \times \mathfrak{M}$ and has dimension $20 \times 15 = 300$.
 
 
 ```python
@@ -267,6 +279,8 @@ print(f"Using {len(surfaces_train)} for training and {len(surfaces_test)} for te
     Using 3891 for training and 205 for testing.
 
 
+Although the numbers are already reasonably well scaled, being all in the range (0, 1), we make sure they are centered in zero and have unitary standard deviation.
+
 
 ```python
 class Scaler:
@@ -293,12 +307,14 @@ scaled_surfaces_train = scaler.fit_transform(surfaces_train)
 scaled_surfaces_test = scaler.transform(surfaces_test)
 ```
 
-As baseline we use [principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis), or PCA. A few components are enough to take into account almost all variance, so we set of 9 components. The method as implemented by `scikit-learn` is extremely simple and fast.
+As baseline we use [principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis), or PCA. A few components are enough to take into account almost all variance, so we set of 9 components. The method as implemented by `scikit-learn` is extremely simple and fast. Even if the results of the PCA aren't exceptionally good, its simplicity, speed and numerical robustness make it a very good baseline.
 
 
 ```python
 from sklearn.decomposition import PCA
 ```
+
+PCA requires vectors, not matrices, therefore we need to flatten the data by lumping together the second and third dimensions.
 
 
 ```python
@@ -868,7 +884,7 @@ import pandas as pd
 from matplotlib.patches import Circle
 Z = vae.encoder(torch.tensor(scaled_surfaces_test).to(device))[0].cpu().detach().numpy()
 g = sns.pairplot(pd.DataFrame(Z, columns=[f"Z_{i}" for i in range(num_latent)]), diag_kind='kde', corner=False)
-g.map_lower(sns.kdeplot, levels=4, color="yellow")
+g.map_lower(sns.kdeplot, levels=4, color="orange")
 for r in [1, 2, 3, 4]:
     for j in range(1, num_latent):
         for i in range(0, j):
@@ -884,4 +900,4 @@ g.figure.tight_layout()
     
 
 
-This shows that we can effectively generate Heston-type surfaces using variational autoencoders. The training dataset is of modest dimension (about 65K entries), so the quality of the reconstructed entities could be improved with more samples.
+This shows that we can effectively generate Heston-type surfaces using variational autoencoders. The training dataset is of modest dimension -- the quality of the reconstructed entities could be improved with more samples.
