@@ -7,6 +7,9 @@ header:
 excerpt: "Forecast the average monthly temperature in Rome using seasonal ARIMA methods."
 ---
 
+In this post we aim to forecast the average monthly temperature in the city of Rome. We will use a dataset that contains data on global land temperatures by city, part of the Berkeley Earth climate data. It includes historical temperature records and is useful for studying climate change and local temperature variations over time. Here we focus only on the city of Rome from 1900 to 2012, both inclusive. 
+
+
 ```python
 import matplotlib.pylab as plt
 import numpy as np
@@ -27,9 +30,9 @@ df['year'] = df['date'].dt.year
 df['month'] = df['date'].dt.strftime('%b')
 df.reset_index(drop=True, inplace=True)
 df.set_index('date', inplace=True)
-df = df.loc['1900':'2012']
+df = df.loc['1900':]
 df = df.asfreq('M', method='bfill')
-df.tail()
+df.head()
 ```
 
 
@@ -66,40 +69,42 @@ df.tail()
   </thead>
   <tbody>
     <tr>
-      <th>2012-07-31</th>
-      <td>24.731</td>
-      <td>2012</td>
-      <td>Aug</td>
+      <th>1900-01-31</th>
+      <td>6.462</td>
+      <td>1900</td>
+      <td>Feb</td>
     </tr>
     <tr>
-      <th>2012-08-31</th>
-      <td>18.922</td>
-      <td>2012</td>
-      <td>Sep</td>
+      <th>1900-02-28</th>
+      <td>5.215</td>
+      <td>1900</td>
+      <td>Mar</td>
     </tr>
     <tr>
-      <th>2012-09-30</th>
-      <td>14.501</td>
-      <td>2012</td>
-      <td>Oct</td>
+      <th>1900-03-31</th>
+      <td>8.887</td>
+      <td>1900</td>
+      <td>Apr</td>
     </tr>
     <tr>
-      <th>2012-10-31</th>
-      <td>10.528</td>
-      <td>2012</td>
-      <td>Nov</td>
+      <th>1900-04-30</th>
+      <td>14.049</td>
+      <td>1900</td>
+      <td>May</td>
     </tr>
     <tr>
-      <th>2012-11-30</th>
-      <td>4.150</td>
-      <td>2012</td>
-      <td>Dec</td>
+      <th>1900-05-31</th>
+      <td>18.884</td>
+      <td>1900</td>
+      <td>Jun</td>
     </tr>
   </tbody>
 </table>
 </div>
 
 
+
+Plotting all the data over times shows an oscillating behavior, as expected due to the seasonality of the temperature. This graph is too cluttered to deliver any information.
 
 
 ```python
@@ -112,17 +117,12 @@ plt.legend();
 ```
 
 
-
-
-    <matplotlib.legend.Legend at 0x16713e210>
-
-
-
-
     
 ![png](/assets/images/temperature/temperature-1.png)
     
 
+
+More explicative is a plot over the months. Here we can clearly see the change in temperature from the coldest months in winder, with averages generally around 5°C, to the hottest months, with averages in between 20°C and 25°C. On each month the data is distributed in a 5°C spread.
 
 
 ```python
@@ -139,6 +139,8 @@ ax.set_ylabel('Temperature (°C)');
 ![png](/assets/images/temperature/temperature-2.png)
     
 
+
+To identify a possible trend we use moving averaged over ten years. This suggests an increase in the monthly temperatures of about 2°C over the last one hundred years.
 
 
 ```python
@@ -158,6 +160,8 @@ plt.legend();
 ![png](/assets/images/temperature/temperature-3.png)
     
 
+
+It is time now to start using more powerful tools. We start from the [seasonal-trend-noise](https://en.wikipedia.org/wiki/Decomposition_of_time_series) decomposition, also called STL decomposition, asimplemented in the [statsmodels](https://www.statsmodels.org/stable/index.html) package. The seasonal part is quite important here and cannot be avoided, while the trend is what we want to find — can we see the effect of global warming from this data or not?
 
 
 ```python
@@ -182,6 +186,8 @@ fig.tight_layout()
     
 
 
+We will use a seasonal autoregressive integrated moving average, or [SARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) model, which is suitable for this kind of time series. Intuitively a frequency of 12 makes sense, where by frequency we mean the number of observations per seasonal cycle. As seen below, the original series is not stationary as quantified by the [augmented Dickey-Fuller test](https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test), while the first differences are. Those are the parameters that we will use in the following.
+
 
 ```python
 from statsmodels.tsa.stattools import adfuller
@@ -197,6 +203,8 @@ print(f'First-order differenced data: ADF statistics: {res[0]}, p-value: {res[1]
     First-order differenced data: ADF statistics: -16.35212390756837, p-value: 2.925519649193536e-29
     First-order differenced data: ADF statistics: -25.706176135107768, p-value: 0.0
 
+
+We still have four parameters to tune: the order of the autoregressive process $p$, the lag $q$ of the moving average process, and the $P$ and $Q$ seasonal counterparts. To select the optimal values, we fit several models and select the one with the best [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion), or AIC. We also compute the Bayesian information criterion, without using it.
 
 
 ```python
@@ -233,6 +241,8 @@ def optimize_SARIMAX(endog, exog, orders, d, D, s, trend):
     return results
 ```
 
+The selection involves the definition and fit of several models, one for each value of $p, q, P$ and $Q$ in $\{0, 1, 2, 3\}$. The model is fitted using the training dataset, while the test dataset, composed of the last ten years, is left aside for the final assessments. This analysis is quite long, lasting well above 30 minutes.
+
 
 ```python
 df_train = df.y[:-120]
@@ -268,11 +278,6 @@ print(f"Selected p={p}, q={q}, P={P}, Q={Q}")
 
     Selected p=1, q=1, P=3, Q=2
 
-
-
-```python
-
-```
 
 
 ```python
@@ -364,28 +369,6 @@ WINDOW = 12
 last_season = rolling_forecast(df, TRAIN_LEN, HORIZON, WINDOW, 'last_season')
 sarima = rolling_forecast(df, TRAIN_LEN, HORIZON, WINDOW, 'SARIMA')
 ```
-
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-    /Users/marzio/envs/base/lib/python3.12/site-packages/statsmodels/base/model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-      warnings.warn("Maximum Likelihood optimization failed to "
-
 
 
 ```python
