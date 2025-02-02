@@ -7,7 +7,7 @@ header:
 excerpt: "Forecast the average monthly temperature in Rome using seasonal ARIMA methods."
 ---
 
-In this post we aim to forecast the average monthly temperature in the city of Rome. We will use a dataset that contains data on global land temperatures by city, part of the Berkeley Earth climate data. It includes historical temperature records and is useful for studying climate change and local temperature variations over time. Here we focus only on the city of Rome from 1900 to 2012, both inclusive. 
+In this post we look at time series forecasts. A time series is a set of data points ordered in time. Our aim is to forecast the average monthly temperature in the city of Rome. We will use a dataset that contains data on global land temperatures by city, part of the Berkeley Earth climate data. It includes historical temperature records and is useful for studying climate change and local temperature variations over time. Our data is equally spaced in time; we focus on the period from 1900 to 2012, both inclusive. 
 
 
 ```python
@@ -161,7 +161,7 @@ plt.legend();
     
 
 
-It is time now to start using more powerful tools. We start from the [seasonal-trend-noise](https://en.wikipedia.org/wiki/Decomposition_of_time_series) decomposition, also called STL decomposition, asimplemented in the [statsmodels](https://www.statsmodels.org/stable/index.html) package. The seasonal part is quite important here and cannot be avoided, while the trend is what we want to find — can we see the effect of global warming from this data or not?
+To understand a time series like the one we consider here it is customary to [decompose](https://en.wikipedia.org/wiki/Decomposition_of_time_series)  it into its components: a trend, a seasonal component, and what is left, the residuals. This is called the STL decomposition and we will take the implementation provided by the [statsmodels](https://www.statsmodels.org/stable/index.html) package, which allows us to visualize the components to help us identify the trend and seasonal patterns that are not always straightforward just by looking at the original dataset.
 
 
 ```python
@@ -186,7 +186,43 @@ fig.tight_layout()
     
 
 
-We will use a seasonal autoregressive integrated moving average, or [SARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) model, which is suitable for this kind of time series. Intuitively a frequency of 12 makes sense, where by frequency we mean the number of observations per seasonal cycle. As seen below, the original series is not stationary as quantified by the [augmented Dickey-Fuller test](https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test), while the first differences are. Those are the parameters that we will use in the following.
+Is the trend showing a clear direction? To assess this, we fit a linear regression model with orders one, two and three. Results are quite similar, with a small plateau in the years 1950 to 1980. Using an order of one shows an increase of about 1°C over the last one hundred years. Plotting a regression model over dates isn't as simple as it should be in seaborn.
+
+
+```python
+import statsmodels.api as sm
+trend = decomposition.trend.dropna().reset_index()
+trend['date_ordinal'] = trend.date.apply(lambda date: date.toordinal())
+
+fig, ax = plt.subplots(figsize=(15, 5))
+sns.regplot(
+    data=trend,
+    x='date_ordinal',
+    y='trend',
+    ax=ax,
+    line_kws=dict(color='red'),
+    order=1,
+    # lowess=True,
+)
+ax.set_xlim(trend.date_ordinal.min() - 1, trend.date_ordinal.max() + 1)
+ax.set_xlabel('Date')
+ax.set_ylabel('Trend (°C)')
+from datetime import date
+new_labels = [date.fromordinal(int(item)) for item in ax.get_xticks()]
+ax.set_xticklabels(new_labels);
+```
+
+
+    
+![png](/assets/images/temperature/temperature-5.png)
+    
+
+
+A **stationary** time series has statistical properties that do not change over time — mean, variance, autocorrelation are all independent of time. Many forecasting models assume stationary, so it is an important property to check. Moving averages, autoregressive models and their combinations assume stationarity and can be reliably used only if the series is so. Intuitively this is because we would need further parameters to capture the changes over time, so the series isn't stationary we can't forecast future values.
+
+Clearly, few series of interest are stationary in their raw form. The STL decomposition above helps us to remove seasonality and trend; we are left with the residuals, for which we need the stationarity. Several methods exist to make a series stationary; here we focus on of the simplest: differencing. **Differencing** is a transformation that calculates the change from one timestep to another and is very useful to stabilize the mean. We can differenciate between consecutive ones or with a seasonal lag. Since the seasonality (also in literal sense) is quite strong, we will check both one-month and twelve-month differencing. It turns out that first-order differencing is enough; other situations may require second-order differencing or [fractional differences](/fractional).
+
+Implicit in our previous discussion is the assumption that we *can* check for stationary. This isn't quite simple but a few tests have been developed over the years. We will use the [augmented Dickey-Fuller test](https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test), which tests for the presence of a unit root. If a unit root is present, the time series is not stationary. In this test, the null hypothesis states that a unit root is present, meaning that our time series is not stationary. If the test returns a p-value that is less than a certain significant level, typically 0.05 or 0.01, then we can reject the null hypothesis. This means that there are no unit roots and the series is stationary.
 
 
 ```python
@@ -203,6 +239,8 @@ print(f'First-order differenced data: ADF statistics: {res[0]}, p-value: {res[1]
     First-order differenced data: ADF statistics: -16.35212390756837, p-value: 2.925519649193536e-29
     First-order differenced data: ADF statistics: -25.706176135107768, p-value: 0.0
 
+
+We will use a seasonal autoregressive integrated moving average, or [SARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) model, which is suitable for this kind of time series. Intuitively a frequency of 12 makes sense, where by frequency we mean the number of observations per seasonal cycle.
 
 We still have four parameters to tune: the order of the autoregressive process $p$, the lag $q$ of the moving average process, and the $P$ and $Q$ seasonal counterparts. To select the optimal values, we fit several models and select the one with the best [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion), or AIC. We also compute the Bayesian information criterion, without using it.
 
@@ -270,6 +308,8 @@ results = optimize_SARIMAX(df_train, None, orders=orders, d=d, D=D, s=s, trend='
 results = results.set_index(['p', 'q', 'P', 'Q'])
 ```
 
+The results are ranked in ascending order of the AIC; we select the values corresponding to the one with the best AIC. Those values finalize the model.
+
 
 ```python
 p, q, P, Q = results.index.values[0]
@@ -288,9 +328,11 @@ fitted_model.plot_diagnostics(figsize=(10, 8));
 
 
     
-![png](/assets/images/temperature/temperature-5.png)
+![png](/assets/images/temperature/temperature-6.png)
     
 
+
+It is important to verify that the residuals are not correlated. Generally this is done with the [Ljung-Box test](https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test).
 
 
 ```python
@@ -335,6 +377,10 @@ acorr_ljungbox(residuals, np.arange(1, 11, 11))
 </div>
 
 
+
+To assess the quality of our model we need one or more baselines. A **baseline** is often the simplest solution we can think of, or one or more simple heuristics that allow us to generate predictions. Baselines often don't require any training, as for the naïve prediction below, and therefore the cost of implementation is very low. Being simple to implement, it should be void of errors. If our (sophisticated) model behaves in line with the baseline then it is not worth using it -- baselines set the bar for what is acceptable and what is not. 
+
+Our baselines are the naïve prediction and the seasonal naïve prediction. The first simply takes the value of the last month and the implementation is a one-liner, the latter takes as increment the increment seen twelve months ago and it is only a little bit more complicated. The seasonal naïve prediction is computed in function `rolling_forecast`; this also computes the SARIMA predictions in a rolling sense, that is by fitting the model up to the selected horizon and predicting the next value.
 
 
 ```python
@@ -390,6 +436,8 @@ print(f'- SARIMA:      {compute_rmse(df_test, sarima):.4f} (°C)')
     - SARIMA:      1.2857 (°C)
 
 
+These results show an important improvements for the seasonal naïve forecast, with another significant reduction in the RMSE from the SARIMA model. The additional burden of the SARIMA model is therefore justified. The improvements are confirmed in the MAE.
+
 
 ```python
 def compute_mae(y_true, y_pred):
@@ -423,6 +471,6 @@ plt.legend();
 
 
     
-![png](/assets/images/temperature/temperature-6.png)
+![png](/assets/images/temperature/temperature-7.png)
     
 
