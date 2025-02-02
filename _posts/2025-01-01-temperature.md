@@ -30,9 +30,9 @@ df['year'] = df['date'].dt.year
 df['month'] = df['date'].dt.strftime('%b')
 df.reset_index(drop=True, inplace=True)
 df.set_index('date', inplace=True)
-df = df.loc['1900':]
+df = df.loc['1900':'2012']
 df = df.asfreq('M', method='bfill')
-df.head()
+df.tail()
 ```
 
 
@@ -69,34 +69,34 @@ df.head()
   </thead>
   <tbody>
     <tr>
-      <th>1900-01-31</th>
-      <td>6.462</td>
-      <td>1900</td>
-      <td>Feb</td>
+      <th>2012-07-31</th>
+      <td>24.731</td>
+      <td>2012</td>
+      <td>Aug</td>
     </tr>
     <tr>
-      <th>1900-02-28</th>
-      <td>5.215</td>
-      <td>1900</td>
-      <td>Mar</td>
+      <th>2012-08-31</th>
+      <td>18.922</td>
+      <td>2012</td>
+      <td>Sep</td>
     </tr>
     <tr>
-      <th>1900-03-31</th>
-      <td>8.887</td>
-      <td>1900</td>
-      <td>Apr</td>
+      <th>2012-09-30</th>
+      <td>14.501</td>
+      <td>2012</td>
+      <td>Oct</td>
     </tr>
     <tr>
-      <th>1900-04-30</th>
-      <td>14.049</td>
-      <td>1900</td>
-      <td>May</td>
+      <th>2012-10-31</th>
+      <td>10.528</td>
+      <td>2012</td>
+      <td>Nov</td>
     </tr>
     <tr>
-      <th>1900-05-31</th>
-      <td>18.884</td>
-      <td>1900</td>
-      <td>Jun</td>
+      <th>2012-11-30</th>
+      <td>4.150</td>
+      <td>2012</td>
+      <td>Dec</td>
     </tr>
   </tbody>
 </table>
@@ -104,16 +104,36 @@ df.head()
 
 
 
-Plotting all the data over times shows an oscillating behavior, as expected due to the seasonality of the temperature. This graph is too cluttered to deliver any information.
+We start with the exploratoring analysis. Plotting all the data over times shows an oscillating behavior, as expected due to the seasonality of the temperature, but this graph is too cluttered to deliver any actionable information. More meaningful are the [autocorrelation](https://en.wikipedia.org/wiki/Autocorrelation) and [partial autocorrelation](https://en.wikipedia.org/wiki/Partial_autocorrelation_function) plots. The former shows a strong anticorrelation with six months lag (from summer to winter) and a strong correlation with twelve months (from year to year). The histogram points to a bimodal distributions, with two peaks.
 
 
 ```python
-plt.figure(figsize=(15,5))
-sns.lineplot(data=df.reset_index(), x='date', y='y', label='Average Monthly Temp')
-plt.title('Average Monthly Temperature in Rome from 1900 until 2012')
-plt.xlabel('Year')
-plt.ylabel("Temperature (°C)")
-plt.legend();
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+y = df.y.dropna()
+fig = plt.figure(figsize=(15, 8))
+
+ax1 = plt.subplot2grid((3, 3), (0, 0), colspan=2)
+ax2 = plt.subplot2grid((3, 3), (1, 0))
+ax3 = plt.subplot2grid((3, 3), (1, 1))
+ax4 = plt.subplot2grid((3, 3), (2, 0), colspan=2)
+
+y.plot(ax=ax1)
+ax1.set_title('Average Monthly Temperature in Rome from 1900 until 2012')
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Temperature (°C)')
+plot_acf(y, lags=48, zero=True, ax=ax2);
+ax1.set_xlabel('Lag')
+ax1.set_ylabel('Correlation')
+ax1.set_ylim(-1.1, 1.1)
+plot_pacf(y, lags=48, zero=True, ax=ax3);
+ax2.set_xlabel('Lag')
+ax2.set_ylabel('Correlation')
+ax2.set_ylim(-1.1, 1.1)
+sns.histplot(y, bins=int(np.sqrt(len(y))), ax=ax4)
+ax4.set_title('Histogram')
+ax4.set_xlabel('Temperature (°C)')
+plt.tight_layout()
 ```
 
 
@@ -168,15 +188,13 @@ To understand a time series like the one we consider here it is customary to [de
 from statsmodels.tsa.seasonal import seasonal_decompose, STL
 decomposition = STL(df.y, period=12).fit()
 
-fig, (ax0, ax1, ax2, ax3) = plt.subplots(figsize=(10, 8), nrows=4, ncols=1, sharex=True)
-ax0.plot(decomposition.observed)
-ax0.set_ylabel('Observed')
-ax1.plot(decomposition.trend)
-ax1.set_ylabel('Trend')
-ax2.plot(decomposition.seasonal)
-ax2.set_ylabel('Seasonal')
-ax3.plot(decomposition.resid)
-ax3.set_ylabel('Residuals')
+fig, (ax0, ax1, ax2) = plt.subplots(figsize=(15, 8), nrows=3, ncols=1, sharex=True)
+ax0.plot(decomposition.trend)
+ax0.set_ylabel('Trend')
+ax1.plot(decomposition.seasonal)
+ax1.set_ylabel('Seasonal')
+ax2.plot(decomposition.resid)
+ax2.set_ylabel('Residuals')
 fig.tight_layout()
 ```
 
@@ -226,12 +244,13 @@ Implicit in our previous discussion is the assumption that we *can* check for st
 
 
 ```python
+y = df.y.dropna()
 from statsmodels.tsa.stattools import adfuller
-res = adfuller(df.y)
+res = adfuller(y)
 print(f'Observed data: ADF statistics: {res[0]}, p-value: {res[1]}')
-res = adfuller(np.diff(df.y, n=1))
+res = adfuller(np.diff(y, n=1))
 print(f'First-order differenced data: ADF statistics: {res[0]}, p-value: {res[1]}')
-res = adfuller(np.diff(df.y, n=12))
+res = adfuller(np.diff(y, n=12))
 print(f'First-order differenced data: ADF statistics: {res[0]}, p-value: {res[1]}')
 ```
 
@@ -240,9 +259,34 @@ print(f'First-order differenced data: ADF statistics: {res[0]}, p-value: {res[1]
     First-order differenced data: ADF statistics: -25.706176135107768, p-value: 0.0
 
 
-We will use a seasonal autoregressive integrated moving average, or [SARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) model, which is suitable for this kind of time series. Intuitively a frequency of 12 makes sense, where by frequency we mean the number of observations per seasonal cycle.
+We will use a seasonal autoregressive integrated moving average, or [SARIMA](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) model, which is suitable for this kind of time series. From the results above we the time series is stationary already, so we'll keep it like this for consecutive entries. From the ACF and PACF plots we did at the beginning, instead, we need differencing for the seasonal behavior, even if we don't know of which order. Intuitively a frequency of 12 makes sense, where by frequency we mean the number of observations per seasonal cycle.
 
-We still have four parameters to tune: the order of the autoregressive process $p$, the lag $q$ of the moving average process, and the $P$ and $Q$ seasonal counterparts. To select the optimal values, we fit several models and select the one with the best [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion), or AIC. We also compute the Bayesian information criterion, without using it.
+The SARIMA model has several parameters: the order of the autoregressive process $p$, the order of differentiation $d$, the lag $q$ of the moving average process, and the $P$, $D$ and $Q$ seasonal counterparts, given that we can reasonably assume a frequency of 12 (months). To find the optimal parameters we can proceed in two ways: either by visual exploration or by calibrating several combinations and choosing the one that has the best indicator. The indicator we will use is the [Akaike information criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion), or AIC; alternatively one can use the Bayesian information criterion.
+
+Let's start from the first method. We repeat the plots done above for the ACF and PACF after a first-order seasonal differencing of 12 and see what we get.
+
+
+```python
+y = df.y.diff(12).dropna()
+fig, (ax0, ax1) = plt.subplots(nrows=2, figsize=(10, 5))
+plot_acf(y, lags=48, zero=True, ax=ax0);
+ax1.set_xlabel('Lag')
+ax1.set_ylabel('Correlation')
+plot_pacf(y, lags=48, zero=True, ax=ax1);
+ax2.set_xlabel('Lag')
+ax2.set_ylabel('Correlation')
+fig.tight_layout()
+```
+
+
+    
+![png](/assets/images/temperature/temperature-6.png)
+    
+
+
+From the ACF plot we can assume $q=2$, while the PACF drops under the confidence interval after the first lag, suggesting $p=1$. Both the ACF and PACF also show significant entries with a lag of twelve, suggessting $P=1$ and $Q=1$. Therefore a good candidate would be a SARIMA model with $(p, d, q), (P, D, Q)$ of $(1, 0, 2), (1, 1, 1)$ and a seasonality of 12. 
+
+The second approach is to fit several models and choose the one with the best AIC. We will use all the possible combinations of the values of $p, q, P$ and $Q$ in $\{0, 1, 2, 3\}$. The model is fitted using the training dataset, while the test dataset, composed of the last ten years, is left aside for the final assessments. We can assume that the trend is linear from our previous discussion. This step is quite time consuming, lasting well above 30 minutes.
 
 
 ```python
@@ -279,8 +323,6 @@ def optimize_SARIMAX(endog, exog, orders, d, D, s, trend):
     return results
 ```
 
-The selection involves the definition and fit of several models, one for each value of $p, q, P$ and $Q$ in $\{0, 1, 2, 3\}$. The model is fitted using the training dataset, while the test dataset, composed of the last ten years, is left aside for the final assessments. This analysis is quite long, lasting well above 30 minutes.
-
 
 ```python
 df_train = df.y[:-120]
@@ -296,11 +338,11 @@ orders = list(product(
     range(0, 4),
     range(0, 4),
 ))
-d, D, s = 1, 1, 12
+d, D, s = 0, 1, 12
 results = optimize_SARIMAX(df_train, None, orders=orders, d=d, D=D, s=s, trend='c')
 ```
 
-    100%|██████████| 256/256 [40:13<00:00,  9.43s/it]  
+    100%|██████████| 256/256 [1:24:15<00:00, 19.75s/it]    
 
 
 
@@ -312,23 +354,112 @@ The results are ranked in ascending order of the AIC; we select the values corre
 
 
 ```python
+results.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>AIC</th>
+      <th>BIC</th>
+    </tr>
+    <tr>
+      <th>p</th>
+      <th>q</th>
+      <th>P</th>
+      <th>Q</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <th>2</th>
+      <th>3</th>
+      <th>2</th>
+      <td>4120.571239</td>
+      <td>4166.618787</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <th>0</th>
+      <th>3</th>
+      <th>2</th>
+      <td>4120.665049</td>
+      <td>4166.712596</td>
+    </tr>
+    <tr>
+      <th rowspan="3" valign="top">1</th>
+      <th>0</th>
+      <th>3</th>
+      <th>2</th>
+      <td>4121.245069</td>
+      <td>4162.176223</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <th>3</th>
+      <th>2</th>
+      <td>4121.459183</td>
+      <td>4167.506730</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <th>3</th>
+      <th>2</th>
+      <td>4121.585784</td>
+      <td>4177.866120</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
 p, q, P, Q = results.index.values[0]
 print(f"Selected p={p}, q={q}, P={P}, Q={Q}")
 ```
 
-    Selected p=1, q=1, P=3, Q=2
+    Selected p=0, q=2, P=3, Q=2
 
+
+The `plot_diagnostic` method analyzes the residuals of the fitted SARIMA model. Albeit a bit cluttered, the top left plot shows that the residuals do not exhibit a trend or a change in variance. The top right plot shows that the distribution is very close to the one of a normal distribution. The normality of the residuals is further confirmed by the [Q-Q plot](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot) at the bottom left, which displays very good agreement with the straight line $y=x$. The [correlogram](https://en.wikipedia.org/wiki/Correlogram) at the bottom right reports no significant coefficients after lag 0. The conclusion is therefore that the residuals of our SARIMA model resemble white noise.
 
 
 ```python
 model = SARIMAX(df_train, order=(p, d, q), seasonal_order=(P, D, Q, s), simple_differencing=False)
 fitted_model = model.fit(disp=False)
-fitted_model.plot_diagnostics(figsize=(10, 8));
+fitted_model.plot_diagnostics(figsize=(10, 8))
+plt.tight_layout();
 ```
 
 
     
-![png](/assets/images/temperature/temperature-6.png)
+![png](/assets/images/temperature/temperature-7.png)
     
 
 
@@ -369,8 +500,8 @@ acorr_ljungbox(residuals, np.arange(1, 11, 11))
   <tbody>
     <tr>
       <th>1</th>
-      <td>2.900733</td>
-      <td>0.088539</td>
+      <td>294.509434</td>
+      <td>5.176273e-66</td>
     </tr>
   </tbody>
 </table>
@@ -415,6 +546,9 @@ WINDOW = 12
 last_season = rolling_forecast(df, TRAIN_LEN, HORIZON, WINDOW, 'last_season')
 sarima = rolling_forecast(df, TRAIN_LEN, HORIZON, WINDOW, 'SARIMA')
 ```
+
+    100%|██████████| 10/10 [02:32<00:00, 15.26s/it]
+
 
 
 ```python
@@ -471,6 +605,6 @@ plt.legend();
 
 
     
-![png](/assets/images/temperature/temperature-7.png)
+![png](/assets/images/temperature/temperature-8.png)
     
 
