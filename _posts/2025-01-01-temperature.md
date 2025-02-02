@@ -463,7 +463,7 @@ plt.tight_layout();
     
 
 
-It is important to verify that the residuals are not correlated. Generally this is done with the [Ljung-Box test](https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test).
+To quantify this observation we can use the [Ljung-Box test](https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test), a statistical test that determines whether the autocorrelation of a set of data is significantly different from zero. The null hypothesis states that the data is independently distributied, that is there is no autocorrelation. If the p-value is above a given threshold, say 0.05, we cannot reject the null hypothesis and we must assume that the residuals are independently distributed. The test can be performed using the `acorr_ljungbox` function of the `statsmodels` package.
 
 
 ```python
@@ -508,6 +508,8 @@ acorr_ljungbox(residuals, np.arange(1, 11, 11))
 </div>
 
 
+
+The value is largely above the p-value, therefore our residuals can be thought of being white noise.
 
 To assess the quality of our model we need one or more baselines. A **baseline** is often the simplest solution we can think of, or one or more simple heuristics that allow us to generate predictions. Baselines often don't require any training, as for the naïve prediction below, and therefore the cost of implementation is very low. Being simple to implement, it should be void of errors. If our (sophisticated) model behaves in line with the baseline then it is not worth using it -- baselines set the bar for what is acceptable and what is not. 
 
@@ -608,3 +610,5 @@ plt.legend();
 ![png](/assets/images/temperature/temperature-8.png)
     
 
+
+We conclude this post with a couple of references. I found the book [Time Series in Python](https://livebook.manning.com/book/time-series-forecasting-in-python-book/welcome/v-9) by Marco Peixeiro a good and readable introduction to the subject; most of the procedure reported above is suggested in the book. From the exploratory data analysis of this dataset [this](https://www.kaggle.com/code/leandrovrabelo/climate-change-forecast-sarima-model) Kaggle notebook is worth a look.
