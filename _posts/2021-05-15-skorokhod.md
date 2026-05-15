@@ -329,8 +329,6 @@ ax.set_ylabel('Density', fontsize=12)
 ax.set_title('Stationary distribution of reflected BM on $[L, U]$', fontsize=13)
 ax.legend(fontsize=11)
 plt.tight_layout()
-plt.savefig('stationary_distribution.png', dpi=150, bbox_inches='tight')
-plt.show()
 ```
 
 
@@ -421,7 +419,6 @@ def fokker_planck_exact(x, t, x0, L, U, n_terms=60):
     )                                               # (M,)
 
     return (1.0 / ell + (2.0 / ell) * series).reshape(shape)
-
 ```
 
 ### Figure 4 — Surface plot of the exact Fokker-Planck solution
@@ -483,8 +480,6 @@ ax2d.legend(fontsize=9, loc='upper right')
 ax2d.set_xlim(L, U)
 
 plt.tight_layout()
-plt.savefig('fokker_planck_surface.png', dpi=150, bbox_inches='tight')
-plt.show()
 ```
 
 
