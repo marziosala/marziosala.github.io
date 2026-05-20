@@ -19,12 +19,24 @@ $$d\log S^i_t = \left(r - q - \tfrac{1}{2}\,a^2(t,S^i_t)\,V^i_t\right)dt
                + \sqrt{a^2(t,S^i_t)\,V^i_t}\;dW^{S,i}_t$$
 reproduces any target smile exactly when the local-vol factor satisfies
 $$a^2(t, x) = \frac{\sigma^2_{\mathrm{Dup}}(t, x)}{\mathbb{E}[V_t \mid S_t = x]}$$
-For a flat smile $\sigma^2_{\mathrm{Dup}} = \sigma^2_{\mathrm{BS}}$ everywhere, so at steady
-state $\mathbb{E}[V]\approx\theta$ and $a^2\approx\sigma^2_{\mathrm{BS}}/\theta$, giving an
+For a flat smile,
+
+$$
+\sigma^2_{\mathrm{Dup}} = \sigma^2_{\mathrm{BS}}
+$$
+
+everywhere, so at steady
+state
+
+$$
+\mathbb{E}[V]\approx\theta$ and $a^2\approx\sigma^2_{\mathrm{BS}}/\theta,
+$$
+
+giving an
 effective volatility $\sqrt{a^2 V}\approx\sigma_{\mathrm{BS}}$ regardless of the Heston skew
 induced by $\rho_h$.
 
-**Two-pass implementation.**
+The calibration is composed by two passes.
 A first pass of $N_{\rm cal}$ interacting particles builds and stores the calibrated
 $a^2(t,\cdot)$ surface.  A second pass of $M \gg N_{\rm cal}$ independent paths
 prices options via linear interpolation into that surface.
