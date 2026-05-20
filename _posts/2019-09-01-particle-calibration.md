@@ -4,7 +4,7 @@ permalink: /particle-calibration/
 title: "Particle Calibration"
 header:
   overlay_image: /assets/images/particle-calibration/particle-calibration-splash.png
-excerpt: "A basic implementation of the particle calibration."
+excerpt: "A basic implementation of the particle calibration method."
 ---
 
 # Particle Calibration of a Local Stochastic Volatility Model
