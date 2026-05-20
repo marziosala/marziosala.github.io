@@ -81,22 +81,33 @@ def dupire_local_var(Y, T):
 ## The particle algorithm
 
 The $N$ coupled particles $(S^i_t, V^i_t)$ evolve as
-$$d\log S^i_t = \left(r - q - \tfrac{1}{2}\,a^2(t,S^i_t)\,V^i_t\right)dt
-  + \sqrt{a^2(t,S^i_t)\,V^i_t}\;dW^{S,i}_t$$
-$$dV^i_t = \kappa(\theta - V^i_t)\,dt + \xi\sqrt{V^i_t}\,dW^{V,i}_t,
-  \qquad \langle dW^S, dW^V\rangle = \rho_h\,dt$$
+
+$$
+d\log S^i_t = \left(r - q - \tfrac{1}{2}\,a^2(t,S^i_t)\,V^i_t\right)dt
+  + \sqrt{a^2(t,S^i_t)\,V^i_t}\;dW^{S,i}_t
+$$
+
+$$
+dV^i_t = \kappa(\theta - V^i_t)\,dt + \xi\sqrt{V^i_t}\,dW^{V,i}_t,
+  \qquad \langle dW^S, dW^V\rangle = \rho_h\,dt
+$$
 
 At each time step, a fixed grid of $G$ log-spot values spanning the central
 95\% of the particle cloud is constructed.
 The conditional expectation is estimated at every grid node via Nadaraya-Watson
 regression with a Gaussian kernel and Silverman bandwidth $h$:
-$$a^2(t, g_k) =
+
+$$
+a^2(t, g_k) =
   \frac{\sigma^2_{\mathrm{BS}}}{\hat{E}^N[V_t \mid \log S_t = g_k]},
   \qquad
   \hat{E}^N[V \mid g_k] =
   \frac{\sum_j K_h(g_k - \log S^j)\,V^j}{\sum_j K_h(g_k - \log S^j)},
-  \qquad K_h(u) = e^{-u^2/(2h^2)}$$
+  \qquad K_h(u) = e^{-u^2/(2h^2)}
+$$
+
 $h = 1.06\,\hat\sigma_{\log S}\,N^{-1/5}$ (Silverman's rule).
+
 The $a^2$ values on the grid are stored as a cubic spline; flat extrapolation is used
 outside $[g_1, g_G]$.
 
@@ -181,8 +192,6 @@ for n in range(Nt):
     for t_s in snap_times:
         if abs(t_next - t_s) < 0.5 * dt:
             print(f't={t_s:.2f}  S mean={S_cal.mean():.4f}  std={S_cal.std():.4f}')
-
-print('Calibration done.')
 ```
 
     t=0.25  S mean=1.0048  std=0.0503
@@ -338,7 +347,12 @@ plt.tight_layout()
 ## Conclusion
 
 With a flat Black-Scholes target the calibration condition simplifies to
-$a^2 = \sigma^2_{\rm BS}/\hat{E}^N[V\mid S]$, and the output smile should be a horizontal
+
+$$
+a^2 = \sigma^2_{\rm BS}/\hat{E}^N[V\mid S],
+$$
+
+and the output smile should be a horizontal
 line at $\sigma_{\rm BS}$ for all strikes and maturities.  Despite the Heston correlation
 $\rho_h = -0.7$ that would ordinarily generate a downward skew, the particle method corrects
 for it on the fly.
